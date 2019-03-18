@@ -24,3 +24,10 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
+from .viewer import (PKPDExperimentViewer, PKPDFittingViewer, PKPDCSVViewer,
+                     PKPDAnalysisViewer, PKPDStatisticsLabelViewer,
+                     PKPDRegressionLabelsViewer, PKPDPopulationViewer,
+                     PKPDAllometricScalingViewer)
+from .viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
+from .viewer_pkpd_simulate_liver_flow import PKPDSimulateLiverFlowViewer
