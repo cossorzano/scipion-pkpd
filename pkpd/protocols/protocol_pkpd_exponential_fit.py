@@ -27,7 +27,7 @@
 import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.object import String, Integer
-from pkpd.pk_models import PKPDExponentialModel
+from pkpd.models.pk_models import PKPDExponentialModel
 from pkpd.protocols import ProtPKPDFitBase
 
 

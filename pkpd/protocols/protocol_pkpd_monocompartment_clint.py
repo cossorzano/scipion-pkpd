@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from pkpd.protocols import ProtPKPDODEBase
-from pkpd.pk_models import PK_MonocompartmentClint
+from pkpd.models.pk_models import PK_MonocompartmentClint
 
 # TESTED in test_workflow_gabrielsson_pk17.py
 # TESTED in test_workflow_gabrielsson_pk20.py

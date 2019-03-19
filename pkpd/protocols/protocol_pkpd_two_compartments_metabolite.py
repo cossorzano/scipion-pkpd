@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from pkpd.protocols import ProtPKPDODEBase
-from pkpd.pk_models import PK_TwocompartmentsClintMetabolite
+from pkpd.models.pk_models import PK_TwocompartmentsClintMetabolite
 
 # TESTED in test_workflow_gabrielsson_pk19.py
 

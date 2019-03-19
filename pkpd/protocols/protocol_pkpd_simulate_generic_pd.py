@@ -25,14 +25,13 @@
 # **************************************************************************
 
 import sys
-import numpy as np
 
 import pyworkflow.protocol.params as params
 from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
 from pyworkflow.em.data import PKPDVariable, PKPDUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.utils import parseRange
-from pkpd.pd_models import *
+from pkpd.models.pd_models import *
 
 
 class ProtPKPDSimulateGenericPD(ProtPKPD):

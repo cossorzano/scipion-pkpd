@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from protocol_pkpd_sa_base import ProtPKPDSABase
-from pkpd.sa_models import NCAObsIVModel
+from pkpd.models.sa_models import NCAObsIVModel
 from pyworkflow.em.pkpd_units import PKPDUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 

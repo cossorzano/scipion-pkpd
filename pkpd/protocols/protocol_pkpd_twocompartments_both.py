@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from pkpd.protocols import ProtPKPDODEBase
-from pkpd.pk_models import PK_TwocompartmentsBoth
+from pkpd.models.pk_models import PK_TwocompartmentsBoth
 
 class ProtPKPDTwoCompartmentsBoth(ProtPKPDODEBase):
     """ Fit a two-compartments model to a set of plasma and peripheral compartment measurements ((any arbitrary dosing regimen is allowed)\n

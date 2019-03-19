@@ -28,7 +28,7 @@ import pyworkflow.protocol.params as params
 from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
 from pyworkflow.em.data import PKPDDoseResponse
 from pkpd.utils import parseRange
-from pkpd.pd_models import *
+from pkpd.models.pd_models import *
 from numpy.random import uniform
 
 
