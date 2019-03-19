@@ -1,9 +1,10 @@
 # **************************************************************************
 # *
-# * Authors: Yunior C. Fonseca Reyna    (cfonseca@cnb.csic.es)
+# * Authors: Yunior C. Fonseca Reyna    (cfonseca@cnb.csic.es) 1
+# *          Carlos Oscar Sorzano (info@kinestat.com) 2
 # *
-# *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * 1. Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * 2. Kinestat Pharma
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'scipion@cnb.csic.es'
+# *  e-mail address 'info@kinestat.com'
 # *
 # **************************************************************************
 
@@ -81,6 +82,19 @@ from .protocol_pkpd_two_compartments_metabolite import ProtPKPDTwoCompartmentsCl
 from .protocol_pkpd_twocompartments_both import ProtPKPDTwoCompartmentsBoth
 from .protocol_pkpd_twocompartments_both_pd import ProtPKPDTwoCompartmentsBothPD
 from .protocol_pkpd_twocompartments_urine import ProtPKPDTwoCompartmentsUrine
+
+from protocol_batch_create_experiment import BatchProtCreateExperiment
+
+from pkpd.viewers import *
+from pkpd.wizard import *
+
+from pkpd.bibtex import _bibtex
+
+from pkpd.viewers.viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
+from pkpd.viewers.viewer_pkpd_simulate_liver_flow import PKPDSimulateLiverFlowViewer
+
+# Pending:
+# Batch effects, Reese2013
 
 
 
