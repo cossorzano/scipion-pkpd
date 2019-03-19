@@ -1,0 +1,49 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; mg/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; h ; numeric[%f] ; time ; Time variable
+E ; none ; numeric[%f]; measurement ; Effect in percentage
+
+[VIAS] ================================
+Oral; ev1; tlag; bioavailability=1
+
+[DOSES] ================================
+D0; via=Oral; bolus; t=0.000000 h; d=400 mg
+D1; via=Oral; repeated_bolus; t=120.000000:8.000000:200.000000 h; d=400 mg
+
+[SAMPLES] ================================
+Individual; dose=D0,D1 
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp ; E
+.5 7.24    85.69
+1 14.21    93.9 
+2 17.2     94.43
+4 7.27     85.2 
+6 3.18     74.62
+9 1.25     50.48
+12 .8 	   42.31
+24 .23     20.85
+34 .11      9.95
+48 .05     NA
+58 .03     NA
+144 5.79   84.83  
+168 4.86   81.21 
+176 3.45   78.14 
+192 4.53   78.51 
+192.5 8.01 89.43 
+193 15.87  93.92 
+194 17.01  93.71 
+196 9.84   91.78 
+198 4.47   81.94 
+201 2.42   70.46 
+204 1.81   71.24 
+216 .8     46.33 
+226 .38    28.51 
+240 .16    30.68 
+250 .12    26.69 
+
+

@@ -1,0 +1,34 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+waterContent ; none ; numeric[%f] ; measurement ; Water content
+distance ; none ; numeric[%f] ; measurement ; Distance
+
+[VIAS] ================================
+
+[DOSES] ================================
+
+[SAMPLES] ================================
+Population measures
+
+[MEASUREMENTS] ===========================
+Population measures ; distance; waterContent
+0.5 1.3 
+1.5 1.3 
+2.5 1.9 
+3.5 3.4 
+4.5 5.3 
+5.5 7.1 
+6.5 10.6 
+7.5 16 
+8.5 16.4 
+9.5 18.3 
+10.5 20.9 
+11.5 20.5 
+12.5 21.3 
+13.5 21.2 
+14.5 20.9 
+
+

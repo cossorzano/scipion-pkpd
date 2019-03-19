@@ -1,0 +1,40 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; plasma concentration
+t ; h ; numeric[%f] ; time ; 
+
+[VIAS] ================================
+Intravenous; iv
+
+[DOSES] ================================
+Bolus ; via=Intravenous; bolus; t=0.000000 h; d=100 ug
+
+[SAMPLES] ================================
+Individual; dose=Bolus 
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp
+.08 1.81 
+.25 1.4 
+.5 1.17 
+.75 1.01 
+1 .97 
+1.33 .958 
+1.67 .8 
+2 .819 
+2.5 .79 
+3.07 .725 
+3.5 .647 
+4.03 .663 
+5 .591 
+7 .524 
+11 .406 
+23 .237 
+29 .154 
+35 .116 
+47.25 .065 
+
+

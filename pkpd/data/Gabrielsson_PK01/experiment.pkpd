@@ -1,0 +1,31 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; min ; numeric[%f] ; time ; 
+
+[VIAS] ================================
+Intravenous; iv; tlag=0.000000 min; bioavailability=1.000000
+
+[DOSES] ================================
+Dose1; via=Intravenous; bolus; t=0.000000 min; d=10 mg
+
+[SAMPLES] ================================
+Individual1; dose=Dose1
+
+[MEASUREMENTS] ===========================
+Individual1 ; t; Cp
+10 920 
+20 800 
+30 750 
+40 630 
+50 610 
+60 530 
+70 520 
+90 380 
+110 350 
+150 200 
+
+

@@ -1,0 +1,65 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; h ; numeric[%f] ; time ; Time
+
+[VIAS] ================================
+Intravenous; iv; tlag=0.000000 min; bioavailability=1.000000
+
+[DOSES] ================================
+Infusion0; via=Intravenous; infusion; t=0:59 min; d=2 mg/min
+Infusion1; via=Intravenous; infusion; t=480:509 min; d=1.33333 mg/min
+Infusion2; via=Intravenous; infusion; t=960:989 min; d=1.33333 mg/min
+Infusion3; via=Intravenous; infusion; t=1440:1469 min; d=1.33333 mg/min
+Infusion4; via=Intravenous; infusion; t=1920:1949 min; d=1.33333 mg/min
+Infusion5; via=Intravenous; infusion; t=2400:2429 min; d=1.33333 mg/min
+Infusion6; via=Intravenous; infusion; t=2880:2909 min; d=1.33333 mg/min
+Infusion7; via=Intravenous; infusion; t=3360:3389 min; d=1.33333 mg/min
+Infusion8; via=Intravenous; infusion; t=3840:3869 min; d=1.33333 mg/min
+Infusion9; via=Intravenous; infusion; t=4320:4349 min; d=1.33333 mg/min
+
+[SAMPLES] ================================
+Individual; dose=Infusion0, Infusion1, Infusion2, Infusion3, Infusion4, Infusion5, Infusion6, Infusion7, Infusion8, Infusion9
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp
+0.25	174
+0.5	370
+1	636
+1.25	616
+1.5	582
+3	518
+5	491
+7	481
+7.75	452
+8.5	670
+15.75	405
+16.5	640
+23.99	370
+24.5	590
+31.75	327
+32.5	550
+39.75	265
+40.5	500
+47.99	217
+48.5	461
+55.75	238
+56.5	460
+63.75	226
+64.5	426
+72	191
+72.25	320
+72.5	442
+72.75	392
+73	373
+73.5	368
+74.5	333
+76.5	302
+78.5	232
+80.5	199
+84.5	134
+90.5	82
+96	61.4

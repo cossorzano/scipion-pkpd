@@ -1,0 +1,25 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+S ; none ; numeric[%f] ; measurement ; Survival frequency
+
+[VIAS] ================================
+
+[DOSES] ================================
+
+[SAMPLES] ================================
+Population measures
+
+[MEASUREMENTS] ===========================
+Population measures ; Cp; S
+0 86.4 
+0.072 80.0 
+0.21 77.3 
+0.31 57.1 
+0.5 7.00 
+0.6 0.0 
+
+

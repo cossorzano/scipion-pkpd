@@ -1,0 +1,33 @@
+[EXPERIMENT] ===========================
+comment = 
+title = Single dose
+
+[VARIABLES] ============================
+Cp ; mg/L ; numeric[%f] ; measurement ; Plasma concentration
+Au ; mg ; numeric[%f] ; measurement ; Cumulative amount in urine
+t ; h ; numeric[%f] ; time ; Time variable
+
+[VIAS] ================================
+Intravenous; iv
+
+[DOSES] ================================
+Treatment; via=Intravenous; bolus; t=0 h; d=12.5 mg
+
+[SAMPLES] ================================
+Individual; dose=Treatment 
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp; Au
+0.333    0.0475	NA
+0.666    0.0462	NA
+1        0.0465	NA 
+2.0    	 0.0429	NA 
+3.0      0.0459 NA 
+4.0      0.0448 NA 
+6.0      0.0405 NA 
+8.0      0.0380 NA 
+24.0     0.0263	0.34
+48.0     0.0142	0.55
+72.0     0.0088	NA
+96.0     0.0057	NA  
+168.0    0.0015	NA  

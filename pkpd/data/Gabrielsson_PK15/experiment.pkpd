@@ -1,0 +1,38 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; min ; numeric[%f] ; time ; Time variable
+
+[VIAS] ================================
+IVEV1; iv-ev1
+
+[DOSES] ================================
+D0; via=IVEV1; bolus; t=0.000000 min; d=8750 ug
+
+[SAMPLES] ================================
+Individual; dose=D0 
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp
+5. 2.71 
+30.0 2.9 
+60.0 4.08 
+90.0 3.75 
+120. 3.4 
+150. 2.21 
+180. 2.24 
+210. 1.52 
+240. 1.38 
+270. 0.96 
+300. 0.95 
+330. 0.88 
+360. 0.66 
+390. 0.64 
+420. 0.42 
+450. 0.38 
+480. 0.305 
+
+

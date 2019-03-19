@@ -1,0 +1,30 @@
+[EXPERIMENT] ===========================
+comment = Domenech Berrozpe, Vol 1. p 250
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; mg/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; min ; numeric[%f] ; time ; Time
+
+[VIAS] ================================
+Intravenous; iv; tlag=0.000000 min; bioavailability=1.000000
+
+[DOSES] ================================
+Infusion0; via=Intravenous; infusion; t=0.000000:720 min; d=1.66666 mg/min
+
+[SAMPLES] ================================
+Individual; dose=Infusion0
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp
+60 1.31
+120 2.42
+180 3.35
+240 4.14
+300 4.80
+360 5.35
+420 5.82
+480 6.22
+540 6.55
+600 6.83
+

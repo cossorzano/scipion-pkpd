@@ -1,0 +1,31 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Ca; ug/L ; numeric[%f] ; measurement ; Hepatic arterial concentration
+Cav; ug/L ; numeric[%f] ; measurement ; Hepatic venous concentration
+Qh; L/min ; numeric[%f] ; measurement ; Hepatic flow
+
+[VIAS] ================================
+
+[DOSES] ================================
+
+[SAMPLES] ================================
+Measures
+
+[MEASUREMENTS] ===========================
+Measures ; Ca; Cav; Qh
+10.7  7.5  1.79
+10.2  6.6  1.72
+14.4  7.3  1.73
+15.3  10.9 1.42
+12.4  8.1  1.69
+15.3  11.1 1.02
+27.4  15.7 1.73
+33.6  25.0 1.87
+34.6  24.8 1.74
+37.9  25.1 1.51
+34.5  25.1 1.53
+41.6  27.2 1.55
+

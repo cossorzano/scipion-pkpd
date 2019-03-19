@@ -1,0 +1,27 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+E ; none ; numeric[%f] ; measurement ; Response in mm Hg
+
+[VIAS] ================================
+
+[DOSES] ================================
+
+[SAMPLES] ================================
+Population measures
+
+[MEASUREMENTS] ===========================
+Population measures ; Cp; E
+10 173   
+25 168   
+50 169   
+75 162   
+90 160   
+120 160   
+150 153   
+200 146   
+300 143   
+500 139 

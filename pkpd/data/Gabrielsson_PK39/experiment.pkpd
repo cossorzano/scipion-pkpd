@@ -1,0 +1,45 @@
+[EXPERIMENT] ===========================
+comment = 
+title = Single dose
+
+[VARIABLES] ============================
+Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
+t ; h ; numeric[%f] ; time ; Time variable
+
+[VIAS] ================================
+Intravenous; iv
+
+[DOSES] ================================
+infusion0 ; via=Intravenous; infusion; t=0:15 min; d=1.79333 ug/min
+infusion1 ; via=Intravenous; infusion; t=16:480 min; d=0.29892 ug/min
+infusion2 ; via=Intravenous; infusion; t=481:1440 min; d=0.144739 ug/min
+
+[SAMPLES] ================================
+Individual; dose=infusion0, infusion1, infusion2
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp
+0.25	53.21
+0.5	25.67
+1	24.59
+2	23.36
+3	26.94
+6	28.55
+8	32.94
+9	23.81
+10	25.81
+12	24.48
+18	21.79
+21	25.20
+24	23.10
+24.5	17.22
+25	13.35
+26	11.49
+28	8.74
+30	7.89
+32	5.92
+34	4.86
+36	3.15
+42	1.82
+48	0.771
+60	0.288

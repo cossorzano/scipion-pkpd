@@ -1,0 +1,53 @@
+[EXPERIMENT] ===========================
+comment = 
+title = My experiment
+
+[VARIABLES] ============================
+Cp ; umol/L ; numeric[%f] ; measurement ; Plasma concentration
+Cm ; umol/L ; numeric[%f] ; measurement ; Metabolite concentration
+t ; min ; numeric[%f] ; time ; Time
+
+[VIAS] ================================
+Intravenous; iv; tlag=0.000000 min; bioavailability=1.000000
+
+[DOSES] ================================
+Infusion300; via=Intravenous; infusion; t=0:5 min; d=60 umol/min
+Infusion50; via=Intravenous; infusion; t=0:5 min; d=10 umol/min
+Infusion10; via=Intravenous; infusion; t=0:5 min; d=2 umol/min
+
+[SAMPLES] ================================
+Individual300; dose=Infusion300
+Individual50; dose=Infusion50
+Individual10; dose=Infusion10
+
+[MEASUREMENTS] ===========================
+Individual300 ; t; Cp; Cm
+5    216.25  13.15 
+10   137     21.9   
+20   101.1   24.12  
+30   88.3    28.7   
+60   75.12   25.6   
+90   64.51   22.96  
+120  54.38   19.72  
+180  41.12   12.92  
+300  27.1    8.23   
+             
+Individual50 ; t; Cp; Cm
+5    35.6    6.372 
+10   18.22   8.018 
+20   13.1    7.75  
+30   11.54   7.934 
+60   7.748   6.458 
+90   5.184   4.508 
+120  4.402   3.552 
+180  2.432   1.892 
+300  1.292   1.414 
+
+Individual10 ; t; Cp; Cm
+5    5.03    1.33 
+10   3.18    1.83 
+20   2.32    1.81 
+30   1.89    1.97 
+60   1.096   1.514
+90   0.644   1.074
+120  0.516   0.55 

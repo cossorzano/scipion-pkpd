@@ -1,0 +1,33 @@
+[EXPERIMENT] ===========================
+comment = 
+title = Single dose
+
+[VARIABLES] ============================
+Cp ; mg/L ; numeric[%f] ; measurement ; Plasma concentration
+Au ; mg ; numeric[%f] ; measurement ; Cumulative amount in urine
+t ; h ; numeric[%f] ; time ; Time variable
+
+[VIAS] ================================
+Oral; ev1; tlag min
+
+[DOSES] ================================
+Treatment ; via=Oral; bolus; t=0 h; d=25 mg
+
+[SAMPLES] ================================
+Individual; dose=Treatment 
+
+[MEASUREMENTS] ===========================
+Individual ; t; Cp; Au
+0.333	 0.00094	NA
+0.666    0.0131 	NA
+1        0.0279 	NA 
+2.0    	 0.0380 	NA 
+3.0      0.0719 	NA 
+4.0      0.0761 	NA 
+6.0      0.0839 	NA 
+8.0      0.075  	NA 
+24.0     0.0516 	0.705
+48.0     0.0349 	1.21
+72.0     0.0234 	NA
+96.0     0.0145 	NA  
+168.0    0.0045 	NA  
