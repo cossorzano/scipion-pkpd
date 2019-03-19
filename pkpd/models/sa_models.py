@@ -29,8 +29,8 @@ Signal Analysis models
 import numpy as np
 import math
 from scipy.optimize import fsolve
-from pyworkflow.em.data import PKPDModelBase
-from pyworkflow.em.pkpd_units import multiplyUnits, divideUnits
+from pkpd.data import PKPDModelBase
+from pkpd.pkpd_units import multiplyUnits, divideUnits
 
 class SAModel(PKPDModelBase):
     def calculateParameters(self, show=True):

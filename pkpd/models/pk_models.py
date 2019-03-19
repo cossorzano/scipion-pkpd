@@ -30,8 +30,9 @@ import math
 
 import numpy as np
 
-from pyworkflow.em.data import PKPDModel, PKPDODEModel
-from pyworkflow.em.pkpd_units import inverseUnits, divideUnits, multiplyUnits, unitFromString, PKPDUnit
+from pkpd.data import PKPDModel, PKPDODEModel
+from pkpd.pkpd_units import (inverseUnits, divideUnits, multiplyUnits,
+                             unitFromString, PKPDUnit)
 
 
 class PKModel(PKPDModel):

@@ -29,8 +29,8 @@ PD models
 
 import numpy as np
 
-from pyworkflow.em.data import PKPDModel
-from pyworkflow.em.pkpd_units import inverseUnits, divideUnits, unitFromString, PKPDUnit
+from pkpd.data import PKPDModel
+from pkpd.pkpd_units import inverseUnits, divideUnits, unitFromString, PKPDUnit
 
 import math
 
