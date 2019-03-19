@@ -30,7 +30,7 @@ import copy
 from itertools import izip
 import math
 import numpy as np
-from pyworkflow.em.pkpd_units import PKPDUnit, changeRateToWeight
+from .pkpd_units import PKPDUnit, changeRateToWeight
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -80,6 +80,7 @@ class BiopharmaceuticsModel:
     def areParametersValid(self, p):
         return np.sum(p<0)==0
 
+
 class BiopharmaceuticsModelOrder0(BiopharmaceuticsModel):
     def getDescription(self):
         return ['Constant absorption rate']
@@ -106,6 +107,7 @@ class BiopharmaceuticsModelOrder0(BiopharmaceuticsModel):
 
     def getDescription(self):
         return "Zero order absorption (%s)"%self.__class__.__name__
+
 
 class BiopharmaceuticsModelOrder01(BiopharmaceuticsModel):
     def getDescription(self):
@@ -142,6 +144,7 @@ class BiopharmaceuticsModelOrder01(BiopharmaceuticsModel):
     def getDescription(self):
         return "Zero-First Mixed order absorption (%s)"%self.__class__.__name__
 
+
 class BiopharmaceuticsModelOrder1(BiopharmaceuticsModel):
     def getDescription(self):
         return ['Absorption rate']
@@ -168,6 +171,7 @@ class BiopharmaceuticsModelOrder1(BiopharmaceuticsModel):
 
     def getDescription(self):
         return "First order absorption (%s)"%self.__class__.__name__
+
 
 class BiopharmaceuticsModelOrderFractional(BiopharmaceuticsModel):
     def getDescription(self):
@@ -207,6 +211,7 @@ class BiopharmaceuticsModelOrderFractional(BiopharmaceuticsModel):
     def areParametersValid(self, p):
         return np.sum(p<0)==0 and p[2]>0 and p[2]<1
 
+
 class BiopharmaceuticsModelImmediateAndOrder1(BiopharmaceuticsModel):
     def getDescription(self):
         return ['Absorption rate','Immediate fraction']
@@ -235,6 +240,7 @@ class BiopharmaceuticsModelImmediateAndOrder1(BiopharmaceuticsModel):
 
     def getDescription(self):
         return "Immediate and First order absorption (%s)"%self.__class__.__name__
+
 
 class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
     def getDescription(self):
@@ -272,6 +278,7 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
 
     def getDescription(self):
         return "First and First order absorption (%s)"%self.__class__.__name__
+
 
 class PKPDVia:
     def __init__(self):

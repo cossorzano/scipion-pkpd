@@ -24,13 +24,7 @@
 # *
 # **************************************************************************
 """
-This modules contains constants related to EM
+This modules contains constants related to Pkdp
 """
 #------------------ Constants values --------------------------------------
 
-NO_INDEX = 0  # This is the index value for single images
-    
-
-# This is the name for track which data is the source of others
-RELATION_SOURCE = 'relation_datasource'
-RELATION_TRANSFORM = 'relation_transform'

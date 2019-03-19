@@ -34,8 +34,8 @@ import Tkinter as tk
 import pyworkflow.gui.dialog as dialog
 import pyworkflow.gui as gui
 from pyworkflow.gui.tree import TreeProvider, BoundTree
-from pyworkflow.em.plotter import EmPlotter
-from pyworkflow.em.pkpd_units import strUnit
+from pyworkflow.em.viewers.plotter import EmPlotter
+from pkpd_units import strUnit
 
 
 class SamplesTreeProvider(TreeProvider):

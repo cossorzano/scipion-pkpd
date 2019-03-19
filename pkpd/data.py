@@ -30,10 +30,10 @@ import math
 import numpy as np
 import sys
 
-from pyworkflow.em.pkpd_units import PKPDUnit, convertUnits, changeRateToMinutes, changeRateToWeight
+from pkpd_units import PKPDUnit, convertUnits, changeRateToMinutes, changeRateToWeight
 from pyworkflow.object import *
-from pyworkflow.utils.path import writeMD5, verifyMD5
-from pyworkflow.em.biopharmaceutics import PKPDDose, PKPDVia
+from utils import writeMD5, verifyMD5
+from biopharmaceutics import PKPDDose, PKPDVia
 
 class EMObject(OrderedObject):
     """Base object for all EM classes"""

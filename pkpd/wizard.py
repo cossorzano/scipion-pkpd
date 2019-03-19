@@ -39,7 +39,7 @@ from pkpd.protocols import ProtPKPDScaleToCommonDose
 from pkpd.protocols.protocol_pkpd_stats_oneExperiment_twoSubgroups_mean import ProtPKPDStatsExp1Subgroups2Mean
 from pkpd.protocols.protocol_pkpd_exponential_fit import ProtPKPDExponentialFit
 from pkpd.protocols.protocol_pkpd_elimination_rate import ProtPKPDEliminationRate
-from protocol_pkpd_monocompartment import ProtPKPDMonoCompartment
+from pkpd.protocols.protocol_pkpd_monocompartment import ProtPKPDMonoCompartment
 from pkpd.protocols import ProtPKPDTwoCompartments
 from pkpd.protocols.protocol_pkpd_simulate_generic_pd import ProtPKPDSimulateGenericPD
 from pkpd.protocols.protocol_pkpd_stats_twoExperiments_twoSubgroups_mean import ProtPKPDStatsExp2Subgroups2Mean
@@ -128,8 +128,10 @@ class PKPDChooseVariableWizard(Wizard):
                 (ProtPKPDTwoCompartmentsBothPD, ['E']),
                 (ProtPKPDMonoCompartmentUrine, ['predicted']),
                 (ProtPKPDSimulateGenericPD, ['predictor']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label1', 'inputExperiment1']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label2', 'inputExperiment2'])
+                (ProtPKPDStatsExp2Subgroups2Mean, ['label1',
+                                                   'inputExperiment1']),
+                (ProtPKPDStatsExp2Subgroups2Mean, ['label2',
+                                                   'inputExperiment2'])
                 ]
 
     def show(self, form, *params):
@@ -150,7 +152,7 @@ class PKPDChooseVariableWizard(Wizard):
             filterFunc = getattr(protocol, 'filterVarForWizard', None)
             tp = FilterVariablesTreeProvider(experiment, filter=filterFunc)
             dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
-                             selectmode=self.getSelectMode())
+                                    selectmode=self.getSelectMode())
             if dlg.resultYes():
                 self.setFormValues(form, label, dlg.values)
 
@@ -196,8 +198,9 @@ class PKPDChooseDoseWizard(Wizard):
             form.showError("Select input experiment first.")
         else:
             experiment.load()
-            dlg = dialog.ListDialog(form.root, "Choose dose name", DoseTreeProvider(experiment),
-                             selectmode=self.getSelectMode())
+            dlg = dialog.ListDialog(form.root, "Choose dose name",
+                                    DoseTreeProvider(experiment),
+                                    selectmode=self.getSelectMode())
             if dlg.resultYes():
                 self.setFormValues(form, label, dlg.values)
 
@@ -221,6 +224,7 @@ class PKPDChooseSeveralVariableWizard(PKPDChooseVariableWizard):
 
     def getSelectMode(self):
         return "extended"
+
 
 class SimpleListTreeProvider(TreeProvider):
     """ A simple TreeProvider over the elements of a string list """
@@ -255,11 +259,13 @@ class PKPDVariableTemplateWizard(Wizard):
             varNames = getVarNamesFromCSVfile(fnCSV)
             tp = SimpleListTreeProvider(varNames, name="Variables")
             dlg = dialog.ListDialog(form.root, "Choose variable(s)", tp,
-                             selectmode='extended')
+                                    selectmode='extended')
             if dlg.resultYes():
                 strToAdd = ""
                 for value in dlg.values:
-                    strToAdd +="\n%s ; [Units/none] ; [numeric/text] ; [time/label/measurement] ; [Comment]"%(value.get())
+                    strToAdd += ("\n%s ; [Units/none] ; [numeric/text] ; "
+                                 "[time/label/measurement] ; [Comment]"
+                                 % (value.get()))
                 if strToAdd!="":
                     currentValue = protocol.getAttributeValue(label, "")
                     form.setVar(label, currentValue+strToAdd)
@@ -274,9 +280,10 @@ class PKPDDoseTemplateWizard(Wizard):
         label = params[0]
         protocol = form.protocol
         currentValue = protocol.getAttributeValue(label, "")
-        template = "\nInfusion0 ; via=Intravenous; infusion; t=0.5:0.75 h; d=60*weight/1000 mg\n"\
-                   "Bolus1 ; via=Oral; bolus; t=2 h; d=100 mg\n"\
-                   "Treatment ; via=Oral; repeated_bolus; t=0:8:48 h; d=100 mg"
+        template = ("\nInfusion0 ; via=Intravenous; infusion; t=0.5:0.75 h; "
+                    "d=60*weight/1000 mg\n Bolus1 ; via=Oral; bolus; t=2 h; "
+                    "d=100 mg\n Treatment ; via=Oral; repeated_bolus; "
+                    "t=0:8:48 h; d=100 mg")
         form.setVar(label, currentValue+template)
 
 

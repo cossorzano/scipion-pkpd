@@ -34,9 +34,9 @@ import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import HotButton
 from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.text import TaggedText
-from pyworkflow.em.plotter import EmPlotter
+from pyworkflow.em.viewers.plotter import EmPlotter
 
-from pyworkflow.em.pkpd_units import PKPDUnit
+from pkpd_units import PKPDUnit
 
 
 class PopulationVar(pwobj.Object):
