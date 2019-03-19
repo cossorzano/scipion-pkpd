@@ -29,3 +29,38 @@ PKPD functions
 
 # Pending:
 # Batch effects, Reese2013
+
+import os
+import pyworkflow.em
+
+from pyworkflow.utils import Environ
+from .constants import *
+
+
+_references = ['']
+_logo = ''
+
+
+class Plugin(pyworkflow.em.Plugin):
+
+    @classmethod
+    def _defineVariables(cls):
+        pass
+
+    @classmethod
+    def getEnviron(cls):
+        """ Setup the environment variables needed to launch Pkdp. """
+        environ = Environ(os.environ)
+
+        return environ
+
+    @classmethod
+    def isVersionActive(cls):
+       pass
+
+    @classmethod
+    def defineBinaries(cls, env):
+        pass
+
+
+pyworkflow.em.Domain.registerPlugin(__name__)
