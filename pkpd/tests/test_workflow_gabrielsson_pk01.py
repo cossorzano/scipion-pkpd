@@ -62,7 +62,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
         self.assertIsNotNone(protChangeUnits.outputExperiment.fnPKPD, "There was a problem with changing units")
         self.validateFiles('protChangeUnits', protChangeUnits)
 
-        # Fit a single exponential to the input data
+        # Fit a single exponential to the input data_test
         print "Compute elimination rate..."
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',

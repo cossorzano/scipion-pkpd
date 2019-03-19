@@ -95,7 +95,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
         fitting.load(protPKPDPMonoCompartment.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.8)
 
-        # This example is simulated data and it serves to verify that infusions are correctly simulated
+        # This example is simulated data_test and it serves to verify that infusions are correctly simulated
         print "Import Experiment 2 (intravenous doses)"
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment simulated',

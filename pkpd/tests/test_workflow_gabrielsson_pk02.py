@@ -71,7 +71,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.assertIsNotNone(protFilterCp.outputExperiment.fnPKPD, "There was a problem with the filter")
         self.validateFiles('ProtFilterCp', protFilterCp)
 
-        # Fit a single exponential to the input data
+        # Fit a single exponential to the input data_test
         print "Fitting an exponential..."
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
