@@ -29,8 +29,9 @@ from collections import OrderedDict
 from itertools import izip
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting, PKPDSampleFit
+from pkpd.protocols.protocol_pkpd import ProtPKPD
+from pkpd.data import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
+                       PKPDSampleFit)
 from pkpd.utils import parseRange
 
 class ProtPKPDFitBase(ProtPKPD):
