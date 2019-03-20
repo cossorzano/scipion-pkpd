@@ -184,6 +184,7 @@ class DoseTreeProvider(TreeProvider):
         key = obj.doseName
         return {'key': key, 'text': key}
 
+
 class PKPDChooseDoseWizard(Wizard):
     _targets = [(ProtPKPDChangeVia, ['doseName','doseVia']),
                 ]

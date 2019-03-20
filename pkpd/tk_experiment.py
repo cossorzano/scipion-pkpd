@@ -85,6 +85,7 @@ class DosesTreeProvider(TreeProvider):
                           )
                 }
 
+
 class GroupsTreeProvider(TreeProvider):
     def __init__(self, experiment):
         self.experiment = experiment
@@ -133,6 +134,7 @@ class ViasTreeProvider(TreeProvider):
                            bioavailabilityStr
                           )
                 }
+
 
 class SamplesTreeProvider(TreeProvider):
     FIT_COLUMNS = ['R2', 'R2adj', 'AIC', 'AICc', 'BIC']

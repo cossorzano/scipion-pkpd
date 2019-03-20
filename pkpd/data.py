@@ -24,16 +24,17 @@
 # *
 # **************************************************************************
 
+import sys
 import copy
 import json
 import math
 import numpy as np
-import sys
-
-from pkpd_units import PKPDUnit, convertUnits, changeRateToMinutes, changeRateToWeight
+from pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
+                        changeRateToWeight)
 from pyworkflow.object import *
 from utils import writeMD5, verifyMD5
 from biopharmaceutics import PKPDDose, PKPDVia
+
 
 class EMObject(OrderedObject):
     """Base object for all EM classes"""
@@ -83,6 +84,7 @@ class Matrix(Scalar):
         """
         self.setMatrix(np.copy(other.getMatrix()))
         self._objValue = other._objValue
+
 
 class PKPDVariable:
     TYPE_NUMERIC = 1000
@@ -449,6 +451,7 @@ class PKPDSampleMeasurement():
             values.append(aux[self.n])
         return values
 
+
 class PKPDGroup():
     def __init__(self, groupName):
         self.groupName = groupName
@@ -735,6 +738,7 @@ class PKPDExperiment(EMObject):
                 nonBolusList.append(sampleName)
         return nonBolusList
 
+
 class PKPDModelBase(object):
     def __init__(self):
         self.fnExperiment = None
@@ -798,6 +802,7 @@ class PKPDModelBase(object):
 
     def setParameters(self, parameters):
         self.parameters = parameters
+
 
 class PKPDModelBase2(PKPDModelBase):
     def __init__(self):
@@ -883,9 +888,11 @@ class PKPDModelBase2(PKPDModelBase):
             self.yPredictedUpper.append(["NA"]*y.shape[0])
             self.yPredictedLower.append(["NA"]*y.shape[0])
 
+
 class PKPDModel(PKPDModelBase2):
     def prepare(self):
         pass
+
 
 class PKPDODEModel(PKPDModelBase2):
     def __init__(self):
@@ -1009,6 +1016,7 @@ class PKPDODEModel(PKPDModelBase2):
             else:
                 self.yPredicted.append(np.interp(x[j],Xt,Yt[:,j]))
         return self.yPredicted
+
 
 class PKPDOptimizer:
     def __init__(self,model,fitType,goalFunction="RMSE"):
@@ -1214,6 +1222,7 @@ class PKPDOptimizer:
             logYp = [smartLog(y) for y in yPredicted]
             self._printFitting(self.model.x, logY, logYp)
 
+
 class PKPDDEOptimizer(PKPDOptimizer):
     def optimize(self):
         from scipy.optimize import differential_evolution
@@ -1229,6 +1238,7 @@ class PKPDDEOptimizer(PKPDOptimizer):
             self.printFitting()
             print(" ")
         return self.optimum
+
 
 class PKPDLSOptimizer(PKPDOptimizer):
     def optimize(self):
@@ -1274,6 +1284,7 @@ class PKPDLSOptimizer(PKPDOptimizer):
             self.upperBound=["NA"]*len(self.optimum)
             self.significance=["NA"]*len(self.optimum)
             self.model.setConfidenceIntervalNA()
+
 
 class PKPDSampleFit:
     READING_SAMPLEFITTINGS_NAME = 0
@@ -1920,6 +1931,7 @@ class PKPDSignalAnalysis(EMObject):
             if sampleAnalysis.sampleName == sampleName:
                 return sampleAnalysis
         return None
+
 
 class PKPDAllometricScale(EMObject):
     READING_PREDICTOR = 1
