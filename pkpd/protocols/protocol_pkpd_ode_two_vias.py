@@ -27,9 +27,10 @@
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDModelBase2, PKPDExperiment, PKPDFitting, PKPDDEOptimizer, PKPDLSOptimizer, \
-    flattenArray, PKPDSampleFit
+from pkpd.protocols import ProtPKPD
+from pkpd.data import (PKPDModelBase2, PKPDExperiment, PKPDFitting,
+                       PKPDDEOptimizer, PKPDLSOptimizer, flattenArray,
+                       PKPDSampleFit)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 # TESTED in test_workflow_gabrielsson_pk10.py

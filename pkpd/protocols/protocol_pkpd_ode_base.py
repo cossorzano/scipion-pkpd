@@ -31,11 +31,12 @@ from collections import OrderedDict
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting, PKPDSampleFit, PKPDModelBase, PKPDModelBase2
+from pkpd.protocols import ProtPKPD
+from pkpd.data import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
+                       PKPDSampleFit, PKPDModelBase, PKPDModelBase2)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.utils import parseRange
-from pyworkflow.em.biopharmaceutics import DrugSource
+from pkpd.biopharmaceutics import DrugSource
 
 
 class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):

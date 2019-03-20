@@ -27,7 +27,7 @@
 from itertools import izip
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.data import PKPDFitting, PKPDSampleFit, PKPDLSOptimizer
+from pkpd.data import PKPDFitting, PKPDSampleFit, PKPDLSOptimizer
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.protocols import ProtPKPDODEBase
 
