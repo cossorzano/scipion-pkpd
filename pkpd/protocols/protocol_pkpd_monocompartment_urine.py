@@ -25,7 +25,7 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPDODEBase
+from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.models.pk_models import PK_MonocompartmentUrine
 
 # TESTED in test_workflow_gabrielsson_pk05.py

@@ -28,3 +28,7 @@ This modules contains constants related to Pkdp
 """
 #------------------ Constants values --------------------------------------
 
+PKDP_HOME = 'PKDP_HOME'
+
+# Supported version
+V1_0_0 = 'V1_0_0'

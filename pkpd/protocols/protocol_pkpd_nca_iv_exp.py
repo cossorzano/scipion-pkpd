@@ -25,7 +25,7 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from protocol_pkpd_sa_base import ProtPKPDSABase
+from .protocol_pkpd_sa_base import ProtPKPDSABase
 from pkpd.models.sa_models import NCAExpIVModel
 from pkpd.pkpd_units import PKPDUnit
 

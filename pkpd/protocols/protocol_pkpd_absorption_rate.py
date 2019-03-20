@@ -25,7 +25,7 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPDFitBase
+from .protocol_pkpd_fit_base import ProtPKPDFitBase
 from pkpd.models.pk_models import PKPDSimpleEVModel
 from pkpd.pkpd_units import strUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED

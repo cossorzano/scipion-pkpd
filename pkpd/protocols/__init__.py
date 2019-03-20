@@ -25,7 +25,7 @@
 # *  e-mail address 'info@kinestat.com'
 # *
 # **************************************************************************
-
+from .protocol_pkpd import *
 from .protocol_batch_create_experiment import BatchProtCreateExperiment
 from .protocol_pkpd_absorption_rate import ProtPKPDAbsorptionRate
 from .protocol_pkpd_allometric_scaling import ProtPKPDAllometricScaling
@@ -83,10 +83,8 @@ from .protocol_pkpd_two_compartments_metabolite import ProtPKPDTwoCompartmentsCl
 from .protocol_pkpd_twocompartments_both import ProtPKPDTwoCompartmentsBoth
 from .protocol_pkpd_twocompartments_both_pd import ProtPKPDTwoCompartmentsBothPD
 from .protocol_pkpd_twocompartments_urine import ProtPKPDTwoCompartmentsUrine
-from .protocol_pkpd import *
 from .import_experiment import ProtImportExperiment
-
-from protocol_batch_create_experiment import BatchProtCreateExperiment
+from .protocol_batch_create_experiment import BatchProtCreateExperiment
 
 from pkpd.viewers import *
 from pkpd.wizard import *

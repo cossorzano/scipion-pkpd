@@ -34,7 +34,7 @@ import os
 import pyworkflow.em
 
 from pyworkflow.utils import Environ
-from .constants import *
+from pkpd.constants import *
 
 
 _references = ['']
@@ -42,21 +42,28 @@ _logo = ''
 
 
 class Plugin(pyworkflow.em.Plugin):
+    _homeVar = PKDP_HOME
 
     @classmethod
     def _defineVariables(cls):
-        pass
+        cls._defineEmVar(PKDP_HOME, 'pkdp-1.0.0')
 
     @classmethod
     def getEnviron(cls):
-        """ Setup the environment variables needed to launch Pkdp. """
+        """ Setup the environment variables needed to launch pkdp """
         environ = Environ(os.environ)
+
+        # environ.update({
+        #     'PATH': Plugin.getHome(),
+        #     'LD_LIBRARY_PATH': str.join(cls.getHome(), 'atsaslib')
+        #                        + ":" + cls.getHome(),
+        # }, position=Environ.BEGIN)
 
         return environ
 
     @classmethod
     def isVersionActive(cls):
-       pass
+        return cls.getActiveVersion().startswith(V1_0_0)
 
     @classmethod
     def defineBinaries(cls, env):
