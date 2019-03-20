@@ -29,10 +29,10 @@ import math
 import random
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.data import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
+from pkpd.data import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.protocols import ProtPKPDODEBase
-from pyworkflow.em.pkpd_units import createUnit, multiplyUnits, strUnit
+from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 from pkpd.utils import find_nearest
 
 class ProtPKPDODESimulate(ProtPKPDODEBase):
@@ -110,7 +110,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         newSample.descriptors["MRT"] = self.MRT
         self.outputExperiment.samples[sampleName] = newSample
 
-    def NCA(self,t,C):
+    def NCA(self, t, C):
         AUClist = []
         AUMClist = []
         Cminlist = []
@@ -196,9 +196,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
     def runSimulate(self, objId, Nsimulations, confidenceInterval, doses):
         self.protODE = self.inputODE.get()
-        if hasattr(self.protODE,"outputExperiment"):
+        if hasattr(self.protODE, "outputExperiment"):
             self.experiment = self.readExperiment(self.protODE.outputExperiment.fnPKPD)
-        elif hasattr(self.protODE,"outputExperiment1"):
+        elif hasattr(self.protODE, "outputExperiment1"):
             self.experiment = self.readExperiment(self.protODE.outputExperiment1.fnPKPD)
         else:
             raise Exception("Cannot find an outputExperiment in the input ODE")
