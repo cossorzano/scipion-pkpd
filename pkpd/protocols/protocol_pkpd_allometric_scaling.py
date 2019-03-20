@@ -29,9 +29,9 @@ import math
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDExperiment, PKPDAllometricScale
-from pyworkflow.em.pkpd_units import strUnit
+from pkpd.protocols.protocol_pkpd import ProtPKPD
+from pkpd.data import PKPDExperiment, PKPDAllometricScale
+from pkpd.pkpd_units import strUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 
