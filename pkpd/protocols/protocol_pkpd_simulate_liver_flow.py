@@ -29,9 +29,10 @@ import numpy as np
 import os
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDODEModel
-from pyworkflow.em.biopharmaceutics import DrugSource, createDeltaDose, createVia
+from pkpd.protocols import ProtPKPD
+from pkpd.data import PKPDODEModel
+from pkpd.biopharmaceutics import DrugSource, createDeltaDose, createVia
+
 
 class PKPDLiver(PKPDODEModel):
     def F(self, t, y):
@@ -69,6 +70,7 @@ class PKPDLiver(PKPDODEModel):
 
     def getStateDimension(self):
         return 3
+
 
 class PKPDLiverEV1():
     def __init__(self):
