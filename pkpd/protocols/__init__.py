@@ -86,14 +86,6 @@ from .protocol_pkpd_twocompartments_urine import ProtPKPDTwoCompartmentsUrine
 from .import_experiment import ProtImportExperiment
 from .protocol_batch_create_experiment import BatchProtCreateExperiment
 
-from pkpd.viewers import *
-from pkpd.wizard import *
-
-from pkpd.bibtex import _bibtex
-
-from pkpd.viewers.viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
-from pkpd.viewers.viewer_pkpd_simulate_liver_flow import PKPDSimulateLiverFlowViewer
-
 # Pending:
 # Batch effects, Reese2013
 

@@ -34,7 +34,8 @@ import os
 import pyworkflow.em
 
 from pyworkflow.utils import Environ
-from pkpd.constants import *
+from bibtex import _bibtex
+from .constants import *
 
 
 _references = ['']
@@ -53,11 +54,11 @@ class Plugin(pyworkflow.em.Plugin):
         """ Setup the environment variables needed to launch pkdp """
         environ = Environ(os.environ)
 
-        # environ.update({
-        #     'PATH': Plugin.getHome(),
-        #     'LD_LIBRARY_PATH': str.join(cls.getHome(), 'atsaslib')
-        #                        + ":" + cls.getHome(),
-        # }, position=Environ.BEGIN)
+        environ.update({
+            'PATH': Plugin.getHome(),
+            'LD_LIBRARY_PATH': str.join(cls.getHome(), 'pkdplib')
+                               + ":" + cls.getHome(),
+        }, position=Environ.BEGIN)
 
         return environ
 
