@@ -28,9 +28,10 @@ from itertools import izip
 import numpy as np
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.plotter import EmPlotter
+from pyworkflow.em.viewers.plotter import EmPlotter
 
-from pkpd.protocols.protocol_pkpd_simulate_drug_interactions import ProtPKPDSimulateDrugInteractions
+from pkpd.protocols import ProtPKPDSimulateDrugInteractions
+
 
 class PKPDSimulateDrugInteractionsViewer(Viewer):
     _targets = [ProtPKPDSimulateDrugInteractions]
@@ -90,7 +91,6 @@ class PKPDSimulateDrugInteractionsViewer(Viewer):
             if leg:
                 leg.draggable()
             plotter.draw()
-
 
     def visualize(self, obj, **kwargs):
         prot = obj
