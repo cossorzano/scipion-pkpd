@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-from pyworkflow.em.packages.pkpd.protocol_pkpd_exponential_fit import ProtPKPDExponentialFit
+from pkpd.protocols.protocol_pkpd_exponential_fit import ProtPKPDExponentialFit
 
 # TESTED in test_workflow_gabrielsson_pk01.py
 # TESTED in test_workflow_gabrielsson_pk02.py
