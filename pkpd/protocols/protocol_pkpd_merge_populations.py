@@ -25,8 +25,8 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDFitting, PKPDSampleFitBootstrap
+from pkpd.protocols import ProtPKPD
+from pkpd.data import PKPDFitting, PKPDSampleFitBootstrap
 import numpy as np
 import copy
 
