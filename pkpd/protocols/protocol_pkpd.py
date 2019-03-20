@@ -30,7 +30,7 @@ In this module are protocol base classes related to PKPD
 import sys
 import os
 from pyworkflow.em.protocol import *
-from pyworkflow.em.data import PKPDExperiment, PKPDFitting
+from pkpd.data import PKPDExperiment, PKPDFitting
 import pyworkflow.protocol.params as params
 
 class ProtPKPD(EMProtocol):
