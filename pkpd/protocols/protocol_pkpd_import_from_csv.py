@@ -28,8 +28,9 @@ import os
 import sys
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD, addDoseToForm
-from pyworkflow.em.data import PKPDExperiment, PKPDVariable, PKPDDose, PKPDVia, PKPDSample
+from pkpd.protocols.protocol_pkpd import ProtPKPD, addDoseToForm
+from pkpd.data import (PKPDExperiment, PKPDVariable, PKPDDose, PKPDVia,
+                       PKPDSample)
 from pyworkflow.utils import copyFile
 
 
@@ -160,6 +161,7 @@ class ProtPKPDImportFromText(ProtPKPD):
     def _summary(self):
         return ["Input file: %s"%self.inputFile.get()]
 
+
 class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
     """ Import experiment from CSV.\n
         Protocol created by http://www.kinestatpharma.com\n"""
@@ -221,6 +223,7 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
                     varNo+=1
             lineNo+=1
 
+
 def getSampleNamesFromCSVfile(fnCSV):
     sampleNames = []
     fh=open(fnCSV)
@@ -249,6 +252,7 @@ def getSampleNamesFromCSVfile(fnCSV):
         lineNo+=1
     fh.close()
     return sampleNames
+
 
 def getVarNamesFromCSVfile(fnCSV):
     varNames = []

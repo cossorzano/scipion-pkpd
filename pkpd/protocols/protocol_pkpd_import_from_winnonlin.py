@@ -40,7 +40,7 @@ class ProtPKPDImportFromWinnonlin(ProtPKPDImportFromText):
     #--------------------------- STEPS functions --------------------------------------------
     def readTextFile(self):
         if len(self.experiment.samples)!=1:
-            raise "Importing from Winnonlin is designed only for 1 sample"
+            raise Exception("Importing from Winnonlin is designed only for 1 sample")
 
         sample = self.experiment.samples.values()[0] # First (and only) element of the dictionary
         aux = ['dummy']+self.listOfVariables
