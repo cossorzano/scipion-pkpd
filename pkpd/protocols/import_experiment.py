@@ -27,12 +27,12 @@
 """
 Import experiment
 """
-from base import ProtImportFiles
-import pyworkflow.protocol.params as params
-from pyworkflow.em.data import PKPDExperiment
-from os.path import exists, basename
 import sys
+from os.path import exists, basename
 from pyworkflow.utils.path import copyFile
+from pyworkflow.em.protocol.protocol_import import ProtImportFiles
+import pyworkflow.protocol.params as params
+from pkpd.data import PKPDExperiment
 
 # TESTED in test_workflow_gabrielsson_pk01.py
 # TESTED in test_workflow_gabrielsson_pk02.py

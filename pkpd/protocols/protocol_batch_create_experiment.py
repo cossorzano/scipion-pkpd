@@ -27,9 +27,10 @@
 
 from pyworkflow.protocol.params import PointerParam, StringParam
 from pyworkflow.em.protocol import BatchProtocol
-from pyworkflow.em.data import PKPDExperiment, PKPDGroup
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
+from pkpd.data import PKPDExperiment, PKPDGroup
+from pkpd.protocols import ProtPKPD
 import copy
+
 
 class BatchProtCreateExperiment(BatchProtocol, ProtPKPD):
     """ Create experiment.\n
