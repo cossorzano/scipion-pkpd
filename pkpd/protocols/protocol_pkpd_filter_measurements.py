@@ -25,8 +25,8 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from pyworkflow.em.protocol.protocol_pkpd import ProtPKPD
-from pyworkflow.em.data import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.protocols.protocol_pkpd import ProtPKPD
+from pkpd.data import PKPDExperiment, PKPDSample, PKPDVariable
 
 # TESTED in test_workflow_gabrielsson_pk02.py
 # TESTED in test_workflow_gabrielsson_pk04.py
