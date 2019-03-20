@@ -28,11 +28,11 @@ from os.path import exists
 import numpy as np
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.data import PKPDExperiment, PKPDAllometricScale
+from pkpd.data import PKPDExperiment, PKPDAllometricScale
 from pyworkflow.gui.text import openTextFileEditor
-from pyworkflow.em.plotter import EmPlotter
-from pyworkflow.em.data import PKPDFitting, PKPDSignalAnalysis
-from pyworkflow.em.pkpd_units import strUnit
+from pyworkflow.em.viewers.plotter import EmPlotter
+from pkpd.data import PKPDFitting, PKPDSignalAnalysis
+from pkpd.pkpd_units import strUnit
 
 from pkpd.protocols.protocol_batch_create_experiment import BatchProtCreateExperiment
 from pkpd.protocols.protocol_pkpd_export_to_csv import ProtPKPDExportToCSV
