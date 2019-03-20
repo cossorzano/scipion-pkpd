@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-from pkpd.protocols.protocol_pkpd_import_from_csv import ProtPKPDImportFromText
+from .protocol_pkpd_import_from_csv import ProtPKPDImportFromText
 
 
 class ProtPKPDImportFromWinnonlin(ProtPKPDImportFromText):

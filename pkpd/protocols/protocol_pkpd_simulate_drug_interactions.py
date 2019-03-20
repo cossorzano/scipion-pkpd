@@ -29,7 +29,7 @@ import numpy as np
 import os
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 class ProtPKPDSimulateDrugInteractions(ProtPKPD):

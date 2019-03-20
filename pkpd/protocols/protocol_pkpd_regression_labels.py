@@ -28,7 +28,7 @@ import numpy as np
 import math
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pkpd.data import PKPDVariable
 
 

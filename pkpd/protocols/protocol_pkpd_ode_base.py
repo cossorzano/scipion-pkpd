@@ -31,7 +31,7 @@ from collections import OrderedDict
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pkpd.data import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
                        PKPDSampleFit, PKPDModelBase, PKPDModelBase2)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED

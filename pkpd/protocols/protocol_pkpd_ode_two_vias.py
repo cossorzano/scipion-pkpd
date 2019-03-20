@@ -27,7 +27,7 @@
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pkpd.data import (PKPDModelBase2, PKPDExperiment, PKPDFitting,
                        PKPDDEOptimizer, PKPDLSOptimizer, flattenArray,
                        PKPDSampleFit)

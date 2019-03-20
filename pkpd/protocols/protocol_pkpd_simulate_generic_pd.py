@@ -27,7 +27,7 @@
 import sys
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pkpd.data import PKPDVariable, PKPDUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.utils import parseRange

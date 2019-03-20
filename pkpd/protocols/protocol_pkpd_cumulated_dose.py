@@ -25,7 +25,7 @@
 # **************************************************************************
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols.protocol_pkpd import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 
 
 class ProtPKPDCumulatedDose(ProtPKPD):

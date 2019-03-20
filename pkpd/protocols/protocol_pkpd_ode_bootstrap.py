@@ -29,7 +29,7 @@ import numpy as np
 import pyworkflow.protocol.params as params
 from pkpd.data import PKPDFitting, PKPDSampleFitBootstrap, PKPDLSOptimizer
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
-from pkpd.protocols import ProtPKPDODEBase
+from .protocol_pkpd_ode_base import ProtPKPDODEBase
 
 # TESTED in test_workflow_gabrielsson_pk02.py
 

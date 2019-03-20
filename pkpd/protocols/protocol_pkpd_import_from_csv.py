@@ -28,7 +28,7 @@ import os
 import sys
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols.protocol_pkpd import ProtPKPD, addDoseToForm
+from .protocol_pkpd import ProtPKPD, addDoseToForm
 from pkpd.data import (PKPDExperiment, PKPDVariable, PKPDDose, PKPDVia,
                        PKPDSample)
 from pyworkflow.utils import copyFile

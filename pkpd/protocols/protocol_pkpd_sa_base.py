@@ -27,7 +27,7 @@
 from itertools import izip
 
 import pyworkflow.protocol.params as params
-from pkpd.protocols import ProtPKPD
+from .protocol_pkpd import ProtPKPD
 from pkpd.data import (PKPDExperiment, PKPDSampleSignalAnalysis,
                        PKPDSignalAnalysis)
 from pkpd.pkpd_units import PKPDUnit

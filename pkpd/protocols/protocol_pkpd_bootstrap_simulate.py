@@ -31,7 +31,7 @@ import random
 import pyworkflow.protocol.params as params
 from pkpd.data import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
-from pkpd.protocols.protocol_pkpd_ode_base import ProtPKPDODEBase
+from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 from pkpd.utils import find_nearest
 
