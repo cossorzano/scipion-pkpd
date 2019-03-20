@@ -27,7 +27,7 @@
 import pyworkflow.protocol.params as params
 from protocol_pkpd_sa_base import ProtPKPDSABase
 from pkpd.models.sa_models import NCAExpIVModel
-from pyworkflow.em.pkpd_units import PKPDUnit
+from pkpd.pkpd_units import PKPDUnit
 
 # TESTED in test_workflow_gabrielsson_pk07.py
 
