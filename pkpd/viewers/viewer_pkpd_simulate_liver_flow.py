@@ -27,9 +27,9 @@
 import numpy as np
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.plotter import EmPlotter
+from pyworkflow.em.viewers.plotter import EmPlotter
 
-from pkpd.protocols.protocol_pkpd_simulate_liver_flow import ProtPKPDSimulateLiverFlow
+from pkpd.protocols import ProtPKPDSimulateLiverFlow
 
 class PKPDSimulateLiverFlowViewer(Viewer):
     _targets = [ProtPKPDSimulateLiverFlow]

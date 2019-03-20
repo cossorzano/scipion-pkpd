@@ -71,7 +71,8 @@ from .protocol_pkpd_scale_to_common_dose import ProtPKPDScaleToCommonDose
 from .protocol_pkpd_simulate_dose_escalation import ProtPKPDSimulateDoseEscalation
 from .protocol_pkpd_simulate_drug_interactions import ProtPKPDSimulateDrugInteractions
 from .protocol_pkpd_simulate_generic_pd import ProtPKPDSimulateGenericPD
-from .protocol_pkpd_simulate_liver_flow import PKPDLiver
+from .protocol_pkpd_simulate_liver_flow import (PKPDLiver, PKPDLiverEV1,
+                                                ProtPKPDSimulateLiverFlow)
 from .protocol_pkpd_statistics_labels import ProtPKPDStatisticsLabel
 from .protocol_pkpd_stats_oneExperiment_twoSubgroups_mean import ProtPKPDStatsExp1Subgroups2Mean
 from .protocol_pkpd_stats_twoExperiments_twoSubgroups_mean import ProtPKPDStatsExp2Subgroups2Mean
