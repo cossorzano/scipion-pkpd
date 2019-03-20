@@ -28,7 +28,7 @@
 import unittest, sys
 from pyworkflow.em import *
 from pyworkflow.tests import *
-from pyworkflow.em.packages.pkpd import *
+from pkpd.protocols import *
 from test_workflow import TestWorkflow
 
 class TestGabrielssonPD11Workflow(TestWorkflow):

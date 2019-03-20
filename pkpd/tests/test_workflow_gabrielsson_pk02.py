@@ -28,8 +28,9 @@
 import unittest, sys
 from pyworkflow.em import *
 from pyworkflow.tests import *
-from pyworkflow.em.packages.pkpd import *
+from pkpd.protocols import *
 from test_workflow import TestWorkflow
+
 
 class TestGabrielssonPK02Workflow(TestWorkflow):
 
@@ -39,7 +40,6 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         cls.dataset = DataSet.getDataSet('Gabrielsson_PK02')
         cls.exptFn = cls.dataset.getFile('experiment')
 
-    
     def testGabrielssonPK02Workflow(self):
         #First, import an experiment
 
