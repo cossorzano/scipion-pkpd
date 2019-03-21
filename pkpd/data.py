@@ -34,7 +34,9 @@ import numpy as np
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 from pyworkflow.object import *
-import pyworkflow.em as pw
+import pyworkflow as pw
+import pyworkflow.utils as pwutils
+from pyworkflow.install.funcs import *
 from .utils import writeMD5, verifyMD5
 from .biopharmaceutics import PKPDDose, PKPDVia
 
@@ -2087,6 +2089,7 @@ class PKPDAllometricScale(EMObject):
 
         fh.close()
 
+
 class PKPDDoseResponse(EMObject):
     def __init__(self, **args):
         EMObject.__init__(self, **args)
@@ -2160,3 +2163,48 @@ def flattenArray(y):
 
 def smartLog(y):
     return np.array([math.log10(yi) if np.isfinite(yi) and yi>0 else float("inf") for yi in y])
+
+
+class PKPDDataSet:
+    _datasetDict = {}  # store all created datasets
+
+    def __init__(self, name, folder, files, url=None):
+        """
+        Params:
+
+        #filesDict is dict with key, value pairs for each file
+        """
+        self._datasetDict[name] = self
+        self.folder = folder
+        import pkg_resources
+        from pkpd import Plugin
+        self.path = join('/home/yunior/Yunior/Projects/Scipion/COSS/scipion-pkpd/pkpd',
+                         'data', 'test', folder)
+        self.filesDict = files
+        self.url = url
+
+    def getFile(self, key):
+        if key in self.filesDict:
+            return join(self.path, self.filesDict[key])
+        return join(self.path, key)
+
+    def getPath(self):
+        return self.path
+
+    @classmethod
+    def getDataSet(cls, name):
+        """
+        This method is called every time the dataset want to be retrieved
+        """
+        assert name in cls._datasetDict, "Dataset: %s dataset doesn't exist." % name
+
+        ds = cls._datasetDict[name]
+        folder = ds.folder
+        url = '' if ds.url is None else ' -u ' + ds.url
+
+        if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
+            command = ("%s %s testdata --download %s %s"
+                       % (pw.PYTHON, pw.getScipionScript(), folder, url))
+            print(">>>> %s" % command)
+            os.system(command)
+        return cls._datasetDict[name]
