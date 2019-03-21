@@ -29,11 +29,11 @@ import copy
 import json
 import math
 import numpy as np
-from pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
+from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 from pyworkflow.object import *
-from utils import writeMD5, verifyMD5
-from biopharmaceutics import PKPDDose, PKPDVia
+from .utils import writeMD5, verifyMD5
+from .biopharmaceutics import PKPDDose, PKPDVia
 
 
 class EMObject(OrderedObject):

@@ -28,7 +28,7 @@ setup(
     url='https://github.com/cossorzano/scipion-pkpd',  # Optional
     author='Carlos Oscar Sorzano',  # Optional
     author_email='info@kinestat.com',  # Optional
-    keywords='pkdp',  # Optional
+    keywords='pkpd',  # Optional
     packages=find_packages(),
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
