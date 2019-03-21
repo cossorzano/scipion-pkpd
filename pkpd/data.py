@@ -25,13 +25,16 @@
 # **************************************************************************
 
 import sys
+import os
 import copy
 import json
 import math
+from os.path import join, relpath
 import numpy as np
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 from pyworkflow.object import *
+import pyworkflow.em as pw
 from .utils import writeMD5, verifyMD5
 from .biopharmaceutics import PKPDDose, PKPDVia
 
@@ -80,7 +83,7 @@ class Matrix(Scalar):
     
     def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[]):
         """ Override the default behaviour of copy
-        to also copy array data_test.
+        to also copy array data.
         """
         self.setMatrix(np.copy(other.getMatrix()))
         self._objValue = other._objValue
@@ -1997,7 +2000,7 @@ class PKPDAllometricScale(EMObject):
                 section = line.split('=')[0].strip().lower()
                 if section=="[allometric scaling]":
                     state=PKPDAllometricScale.READING_PREDICTOR
-                elif section=="[data_test]":
+                elif section=="[data]":
                     state=PKPDAllometricScale.READING_X
                 else:
                     print("Skipping: ",line)
