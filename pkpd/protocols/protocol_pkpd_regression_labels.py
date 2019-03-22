@@ -29,7 +29,7 @@ import math
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.data import PKPDVariable
+from pkpd.object import PKPDVariable
 
 
 class ProtPKPDRegressionLabel(ProtPKPD):

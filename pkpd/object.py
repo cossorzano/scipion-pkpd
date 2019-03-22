@@ -36,59 +36,10 @@ from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
 from pyworkflow.object import *
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+from pyworkflow.em.data import *
 from pyworkflow.install.funcs import *
 from .utils import writeMD5, verifyMD5
 from .biopharmaceutics import PKPDDose, PKPDVia
-
-
-class EMObject(OrderedObject):
-    """Base object for all EM classes"""
-    def __init__(self, **args):
-        OrderedObject.__init__(self, **args)
-        
-    def __str__(self):
-        return self.getClassName()
-    
-    def getFiles(self):
-        """ Get all filePaths """
-        return None
-
-
-class Matrix(Scalar):
-    def __init__(self, **args):
-        Scalar.__init__(self, **args)
-        self._matrix = np.eye(4)
-        
-    def _convertValue(self, value):
-        """Value should be a str with comman separated values
-        or a list.
-        """
-        self._matrix = np.array(json.loads(value))
-            
-    def getObjValue(self):
-        self._objValue = json.dumps(self._matrix.tolist())
-        return self._objValue
-    
-    def setValue(self, i, j, value):
-        self._matrix[i, j] = value
-        
-    def getMatrix(self):
-        """ Return internal numpy matrix. """
-        return self._matrix
-    
-    def setMatrix(self, matrix):
-        """ Override internal numpy matrix. """
-        self._matrix = matrix
-        
-    def __str__(self):
-        return np.array_str(self._matrix)
-    
-    def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[]):
-        """ Override the default behaviour of copy
-        to also copy array data.
-        """
-        self.setMatrix(np.copy(other.getMatrix()))
-        self._objValue = other._objValue
 
 
 class PKPDVariable:
@@ -112,7 +63,7 @@ class PKPDVariable:
         self.comment = ""
         self.units = None
 
-    def parseTokens(self,tokens):
+    def parseTokens(self, tokens):
         # t ; h ; numeric[%f] ; time ;
 
         # Get name

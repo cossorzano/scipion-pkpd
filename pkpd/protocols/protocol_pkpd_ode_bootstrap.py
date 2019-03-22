@@ -27,7 +27,7 @@
 import numpy as np
 
 import pyworkflow.protocol.params as params
-from pkpd.data import PKPDFitting, PKPDSampleFitBootstrap, PKPDLSOptimizer
+from pkpd.object import PKPDFitting, PKPDSampleFitBootstrap, PKPDLSOptimizer
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 

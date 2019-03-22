@@ -29,7 +29,7 @@ PD models
 
 import numpy as np
 
-from pkpd.data import PKPDModel
+from pkpd.object import PKPDModel
 from pkpd.pkpd_units import inverseUnits, divideUnits, unitFromString, PKPDUnit
 
 import math

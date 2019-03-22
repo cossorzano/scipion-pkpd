@@ -29,7 +29,7 @@ import math
 import random
 
 import pyworkflow.protocol.params as params
-from pkpd.data import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
+from pkpd.object import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit

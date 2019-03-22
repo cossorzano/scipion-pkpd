@@ -29,7 +29,7 @@ import unittest, sys
 from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from pkpd.data import PKPDDataSet
+from pkpd.object import PKPDDataSet
 from test_workflow import TestWorkflow
 
 

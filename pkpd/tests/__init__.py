@@ -25,7 +25,7 @@
 # *
 # **************************************************************************
 
-from pkpd.data import PKPDDataSet
+from pkpd.object import PKPDDataSet
 
 try:
     from unittest.runner import _WritelnDecorator # Python 2.7+

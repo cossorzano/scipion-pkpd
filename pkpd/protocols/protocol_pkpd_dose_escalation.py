@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.data import PKPDDoseResponse
+from pkpd.object import PKPDDoseResponse
 import scipy.stats
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 

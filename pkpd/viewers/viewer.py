@@ -28,10 +28,10 @@ from os.path import exists
 import numpy as np
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pkpd.data import PKPDExperiment, PKPDAllometricScale
+from pkpd.object import PKPDExperiment, PKPDAllometricScale
 from pyworkflow.gui.text import openTextFileEditor
 from pyworkflow.em.viewers.plotter import EmPlotter
-from pkpd.data import PKPDFitting, PKPDSignalAnalysis
+from pkpd.object import PKPDFitting, PKPDSignalAnalysis
 from pkpd.pkpd_units import strUnit
 
 from pkpd.protocols.protocol_batch_create_experiment import BatchProtCreateExperiment
