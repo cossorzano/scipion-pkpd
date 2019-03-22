@@ -66,9 +66,26 @@ class Plugin(pyworkflow.em.Plugin):
     # def isVersionActive(cls):
     #     return cls.getActiveVersion().startswith(V1_0_0)
     #
-    # @classmethod
-    # def defineBinaries(cls, env):
-    #     pass
+    @classmethod
+    def defineBinaries(cls, env):
+
+        ## PIP PACKAGES ##
+        def addPipModule(moduleName, *args, **kwargs):
+            """ To try to add certain pipModule.
+                If it fails due to it is already add by other plugin or Scipion,
+                  just returns its name to use it as a dependency.
+                Raise the exception if unknown error is gotten.
+            """
+            try:
+                return env.addPipModule(moduleName, *args, **kwargs)._name
+            except Exception as e:
+                if "Duplicated target '%s'" % moduleName == str(e):
+                    return moduleName
+                else:
+                    raise Exception(e)
+
+        scipy = addPipModule('scipy', '0.15.0', default=True,
+                             deps=['lapack', 'matplotlib'])
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
