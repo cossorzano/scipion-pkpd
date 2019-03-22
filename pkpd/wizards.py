@@ -59,7 +59,7 @@ from pkpd.protocols.protocol_pkpd_monocompartment_linkpd import ProtPKPDMonoComp
 from pkpd.protocols.protocol_pkpd_monocompartment_pd import ProtPKPDMonoCompartmentPD
 from pkpd.protocols.protocol_pkpd_twocompartments_both_pd import ProtPKPDTwoCompartmentsBothPD
 
-from pkpd.tk_ode import PKPDODEDialog, PKPDFitDialog
+from pkpd.viewers.tk_ode import PKPDODEDialog, PKPDFitDialog
 
 
 class FilterVariablesTreeProvider(TreeProvider):

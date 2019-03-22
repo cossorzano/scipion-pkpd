@@ -42,8 +42,8 @@ from pkpd.protocols.protocol_pkpd_ode_bootstrap import ProtPKPDODEBootstrap
 from pkpd.protocols.protocol_pkpd_filter_population import ProtPKPDFilterPopulation
 from pkpd.protocols.protocol_pkpd_merge_populations import ProtPKPDMergePopulations
 
-from pkpd.tk_experiment import ExperimentWindow
-from pkpd.tk_populations import PopulationWindow
+from pkpd.viewers.tk_experiment import ExperimentWindow
+from pkpd.viewers.tk_populations import PopulationWindow
 
 
 

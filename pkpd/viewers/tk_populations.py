@@ -36,7 +36,7 @@ from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.text import TaggedText
 from pyworkflow.em.viewers.plotter import EmPlotter
 
-from pkpd_units import PKPDUnit
+from pkpd.pkpd_units import PKPDUnit
 
 
 class PopulationVar(pwobj.Object):
