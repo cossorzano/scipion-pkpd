@@ -1207,7 +1207,7 @@ class PKPDLSOptimizer(PKPDOptimizer):
             print("Best LS function value: "+str(self.goalFunction(self.optimum)))
             print("Best LS parameters: "+str(self.optimum))
             print("Covariance matrix:")
-            if self.cov_x!=None:
+            if self.cov_x is not None:
                 self.cov_x *= np.var(self.info["fvec"])
                 print(np.array_str(self.cov_x,max_line_width=120))
             else:
@@ -1220,7 +1220,7 @@ class PKPDLSOptimizer(PKPDOptimizer):
         return self.optimum
 
     def setConfidenceInterval(self,confidenceInterval):
-        if self.cov_x!=None:
+        if self.cov_x is not None:
             from scipy.stats import norm
             nstd = norm.ppf(1-(1-confidenceInterval/100)/2)
             perr = np.sqrt(np.diag(self.cov_x))
