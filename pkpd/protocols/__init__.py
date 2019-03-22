@@ -84,6 +84,7 @@ from .protocol_pkpd_twocompartments_both import ProtPKPDTwoCompartmentsBoth
 from .protocol_pkpd_twocompartments_both_pd import ProtPKPDTwoCompartmentsBothPD
 from .protocol_pkpd_twocompartments_urine import ProtPKPDTwoCompartmentsUrine
 from .protocol_batch_create_experiment import BatchProtCreateExperiment
+from .import_experiment import ProtImportExperiment
 
 # Pending:
 # Batch effects, Reese2013
