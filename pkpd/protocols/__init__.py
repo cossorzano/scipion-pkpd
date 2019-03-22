@@ -83,7 +83,6 @@ from .protocol_pkpd_two_compartments_metabolite import ProtPKPDTwoCompartmentsCl
 from .protocol_pkpd_twocompartments_both import ProtPKPDTwoCompartmentsBoth
 from .protocol_pkpd_twocompartments_both_pd import ProtPKPDTwoCompartmentsBothPD
 from .protocol_pkpd_twocompartments_urine import ProtPKPDTwoCompartmentsUrine
-from .import_experiment import ProtImportExperiment
 from .protocol_batch_create_experiment import BatchProtCreateExperiment
 
 # Pending:
