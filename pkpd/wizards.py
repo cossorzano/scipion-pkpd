@@ -26,11 +26,12 @@
 # **************************************************************************
 
 import os
-
+import Tkinter as tk
 import pyworkflow.object as pwobj
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog
-from pyworkflow.gui.tree import TreeProvider
+from pyworkflow.gui.tree import TreeProvider, BoundTree
+from pyworkflow.gui.dialog import ListDialog
 
 from pkpd.protocols.protocol_pkpd_regression_labels import ProtPKPDRegressionLabel
 from pkpd.protocols.protocol_pkpd_drop_measurements import ProtPKPDDropMeasurements
@@ -312,7 +313,7 @@ class PKPDDosesToSamplesTemplateWizard(Wizard):
                 if len(tokens)==2:
                     sampleNamesAssigned.append(tokens[0].strip())
 
-            dlg = dialog.MultiListDialog(form.root, "Test",
+            dlg = MultiListDialog(form.root, "Test",
                                          [SimpleListTreeProvider(list(set(sampleNamesInCSV)-set(sampleNamesAssigned)),
                                                                  name="Samples"),
                                           SimpleListTreeProvider(doseNames,
@@ -406,3 +407,27 @@ class PKPDODEWizard(Wizard):
             # except Exception as e:
                 # pass
                 # form.showError("Error: %s" % str(e))
+
+
+class MultiListDialog(ListDialog):
+    """
+    Select elements among several lists.
+    """
+    def _createTree(self, parent):
+        treeFrame = tk.Frame(parent)
+        treeFrame.grid(row=0, column=0, sticky='news')
+        treeFrame.rowconfigure(0, weight=1)
+        self.trees = []
+        self.tree = None
+
+        for i, p in enumerate(self.provider):
+            t = BoundTree(treeFrame, p,
+                          selectmode=self._selectmode)
+            t.grid(row=0, column=i, padx=5, pady=5, sticky='news')
+            treeFrame.columnconfigure(i, weight=1)
+            self.trees.append(t)
+
+    def apply(self):
+        self.values = []
+        for t in self.trees:
+            self.values.append(t.getSelectedObjects())
