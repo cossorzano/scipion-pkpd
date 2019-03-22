@@ -28,9 +28,9 @@
 import unittest, sys
 from pyworkflow.em import *
 from pyworkflow.tests import *
-from pkpd.protocols import *
+import pkpd.protocols
 from test_workflow import TestWorkflow
-from pkpd.object import PKPDDataSet
+from pkpd.objects import PKPDDataSet
 
 
 class TestGabrielssonPD03Workflow(TestWorkflow):
@@ -45,7 +45,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         # Import an experiment (intravenous)
 
         print "Import Experiment"
-        protImport = self.newProtocol(ProtImportExperiment,
+        protImport = self.newProtocol(pkpd.protocols.ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
         self.launchProtocol(protImport)
@@ -54,7 +54,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
 
         # Fit a PD model
         print "Fitting a saturated PD model ..."
-        protPDfitting = self.newProtocol(ProtPKPDGenericFit,
+        protPDfitting = self.newProtocol(pkpd.protocols.ProtPKPDGenericFit,
                                          objLabel='pkpd - pd saturated',
                                          modelType=2, fitType=0,
                                          bounds='(150.0, 200.0); (-100.0, 0.0); (50.0, 400.0)')
@@ -63,7 +63,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.assertIsNotNone(protPDfitting.outputExperiment.fnPKPD, "There was a problem with the mono-compartmental model ")
         self.assertIsNotNone(protPDfitting.outputFitting.fnFitting, "There was a problem with the mono-compartmental model ")
         self.validateFiles('protPDfitting', protPDfitting)
-        experiment = PKPDExperiment()
+        experiment = pkpd.protocols.PKPDExperiment()
         experiment.load(protPDfitting.outputExperiment.fnPKPD)
         e0 = float(experiment.samples['Population measures'].descriptors['e0'])
         ec50 = float(experiment.samples['Population measures'].descriptors['eC50'])
@@ -71,13 +71,13 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.assertTrue(e0>175 and e0<177) # Gabrielsson p 905: 176
         self.assertTrue(ec50>233 and ec50<234) # Gabrielsson p 905: 231
         self.assertTrue(emax>-57 and emax<-0.55) # Gabrielsson p 905: 56.1
-        fitting = PKPDFitting()
+        fitting = pkpd.protocols.PKPDFitting()
         fitting.load(protPDfitting.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.96)
 
         # Fit a PD model
         print "Fitting a sigmoid PD model ..."
-        protPDfitting = self.newProtocol(ProtPKPDGenericFit,
+        protPDfitting = self.newProtocol(pkpd.protocols.ProtPKPDGenericFit,
                                          objLabel='pkpd - pd sigmoid',
                                          modelType=3, fitType=0,
                                          bounds='(150.0, 200.0); (-100.0, 0.0); (50.0, 400.0); (0,4)')
@@ -86,7 +86,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.assertIsNotNone(protPDfitting.outputExperiment.fnPKPD, "There was a problem with the mono-compartmental model ")
         self.assertIsNotNone(protPDfitting.outputFitting.fnFitting, "There was a problem with the mono-compartmental model ")
         self.validateFiles('protPDfitting', protPDfitting)
-        experiment = PKPDExperiment()
+        experiment = pkpd.protocols.PKPDExperiment()
         experiment.load(protPDfitting.outputExperiment.fnPKPD)
         e0 = float(experiment.samples['Population measures'].descriptors['e0'])
         ec50 = float(experiment.samples['Population measures'].descriptors['eC50'])
@@ -96,7 +96,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.assertTrue(ec50>143 and ec50<144) # Gabrielsson p 905: 143
         self.assertTrue(emax>-36 and emax<-0.35) # Gabrielsson p 905: 35.7
         self.assertTrue(h>1.9 and h<2) # Gabrielsson p 905: 1.94
-        fitting = PKPDFitting()
+        fitting = pkpd.protocols.PKPDFitting()
         fitting.load(protPDfitting.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.97)
 

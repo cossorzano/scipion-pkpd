@@ -28,8 +28,8 @@ from itertools import izip
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import (PKPDExperiment, PKPDSampleSignalAnalysis,
-                         PKPDSignalAnalysis)
+from pkpd.objects import (PKPDExperiment, PKPDSampleSignalAnalysis,
+                          PKPDSignalAnalysis)
 from pkpd.pkpd_units import PKPDUnit
 
 

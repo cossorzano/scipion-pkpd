@@ -32,8 +32,8 @@ import numpy as np
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
-                         PKPDSampleFit, PKPDModelBase, PKPDModelBase2)
+from pkpd.objects import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
+                          PKPDSampleFit, PKPDModelBase, PKPDModelBase2)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.utils import parseRange
 from pkpd.biopharmaceutics import DrugSource

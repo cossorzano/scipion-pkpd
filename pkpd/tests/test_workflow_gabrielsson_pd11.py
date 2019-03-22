@@ -30,13 +30,14 @@ from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from test_workflow import TestWorkflow
+from pkpd.objects import PKPDDataSet
 
 class TestGabrielssonPD11Workflow(TestWorkflow):
 
     @classmethod
     def setUpClass(cls):
         tests.setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('Gabrielsson_PD11')
+        cls.dataset = PKPDDataSet.getDataSet('Gabrielsson_PD11')
         cls.exptFn = cls.dataset.getFile('experiment')
 
     def testGabrielssonPD11Workflow(self):

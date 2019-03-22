@@ -28,7 +28,7 @@ import sys
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import PKPDExperiment, PKPDVariable
+from pkpd.objects import PKPDExperiment, PKPDVariable
 
 
 class ProtPKPDFilterSamples(ProtPKPD):

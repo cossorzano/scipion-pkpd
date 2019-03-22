@@ -30,8 +30,8 @@ from itertools import izip
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
-                         PKPDSampleFit)
+from pkpd.objects import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
+                          PKPDSampleFit)
 from pkpd.utils import parseRange
 
 class ProtPKPDFitBase(ProtPKPD):

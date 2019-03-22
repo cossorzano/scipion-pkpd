@@ -30,7 +30,7 @@ import math
 
 import numpy as np
 
-from pkpd.object import PKPDModel, PKPDODEModel
+from pkpd.objects import PKPDModel, PKPDODEModel
 from pkpd.pkpd_units import (inverseUnits, divideUnits, multiplyUnits,
                              unitFromString, PKPDUnit)
 

@@ -29,7 +29,7 @@ import sys
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import PKPDExperiment
+from pkpd.objects import PKPDExperiment
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 class ProtPKPDJoinSamples(ProtPKPD):

@@ -30,7 +30,7 @@ import numpy as np
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import PKPDExperiment, PKPDAllometricScale
+from pkpd.objects import PKPDExperiment, PKPDAllometricScale
 from pkpd.pkpd_units import strUnit
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 

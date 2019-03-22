@@ -30,7 +30,7 @@ import os
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import PKPDODEModel
+from pkpd.objects import PKPDODEModel
 from pkpd.biopharmaceutics import DrugSource, createDeltaDose, createVia
 
 

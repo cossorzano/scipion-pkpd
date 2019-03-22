@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.object import PKPDVariable
+from pkpd.objects import PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 

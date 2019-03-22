@@ -29,7 +29,7 @@ Signal Analysis models
 import numpy as np
 import math
 from scipy.optimize import fsolve
-from pkpd.object import PKPDModelBase
+from pkpd.objects import PKPDModelBase
 from pkpd.pkpd_units import multiplyUnits, divideUnits
 
 class SAModel(PKPDModelBase):
