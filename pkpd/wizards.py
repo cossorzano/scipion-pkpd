@@ -112,7 +112,7 @@ class PKPDChooseVariableWizard(Wizard):
 
     def show(self, form, *params):
         protocol = form.protocol
-        label = params[0]
+        label = params
 
         fullParams = self._getAllParams(protocol)
         experiment = None
@@ -140,6 +140,17 @@ class PKPDChooseVariableWizard(Wizard):
 
     def getSelectMode(self):
         return "browse"
+
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
 
 
 class DoseTreeProvider(TreeProvider):
@@ -227,7 +238,7 @@ class PKPDVariableTemplateWizard(Wizard):
                 ]
 
     def show(self, form, *params):
-        label = params[0]
+        label = params
         protocol = form.protocol
         fnCSV = protocol.getAttributeValue('inputFile', "")
         if not os.path.exists(fnCSV):
@@ -268,7 +279,7 @@ class PKPDDosesToSamplesTemplateWizard(Wizard):
     _targets = [(ProtPKPDImportFromText, ['dosesToSamples'])
                 ]
     def show(self, form, *params):
-        label = params[0]
+        label = params
         protocol = form.protocol
         fnCSV = protocol.getAttributeValue('inputFile', "")
         if not os.path.exists(fnCSV):
@@ -331,7 +342,7 @@ class PKPDODEWizard(Wizard):
     _nonODE = [ProtPKPDGenericFit]
 
     def show(self, form, *params):
-        label = params[0]
+        label = params
         protocol = form.protocol
         experiment = protocol.getAttributeValue('inputExperiment', None)
 
