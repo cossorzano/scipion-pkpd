@@ -2177,8 +2177,11 @@ class PKPDDataSet:
         self._datasetDict[name] = self
         self.folder = folder
         import pkg_resources
-        from pkpd import Plugin
-        self.path = join('/home/yunior/Yunior/Projects/Scipion/COSS/scipion-pkpd/pkpd',
+        from pyworkflow.install.plugin_funcs import PluginInfo
+        package = PluginInfo('scipion-pkpd', 'scipion-pkpd',
+                             remote=False).pipName
+        dist = pkg_resources.get_distribution(package).location
+        self.path = join(dist, 'pkpd',
                          'data', 'test', folder)
         self.filesDict = files
         self.url = url
