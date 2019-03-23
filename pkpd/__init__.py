@@ -32,7 +32,6 @@ PKPD functions
 
 import os
 import pyworkflow.em
-
 from pyworkflow.utils import Environ
 from .bibtex import _bibtex
 from .constants import *
@@ -69,23 +68,9 @@ class Plugin(pyworkflow.em.Plugin):
     @classmethod
     def defineBinaries(cls, env):
 
-        ## PIP PACKAGES ##
-        def addPipModule(moduleName, *args, **kwargs):
-            """ To try to add certain pipModule.
-                If it fails due to it is already add by other plugin or Scipion,
-                  just returns its name to use it as a dependency.
-                Raise the exception if unknown error is gotten.
-            """
-            try:
-                return env.addPipModule(moduleName, *args, **kwargs)._name
-            except Exception as e:
-                if "Duplicated target '%s'" % moduleName == str(e):
-                    return moduleName
-                else:
-                    raise Exception(e)
-
-        scipy = addPipModule('scipy', '0.15.0', default=True,
-                             deps=['lapack', 'matplotlib'])
+        pipCmd = (pyworkflow.em.Config.SCIPION_HOME + '/./scipion ' +
+                  pyworkflow.PYTHON + ' -m pip install scipy==0.15.0')
+        os.system(pipCmd)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
