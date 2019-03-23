@@ -1016,7 +1016,7 @@ class PKPDOptimizer:
         allDiffs = None
         for yTarget in self.yTarget:
             diff = 1e38*np.ones(yTarget.shape)
-            if allDiffs==None:
+            if allDiffs is None:
                 allDiffs = diff
             else:
                 allDiffs = np.concatenate([allDiffs, diff])
@@ -1037,7 +1037,7 @@ class PKPDOptimizer:
             if self.takeRelative:
                 diff = diff/yTarget
 
-            if allDiffs==None:
+            if allDiffs is None:
                 allDiffs = diff
             else:
                 allDiffs = np.concatenate([allDiffs, diff])
@@ -1075,7 +1075,7 @@ class PKPDOptimizer:
                 if np.isfinite(yii) and np.isfinite(ypii):
                     diff.append(yii-ypii)
             diff = np.asarray(diff)
-            if self.e==None:
+            if self.e is None:
                 self.e = diff
                 yToUse = np.asarray(yi)
             else:
@@ -1493,7 +1493,7 @@ class PKPDSampleFitBootstrap:
             tokens = line.split('#')
             tokensParameters = tokens[0].strip().split(' ')
             tokensQuality = tokens[1].strip().split(' ')
-            if self.parameters == None:
+            if self.parameters is None:
                 self.parameters = np.empty((0,len(tokensParameters)),np.double)
             self.parameters = np.vstack([self.parameters, [float(prm) for prm in tokensParameters]])
 
