@@ -733,8 +733,8 @@ class DrugSource:
         retval = []
         currentToken=0
         for via, viaPrmNo in self.vias:
-            retval+=via.areParametersSignificant(lowerBound[currentToken:currentToken+viaPrmNo],
-                                                 upperBound[currentToken:currentToken+viaPrmNo])
+            retval+=[x for x in via.areParametersSignificant(lowerBound[currentToken:(currentToken+viaPrmNo)],
+                                                             upperBound[currentToken:(currentToken+viaPrmNo)])]
             currentToken+=viaPrmNo
         if retval:
             return retval
