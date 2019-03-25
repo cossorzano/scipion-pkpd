@@ -67,10 +67,7 @@ class Plugin(pyworkflow.em.Plugin):
     #
     @classmethod
     def defineBinaries(cls, env):
-
-        pipCmd = (pyworkflow.em.Config.SCIPION_HOME + '/./scipion ' +
-                  pyworkflow.PYTHON + ' -m pip install scipy==0.15.0')
-        os.system(pipCmd)
+        pass
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
