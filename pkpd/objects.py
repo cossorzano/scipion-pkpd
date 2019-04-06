@@ -1082,14 +1082,14 @@ class PKPDOptimizer:
                 self.e = np.concatenate([self.e, diff])
                 yToUse = np.concatenate([yToUse, yi])
 
-        self.R2 = (1-np.var(self.e)/np.var(yToUse))
-        n=len(self.e) # Number of samples
+        self.R2 = (1-np.var(diff)/np.var(yToUse))
+        n=len(diff) # Number of samples
         p=self.model.getNumberOfParameters()
         if n-p>0:
             self.R2adj = 1-self.R2*(n-1)/(n-p)*(1-self.R2)
         else:
             self.R2adj = -1
-        logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(np.sum(np.multiply(self.e,self.e)))))
+        logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(np.sum(np.multiply(diff,diff)))))
         self.AIC = 2*p-2*logL
         if n-p-1>0:
             self.AICc = self.AIC+2*p*(p+1)/(n-p-1)
@@ -1595,8 +1595,12 @@ class PKPDFitting(EMObject):
         mu=np.mean(observations,axis=0)
         if observations.shape[0]>2:
             C=np.cov(np.transpose(observations))
-            R=np.corrcoef(np.transpose(observations))
-            sigma = np.sqrt(np.diag(C))
+            if not C.shape:
+                R=np.asarray([1.0])
+                sigma = C
+            else:
+                R = np.corrcoef(np.transpose(observations))
+                sigma = np.sqrt(np.diag(C))
             fh.write("Mean   parameters  = %s\n"%np.array_str(mu))
             fh.write("Median parameters  = %s\n"%np.array_str(np.median(observations,axis=0)))
             limits = np.percentile(observations,[2.5,97.5],axis=0)
