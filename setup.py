@@ -32,5 +32,6 @@ setup(
     packages=find_packages(),
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
-    }
+    },
+    install_requires=['scipy==0.15.0']
 )
