@@ -43,10 +43,11 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         form.addParam('allowTlag', params.BooleanParam,
                       label="Allow lag", default=False,
                       help='Allow lag time before starting dissolution (t-tlag)')
-        form.addParam('modelType', params.EnumParam, choices=["Zero order","First order"],
+        form.addParam('modelType', params.EnumParam, choices=["Zero order","First order","Fractional"],
                       label="Dissolution model", default=1,
                       help='Zero order: Y=K*(t-[tlag])\n'\
-                           'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n')
+                           'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n'\
+                           'Fractional order: Y=Ymax-pow(Amax^alpha-alpha*beta*t,1/alpha))')
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
@@ -54,7 +55,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         form.addParam('bounds', params.StringParam, label="Bounds (optional)", default="",
                       help='Parameter values for the simulation.\nExample: (1,10);(0,0.05) is (1,10) for the first parameter, (0,0.05) for the second parameter\n'
                            'Zero order: [tlag];K\n'
-                           'First order: [tlag];Ymax;beta')
+                           'First order: [tlag];Ymax;beta\n'
+                           'Fractional order: [tlag]; Ymax;beta;alpha\n')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
 
@@ -67,6 +69,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
             return Dissolution0()
         elif self.modelType.get() == 1:
             return Dissolution1()
+        elif self.modelType.get() == 2:
+            return DissolutionAlpha()
 
     def setupFromFormParameters(self):
         self.model.allowTlag = self.allowTlag.get()
