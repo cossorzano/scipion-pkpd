@@ -43,16 +43,18 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         form.addParam('allowTlag', params.BooleanParam,
                       label="Allow lag", default=False,
                       help='Allow lag time before starting dissolution (t-tlag)')
-        form.addParam('modelType', params.EnumParam, choices=["Zero order"],
-                      label="Dissolution model", default=0,
-                      help='Zero order: Y=K*(t-[tlag])\n')
+        form.addParam('modelType', params.EnumParam, choices=["Zero order","First order"],
+                      label="Dissolution model", default=1,
+                      help='Zero order: Y=K*(t-[tlag])\n'\
+                           'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n')
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
                            "Relative: sum ((Cobserved-Cpredicted)/Cobserved)^2")
         form.addParam('bounds', params.StringParam, label="Bounds (optional)", default="",
                       help='Parameter values for the simulation.\nExample: (1,10);(0,0.05) is (1,10) for the first parameter, (0,0.05) for the second parameter\n'
-                           'Linear: [tlag];K\n')
+                           'Zero order: [tlag];K\n'
+                           'First order: [tlag];Ymax;beta')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
 
@@ -63,6 +65,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
     def createModel(self):
         if self.modelType.get() == 0:
             return Dissolution0()
+        elif self.modelType.get() == 1:
+            return Dissolution1()
 
     def setupFromFormParameters(self):
         self.model.allowTlag = self.allowTlag.get()
