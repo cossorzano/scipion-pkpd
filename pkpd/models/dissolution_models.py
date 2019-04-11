@@ -41,6 +41,22 @@ class DissolutionModel(PKPDModel):
     def setAllowTLag(self, _allowTlag):
         self.allowTlag = _allowTlag
 
+    def printSetup(self):
+        print("Model: %s"%self.getModelEquation())
+
+    def getParameterDescriptions(self):
+        return ['Automatically fitted model of the form %s'%self.getModelEquation()]*self.getNumberOfParameters()
+
+    def areParametersValid(self, p):
+        return np.sum(p>0)==p.size # All positive
+
+    def areParametersSignificant(self, lowerBound, upperBound):
+        retval=[]
+        for i in range(len(upperBound)):
+            retval.append(lowerBound[i]>0 or upperBound[i]<0)
+        return retval
+
+
 class Dissolution0(DissolutionModel):
     def forwardModel(self, parameters, x=None):
         if x==None:
@@ -53,7 +69,7 @@ class Dissolution0(DissolutionModel):
         else:
             tlag=0.0
             K=parameters[0]
-        xToUse=np.clip(xToUse,0.0,None) # u(t-tlag)
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
 
         self.yPredicted = K*xToUse
         self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
@@ -75,9 +91,6 @@ class Dissolution0(DissolutionModel):
                 self.bounds.append((0.0,np.max(xToUse)))
             self.bounds.append((0.1*K,10*K))
 
-    def printSetup(self):
-        print("Model: %s"%self.getModelEquation())
-
     def getModelEquation(self):
         if self.allowTlag:
             return "Y=K*(t-tlag)"
@@ -97,9 +110,6 @@ class Dissolution0(DissolutionModel):
         else:
             return ['K']
 
-    def getParameterDescriptions(self):
-        return ['Automatically fitted model of the form %s'%self.getModelEquation()]*self.getNumberOfParameters()
-
     def calculateParameterUnits(self,sample):
         yunits = self.experiment.getVarUnits(self.yName)
         xunits = self.experiment.getVarUnits(self.xName)
@@ -109,18 +119,6 @@ class Dissolution0(DissolutionModel):
         else:
             self.parameterUnits=[sunits]
         return self.parameterUnits
-
-    def areParametersSignificant(self, lowerBound, upperBound):
-        retval=[]
-        if self.allowTlag:
-            retval.append(lowerBound[0]>0 or upperBound[0]<0)
-            retval.append(lowerBound[1]>0 or upperBound[1]<0)
-        else:
-            retval.append(lowerBound[0] > 0 or upperBound[0] < 0)
-        return retval
-
-    def areParametersValid(self, p):
-        return np.sum(p>0)==p.size # All positive
 
 
 class Dissolution1(DissolutionModel):
@@ -137,7 +135,7 @@ class Dissolution1(DissolutionModel):
             tlag=0.0
             Vmax=parameters[0]
             beta=parameters[1]
-        xToUse=np.clip(xToUse,0.0,None) # u(t-tlag)
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
 
         self.yPredicted = Vmax*(1-np.exp(-beta*xToUse))
         self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
@@ -161,9 +159,6 @@ class Dissolution1(DissolutionModel):
             self.bounds.append((0.1*Vmax,10*Vmax))
             self.bounds.append((0.1*beta,10*beta))
 
-    def printSetup(self):
-        print("Model: %s"%self.getModelEquation())
-
     def getModelEquation(self):
         if self.allowTlag:
             return "Y=Vmax*(1-exp(-beta*(t-tlag)))"
@@ -183,9 +178,6 @@ class Dissolution1(DissolutionModel):
         else:
             return ['Vmax','beta']
 
-    def getParameterDescriptions(self):
-        return ['Automatically fitted model of the form %s'%self.getModelEquation()]*self.getNumberOfParameters()
-
     def calculateParameterUnits(self,sample):
         yunits = self.experiment.getVarUnits(self.yName)
         xunits = self.experiment.getVarUnits(self.xName)
@@ -195,20 +187,6 @@ class Dissolution1(DissolutionModel):
         else:
             self.parameterUnits=[yunits, x1units]
         return self.parameterUnits
-
-    def areParametersSignificant(self, lowerBound, upperBound):
-        retval=[]
-        if self.allowTlag:
-            retval.append(lowerBound[0]>0 or upperBound[0]<0)
-            retval.append(lowerBound[1]>0 or upperBound[1]<0)
-            retval.append(lowerBound[2]>0 or upperBound[2]<0)
-        else:
-            retval.append(lowerBound[0] > 0 or upperBound[0] < 0)
-            retval.append(lowerBound[1] > 0 or upperBound[1] < 0)
-        return retval
-
-    def areParametersValid(self, p):
-        return np.sum(p>0)==p.size # All positive
 
 
 class DissolutionAlpha(DissolutionModel):
@@ -227,7 +205,7 @@ class DissolutionAlpha(DissolutionModel):
             Vmax=parameters[0]
             beta=parameters[1]
             alpha=parameters[2]
-        xToUse=np.clip(xToUse,0.0,None) # u(t-tlag)
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
         alpha=np.clip(0.00001,alpha,None)
         argument = np.clip(pow(Vmax,alpha)-alpha*beta*xToUse,0.0,None)
 
@@ -254,9 +232,6 @@ class DissolutionAlpha(DissolutionModel):
             self.bounds.append((0.1*beta,10*beta))
             self.bounds.append((0.0001,3.0))
 
-    def printSetup(self):
-        print("Model: %s"%self.getModelEquation())
-
     def getModelEquation(self):
         if self.allowTlag:
             return "Y=Vmax-pow(Vmax^alpha-alpha*beta*(t-tlag),1/alpha)"
@@ -279,8 +254,78 @@ class DissolutionAlpha(DissolutionModel):
         else:
             return ['Vmax','beta','alpha']
 
-    def getParameterDescriptions(self):
-        return ['Automatically fitted model of the form %s'%self.getModelEquation()]*self.getNumberOfParameters()
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        x1units = inverseUnits(xunits)
+        if self.allowTlag:
+            self.parameterUnits=[xunits, yunits, x1units, PKPDUnit.UNIT_NONE]
+        else:
+            self.parameterUnits=[yunits, x1units, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+
+class DissolutionWeibull(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x==None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+            lambdda=parameters[2]
+            b=parameters[3]
+        else:
+            tlag=0.0
+            Vmax=parameters[0]
+            lambdda=parameters[1]
+            b=parameters[2]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+        argument = lambdda*np.power(xToUse,b)
+
+        self.yPredicted = Vmax*(1-np.exp(-argument))
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Weibull dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)
+            lambdda=5/np.max(xToUse)
+            print("First estimate of Weibull order dissolution: ")
+            print("Y=(%f)*(1-exp(-(%f)*t)"%(Vmax,lambdda))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+            self.bounds.append((0.1*lambdda,10*lambdda))
+            self.bounds.append((0.0001,5.0))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*(1-exp(-lambda*(t-tlag)^b)"
+        else:
+            return "Y=Vmax*(1-exp(-lambda*t^b)"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint="Y=(%f)*(1-exp(-(%f)*(t-(%f))^(%f)))"%(self.parameters[1],self.parameters[2],self.parameters[0],
+                                                    self.parameters[3])
+        else:
+            toPrint="Y=(%f)*(1-exp(-(%f)*t^(%f)))"%(self.parameters[0],self.parameters[1],self.parameters[2])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','lambda','b']
+        else:
+            return ['Vmax','lambda','b']
 
     def calculateParameterUnits(self,sample):
         yunits = self.experiment.getVarUnits(self.yName)
@@ -292,18 +337,271 @@ class DissolutionAlpha(DissolutionModel):
             self.parameterUnits=[yunits, x1units, PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
-    def areParametersSignificant(self, lowerBound, upperBound):
-        retval=[]
-        if self.allowTlag:
-            retval.append(lowerBound[0]>0 or upperBound[0]<0)
-            retval.append(lowerBound[1]>0 or upperBound[1]<0)
-            retval.append(lowerBound[2]>0 or upperBound[2]<0)
-            retval.append(lowerBound[3]>0 or upperBound[3]<0)
-        else:
-            retval.append(lowerBound[0] > 0 or upperBound[0] < 0)
-            retval.append(lowerBound[1] > 0 or upperBound[1] < 0)
-            retval.append(lowerBound[2] > 0 or upperBound[2] < 0)
-        return retval
 
-    def areParametersValid(self, p):
-        return np.sum(p>0)==p.size # All positive
+class DissolutionHiguchi(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x==None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+        else:
+            tlag=0.0
+            Vmax=parameters[0]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+
+        self.yPredicted = Vmax*np.sqrt(xToUse)
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Higuchi dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)/np.sqrt(np.max(xToUse))
+            print("First estimate of Higuchi order dissolution: ")
+            print("Y=(%f)*t^0.5"%Vmax)
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*(t-tlag)^0.5"
+        else:
+            return "Y=Vmax*t^0.5"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint="Y=(%f)*(t-(%f))^0.5"%(self.parameters[1],self.parameters[0])
+        else:
+            toPrint="Y=(%f)*t^0.5"%(self.parameters[0])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax']
+        else:
+            return ['Vmax']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        if self.allowTlag:
+            self.parameterUnits=[xunits, yunits]
+        else:
+            self.parameterUnits=[yunits]
+        return self.parameterUnits
+
+
+class DissolutionKorsmeyer(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x==None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+            m=parameters[2]
+        else:
+            tlag=0.0
+            Vmax=parameters[0]
+            m = parameters[1]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+
+        self.yPredicted = Vmax*np.power(xToUse,m)
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Korsmeyer-Peppas dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)/np.sqrt(np.max(xToUse))
+            print("First estimate of Korsmeyer-Peppas order dissolution: ")
+            print("Y=(%f)*t^0.5"%Vmax)
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+            self.bounds.append((0.0001,5.0))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*(t-tlag)^m"
+        else:
+            return "Y=Vmax*t^m"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint="Y=(%f)*(t-(%f))^(%f)"%(self.parameters[1],self.parameters[0],self.parameters[2])
+        else:
+            toPrint="Y=(%f)*t^(%f)"%(self.parameters[0],self.parameters[1])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','m']
+        else:
+            return ['Vmax','m']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        if self.allowTlag:
+            self.parameterUnits=[xunits, yunits, PKPDUnit.UNIT_NONE]
+        else:
+            self.parameterUnits=[yunits, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+
+class DissolutionHixson(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x==None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+            K=parameters[2]
+        else:
+            tlag=0.0
+            Vmax=parameters[0]
+            K = parameters[1]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+
+        self.yPredicted = Vmax*(1-np.power(1-K*xToUse,3))
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Hixson-Crowell dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)/np.sqrt(np.max(xToUse))
+            K=0.5/np.max(xToUse)
+            print("First estimate of Hixson-Crowell order dissolution: ")
+            print("Y=(%f)*(1-(1-(%f)*t)^3)"%(Vmax,K))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+            self.bounds.append((0.1*K,10*K))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*(1-(1-K*(t-tlag))^3)"
+        else:
+            return "Y=Vmax*(1-(1-K*t)^3)"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint="Y=(%f)*(1-(1-(%f)*(t-(%f)))^3)"%(self.parameters[1],self.parameters[2],self.parameters[0])
+        else:
+            toPrint="Y=(%f)*(1-(1-(%f)*t)^3)"%(self.parameters[0],self.parameters[1])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','K']
+        else:
+            return ['Vmax','K']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        x1units = inverseUnits(xunits)
+        if self.allowTlag:
+            self.parameterUnits=[xunits, yunits, x1units]
+        else:
+            self.parameterUnits=[yunits, x1units]
+        return self.parameterUnits
+
+
+class DissolutionHopfenberg(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x==None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+            K=parameters[2]
+            m=parameters[3]
+        else:
+            tlag=0.0
+            Vmax=parameters[0]
+            K = parameters[1]
+            m = parameters[2]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+
+        self.yPredicted = Vmax*(1-np.power(1-K*xToUse,m))
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Hopfenberg dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)/np.sqrt(np.max(xToUse))
+            K=0.5/np.max(xToUse)
+            print("First estimate of Hopfenberg order dissolution: ")
+            print("Y=(%f)*(1-(1-(%f)*t)^3)"%(Vmax,K))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+            self.bounds.append((0.1*K,10*K))
+            self.bounds.append((0.0001,20.0))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*(1-(1-K*(t-tlag))^m)"
+        else:
+            return "Y=Vmax*(1-(1-K*t)^m)"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint="Y=(%f)*(1-(1-(%f)*(t-(%f)))^(%f))"%(self.parameters[1],self.parameters[2],self.parameters[0],
+                                                         self.parameters[3])
+        else:
+            toPrint="Y=(%f)*(1-(1-(%f)*t)^(%f))"%(self.parameters[0],self.parameters[1],self.parameters[2])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','K','m']
+        else:
+            return ['Vmax','K','m']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        x1units = inverseUnits(xunits)
+        if self.allowTlag:
+            self.parameterUnits=[xunits, yunits, x1units, PKPDUnit.UNIT_NONE]
+        else:
+            self.parameterUnits=[yunits, x1units, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
