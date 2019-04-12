@@ -172,6 +172,11 @@ PKPDDataSet(name='Gabrielsson_PD11', folder='Gabrielsson_PD11',
                'experiment': 'experiment.pkpd'
                })
 
+PKPDDataSet(name='Dissolution', folder='Dissolution',
+        files={
+               'experiment': 'dissolution.pkpd'
+               })
+
 PKPDDataSet(name='model',  folder='model',
         files={
                'classesSelection': 'gold/classes_selection.sqlite',

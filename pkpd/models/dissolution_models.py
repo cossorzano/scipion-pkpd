@@ -34,6 +34,8 @@ from pkpd.pkpd_units import inverseUnits, divideUnits, PKPDUnit
 
 import math
 
+# Tested by test_workflow_dissolution
+
 class DissolutionModel(PKPDModel):
     def __init__(self):
         self.allowTlag = False

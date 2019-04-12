@@ -27,6 +27,7 @@
 import math
 from collections import OrderedDict
 from itertools import izip
+import numpy as np
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
@@ -182,6 +183,11 @@ class ProtPKPDFitBase(ProtPKPD):
         elif self.fitType.get()==2:
             fitType = "relative"
 
+        R2List=[]
+        R2adjList=[]
+        AICList=[]
+        AICcList=[]
+        BICList=[]
         for sampleName, sample in self.experiment.samples.iteritems():
             self.printSection("Fitting "+sampleName)
             x, y = sample.getXYValues(self.varNameX,self.varNameY)
@@ -220,6 +226,12 @@ class ProtPKPDFitBase(ProtPKPD):
             sampleFit.copyFromOptimizer(optimizer2)
             self.fitting.sampleFits.append(sampleFit)
 
+            R2List.append(sampleFit.R2)
+            R2adjList.append(sampleFit.R2adj)
+            AICList.append(sampleFit.AIC)
+            AICcList.append(sampleFit.AICc)
+            BICList.append(sampleFit.BIC)
+
             # Add the parameters to the sample and experiment
             for varName, varUnits, description, varValue in izip(self.model.getParameterNames(), self.model.parameterUnits, self.model.getParameterDescriptions(), self.model.parameters):
                 self.experiment.addParameterToSample(sampleName, varName, varUnits, description, varValue)
@@ -239,6 +251,15 @@ class ProtPKPDFitBase(ProtPKPD):
         self.fitting.write(self._getPath("fitting.pkpd"))
         self.experiment.write(self._getPath("experiment.pkpd"))
 
+        fnSummary = self._getPath("summary.txt")
+        fh=open(fnSummary,"w")
+        fh.write("R2    (Mean+-Std): (%f)+-(%f)\n"%(np.mean(R2List),np.std(R2List)))
+        fh.write("R2adj (Mean+-Std): (%f)+-(%f)\n"%(np.mean(R2adjList),np.std(R2adjList)))
+        fh.write("AIC   (Mean+-Std): (%f)+-(%f)\n"%(np.mean(AICList),np.std(AICList)))
+        fh.write("AICc  (Mean+-Std): (%f)+-(%f) Recommended\n"%(np.mean(AICcList),np.std(AICcList)))
+        fh.write("BIC   (Mean+-Std): (%f)+-(%f)\n"%(np.mean(BICList),np.std(BICList)))
+        fh.close()
+
     def createOutputStep(self):
         self._defineOutputs(outputFitting=self.fitting)
         self._defineOutputs(outputExperiment=self.experiment)
@@ -249,6 +270,7 @@ class ProtPKPDFitBase(ProtPKPD):
     def _summary(self):
         self.getXYvars()
         msg=['Predicting %s from %s'%(self.varNameX,self.varNameY)]
+        self.addFileContentToMessage(msg, self._getPath("summary.txt"))
         return msg
 
     def _validate(self):
