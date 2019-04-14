@@ -485,7 +485,7 @@ class DissolutionHixson(DissolutionModel):
             K = parameters[1]
         xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
 
-        self.yPredicted = Vmax*(1-np.power(1-K*xToUse,3))
+        self.yPredicted = Vmax*(1-np.power(np.clip(1-K*xToUse,0.0,None),3))
         self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
         return self.yPredicted
 
@@ -555,7 +555,7 @@ class DissolutionHopfenberg(DissolutionModel):
             m = parameters[2]
         xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
 
-        self.yPredicted = Vmax*(1-np.power(1-K*xToUse,m))
+        self.yPredicted = Vmax*(1-np.power(np.clip(1-K*xToUse,0.0,None),m))
         self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
         return self.yPredicted
 
