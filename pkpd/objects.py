@@ -1028,7 +1028,7 @@ class PKPDOptimizer:
         yPredicted = self.model.forwardModel(parameters)
 
         allDiffs = None
-        for y, yTarget,yTargetLog in izip(yPredicted,self.yTarget,self.yTargetLogs):
+        for y, yTarget, yTargetLog in izip(yPredicted,self.yTarget,self.yTargetLogs):
             if self.takeYLogs:
                 idx = np.logical_and(np.isfinite(y),y>=1e-20)
                 diff = yTargetLog[idx]-np.log10(y[idx])
@@ -1043,12 +1043,12 @@ class PKPDOptimizer:
                 allDiffs = np.concatenate([allDiffs, diff])
 
             idx = np.logical_not(np.isfinite(allDiffs))
-            allDiffs[idx]=1e38
+            allDiffs[idx]=np.nan
         e = allDiffs
         if e.size<parameters.size:
             return self.hugeError()
 
-        rmse = math.sqrt(np.power(e,2).mean())
+        rmse = math.sqrt(np.nanmean(np.power(e,2)))
         if rmse<self.bestRmse:
             print("   Best rmse so far=%f"%rmse)
             print("      at x=%s"%str(parameters))
@@ -1062,7 +1062,7 @@ class PKPDOptimizer:
 
     def goalRMSE(self,parameters):
         e = self.getResiduals(parameters)
-        rmse = math.sqrt(np.power(e,2).mean())
+        rmse = math.sqrt(np.nanmean(np.power(e,2)))
         return rmse
 
     def _evaluateQuality(self, x, y, yp):
@@ -1082,14 +1082,16 @@ class PKPDOptimizer:
                 self.e = np.concatenate([self.e, diff])
                 yToUse = np.concatenate([yToUse, yi])
 
-        self.R2 = (1-np.var(diff)/np.var(yToUse))
+
+        yToUse[np.logical_not(np.isfinite(yToUse))]=np.nan # Remove infinites
+        self.R2 = (1-np.nanvar(diff)/np.nanvar(yToUse))
         n=len(diff) # Number of samples
         p=self.model.getNumberOfParameters()
         if n-p>0:
             self.R2adj = 1-self.R2*(n-1)/(n-p)*(1-self.R2)
         else:
             self.R2adj = -1
-        logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(np.sum(np.multiply(diff,diff)))))
+        logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(np.nansum(np.multiply(diff,diff)))))
         self.AIC = 2*p-2*logL
         if n-p-1>0:
             self.AICc = self.AIC+2*p*(p+1)/(n-p-1)
