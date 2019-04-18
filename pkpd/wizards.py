@@ -67,47 +67,32 @@ class FilterVariablesTreeProvider(TreeProvider):
 
 
 class PKPDChooseVariableWizard(Wizard):
-    _targets = [(ProtPKPDRegressionLabel, ['labelX']),
-                (ProtPKPDRegressionLabel, ['labelY']),
+    _targets = [(ProtPKPDRegressionLabel, ['labelX', 'labelY']),
                 (ProtPKPDChangeUnits, ['labelToChange']),
                 (ProtPKPDStatsExp1Subgroups2Mean, ['labelToCompare']),
-                (ProtPKPDExponentialFit, ['predictor']),
-                (ProtPKPDExponentialFit, ['predicted']),
-                (ProtPKPDEliminationRate, ['predictor']),
-                (ProtPKPDEliminationRate, ['predicted']),
-                (ProtPKPDMonoCompartment, ['predictor']),
-                (ProtPKPDMonoCompartment, ['predicted']),
-                (ProtPKPDMonoCompartmentUrine, ['predictor']),
-                (ProtPKPDMonoCompartmentUrine, ['predicted']),
-                (ProtPKPDMonoCompartmentUrine, ['Au']),
-                (ProtPKPDMonoCompartmentLinkPD, ['predictor']),
-                (ProtPKPDMonoCompartmentLinkPD, ['predicted']),
-                (ProtPKPDMonoCompartmentLinkPD, ['E']),
-                (ProtPKPDMonoCompartmentPD, ['predictor']),
-                (ProtPKPDMonoCompartmentPD, ['predicted']),
-                (ProtPKPDMonoCompartmentPD, ['E']),
-                (ProtPKPDTwoCompartments, ['predictor']),
-                (ProtPKPDTwoCompartments, ['predicted']),
-                (ProtPKPDTwoCompartmentsClint, ['predictor']),
-                (ProtPKPDTwoCompartmentsClint, ['predicted']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['predictor']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['predicted']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['metabolite']),
-                (ProtPKPDTwoCompartmentsAutoinduction, ['predictor']),
-                (ProtPKPDTwoCompartmentsAutoinduction, ['predicted']),
-                (ProtPKPDTwoCompartmentsBoth, ['predictor']),
-                (ProtPKPDTwoCompartmentsBoth, ['predicted']),
-                (ProtPKPDTwoCompartmentsBoth, ['Cperipheral']),
-                (ProtPKPDTwoCompartmentsBothPD, ['predictor']),
-                (ProtPKPDTwoCompartmentsBothPD, ['predicted']),
-                (ProtPKPDTwoCompartmentsBothPD, ['Cperipheral']),
-                (ProtPKPDTwoCompartmentsBothPD, ['E']),
+                (ProtPKPDExponentialFit, ['predictor', 'predicted']),
+                (ProtPKPDEliminationRate, ['predictor', 'predicted']),
+                (ProtPKPDMonoCompartment, ['predictor', 'predicted']),
+                (ProtPKPDMonoCompartmentUrine, ['predictor', 'predicted',
+                                                'Au']),
+                (ProtPKPDMonoCompartmentLinkPD, ['predictor', 'predicted',
+                                                 'E']),
+                (ProtPKPDMonoCompartmentPD, ['predictor', 'predicted', 'E']),
+                (ProtPKPDTwoCompartments, ['predictor', 'predicted']),
+                (ProtPKPDTwoCompartmentsClint, ['predictor', 'predicted']),
+                (ProtPKPDTwoCompartmentsClintMetabolite, ['predictor',
+                                                          'predicted',
+                                                          'metabolite']),
+                (ProtPKPDTwoCompartmentsAutoinduction, ['predictor',
+                                                        'predicted']),
+                (ProtPKPDTwoCompartmentsBoth, ['predictor', 'predicted',
+                                               'Cperipheral']),
+                (ProtPKPDTwoCompartmentsBothPD, ['predictor', 'predicted',
+                                                 'Cperipheral', 'E']),
                 (ProtPKPDMonoCompartmentUrine, ['predicted']),
                 (ProtPKPDSimulateGenericPD, ['predictor']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label1',
-                                                   'inputExperiment1']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label2',
-                                                   'inputExperiment2'])
+                (ProtPKPDStatsExp2Subgroups2Mean, ['label1', 'inputExperiment1',
+                                                   'label2', 'inputExperiment2'])
                 ]
 
     def show(self, form, *params):
@@ -173,7 +158,7 @@ class DoseTreeProvider(TreeProvider):
 
 
 class PKPDChooseDoseWizard(Wizard):
-    _targets = [(ProtPKPDChangeVia, ['doseName','doseVia']),
+    _targets = [(ProtPKPDChangeVia, ['doseName', 'doseVia']),
                 ]
 
     def show(self, form, *params):
@@ -202,7 +187,7 @@ class PKPDChooseDoseWizard(Wizard):
 
 class PKPDChooseSeveralVariableWizard(PKPDChooseVariableWizard):
     _targets = [(ProtPKPDDropMeasurements, ['varsToDrop']),
-                (ProtPKPDScaleToCommonDose,['measurementsToChange'])]
+                (ProtPKPDScaleToCommonDose, ['measurementsToChange'])]
 
     def getTitle(self):
         return "Choose variable(s)"
@@ -234,8 +219,7 @@ class SimpleListTreeProvider(TreeProvider):
 
 
 class PKPDVariableTemplateWizard(Wizard):
-    _targets = [(ProtPKPDImportFromText, ['variables'])
-                ]
+    _targets = [(ProtPKPDImportFromText, ['variables'])]
 
     def show(self, form, *params):
         label = params
