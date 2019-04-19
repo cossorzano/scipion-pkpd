@@ -48,12 +48,9 @@ are independent, which are not. Use Bootstrap estimates instead.\n
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         self._defineParams1(form)
-        form.addParam('predictor', params.StringParam, label="Time variable", default="t",
-                      help='Y is predicted as an exponential function of X, Y=f(X)')
-        form.addParam('predicted', params.StringParam, label="Plasma concentration", default="Cp",
-                      help='Y is predicted as an exponential function of X, Y=f(X)')
-        form.addParam('Au', params.StringParam, label="Cumulated amount in urine", default="Au",
-                      help='Cumulated amount in urine')
+        form.addParam('predictor', params.StringParam, label="Time variable", default="t")
+        form.addParam('predicted', params.StringParam, label="Plasma concentration", default="Cp")
+        form.addParam('Au', params.StringParam, label="Cumulated amount in urine", default="Au")
         form.addParam('bounds', params.StringParam, label="Parameter bounds ([tlag], Cl, V, Clp, Vp, fe)", default="",
                       help="Bounds for the tlag (if it must be estimated), clearance, volume and fraction excreted."\
                       'Make sure that the bounds are expressed in the expected units (estimated from the sample itself).'\
