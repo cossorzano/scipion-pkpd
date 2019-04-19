@@ -27,14 +27,118 @@
 
 import os
 import Tkinter as tk
+import ttk
 import pyworkflow.object as pwobj
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog
 from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.dialog import ListDialog
+import pyworkflow.gui as gui
 
 from pkpd.protocols import *
 from pkpd.viewers.tk_ode import PKPDODEDialog, PKPDFitDialog
+
+
+class VariablesProvider(dialog.Dialog):
+    """
+    This class create a frame with the pkpd variables
+    """
+    def __init__(self, parent, title, **kwargs):
+        """ From kwargs:
+                message: message tooltip to show when browsing.
+                selected: the item that should be selected.
+                validateSelectionCallback: a callback function to validate selected items.
+        """
+        self.targetProtocol = kwargs['targetProtocol']
+        self.params = kwargs['params']
+        self.values = []
+        self.experiment = kwargs['experiment']
+        self.provider = FilterVariablesTreeProvider(self.experiment)
+
+        dialog.Dialog.__init__(self, parent, title,
+                               buttons=[('Select', dialog.RESULT_YES),
+                                        ('Cancel', dialog.RESULT_CANCEL)])
+
+    def body(self, bodyFrame):
+        bodyFrame.config(bg='white')
+        gui.configureWeigths(bodyFrame)
+        self._createContent(bodyFrame)
+
+    def _createContent(self, content):
+        """
+        Create the wizard content
+        """
+
+        # Create the variables
+        frame = tk.Frame(content, bg='white')
+        variables = tk.LabelFrame(frame, text="Parameters", bg='white')
+
+        variables.grid(row=0, column=0, sticky='news', padx=5, pady=5)
+        self.samplesTree = self._addBoundTree(variables,
+                                              self.provider, 4)
+
+        # Create the content
+        parameteres = tk.LabelFrame(frame, text="Variables", bg='white')
+        parameteres.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+        self._insertParameters(parameteres)
+
+        frame.grid(row=0, column=0, padx=5, pady=5)
+        gui.configureWeigths(frame)
+
+    def _insertParameters(self, content):
+        row = 0
+        for param in self.params:
+            paramValue = self._createVariablesValue(content, param)
+            paramValue.grid(row=row, column=0, sticky='ne', padx=5, pady=5)
+            row += 1
+
+    def _createVariablesValue(self, frame, paramName):
+        """
+        Create the wizard variables with the values
+        """
+        def _fillVariableValues(paramName, varValue, cbox):
+            self._objects = self.provider.getObjects()
+            index = 0
+            valueIndex = 0
+            valuesList = []
+            for obj in self._objects:
+                objDict = self.provider.getObjectInfo(obj)
+                if objDict is not None:
+                    key = objDict.get('key')
+                    text = objDict.get('text', key)
+                    parent = objDict.get('parent', None)
+                    valuesList.append(key)
+                    if key == varValue:
+                        valueIndex = index
+                    index += 1
+            cbox['values'] = valuesList
+            cbox.current(valueIndex)
+
+        def _selection_changed(event, param, newValue):
+            print("Nuevo elemento seleccionado: ", param, ': ', newValue)
+            for value in self.values:
+                if value[0] == param:
+                    value[1].set(newValue)
+
+        paramValueFrame = tk.Frame(frame, bg='white')
+        label = tk.Label(paramValueFrame, text=(paramName + ': '))
+        label.grid(row=0, column=0, sticky='ne')
+        combobox = ttk.Combobox(paramValueFrame, name=paramName, state="readonly")
+        combobox.grid(row=0, column=1, sticky='ne')
+        combobox.bind("<<ComboboxSelected>>", lambda event: _selection_changed(event,
+                                                                               combobox._name,
+                                                                               combobox['value'][combobox.current()]))
+        varValue = getattr(self.targetProtocol, paramName, None)
+        self.values.append((paramName, varValue))
+        _fillVariableValues(paramName, varValue, combobox)
+
+        return paramValueFrame
+
+    def _addBoundTree(self, parent, provider, height):
+        bt = BoundTree(parent, provider, height=height)
+        bt.grid(row=0, column=0, sticky='news', padx=5, pady=5)
+        gui.configureWeigths(parent)
+        return bt
 
 
 class FilterVariablesTreeProvider(TreeProvider):
@@ -42,6 +146,7 @@ class FilterVariablesTreeProvider(TreeProvider):
     Additionally, we can filter by a given function. """
 
     def __init__(self, experiment, filter=None):
+        self.params = params
         self.experiment = experiment
         self.filter = filter or self._noFilter
 
@@ -97,31 +202,37 @@ class PKPDChooseVariableWizard(Wizard):
 
     def show(self, form, *params):
         protocol = form.protocol
-        label = params
+
 
         fullParams = self._getAllParams(protocol)
-        experiment = None
-        if len(fullParams)>1:
-            experiment = protocol.getAttributeValue(fullParams[1], None)
-        else:
-            experiment = protocol.getAttributeValue('inputExperiment', None)
+
+        experiment = protocol.getAttributeValue('inputExperiment', None)
 
         if experiment is None:
             form.showError("Select input experiment first.")
         else:
             experiment.load()
             filterFunc = getattr(protocol, 'filterVarForWizard', None)
-            tp = FilterVariablesTreeProvider(experiment, filter=filterFunc)
-            dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
-                                    selectmode=self.getSelectMode())
+            dlg = VariablesProvider(form.root, self.getTitle(),
+                                    targetProtocol=protocol,
+                                    params=fullParams,
+                                    experiment=experiment)
+            # tp = FilterVariablesTreeProvider(fullParams, experiment,
+            #                                  filter=filterFunc)
+            # dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
+            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
-                self.setFormValues(form, label, dlg.values)
+                for label in fullParams:
+                    for value in dlg.values:
+                        if value[0] == label:
+                            self.setFormValues(form, label, value[1])
+                            break
 
     def getTitle(self):
         return "Choose variable"
 
     def setFormValues(self, form, label, values):
-        form.setVar(label, values[0].varName)
+        form.setVar(label, values)
 
     def getSelectMode(self):
         return "browse"
