@@ -68,7 +68,6 @@ class VariablesProvider(dialog.Dialog):
         """
         Create the wizard content
         """
-
         # Create the variables
         frame = tk.Frame(content, bg='white')
         variables = tk.LabelFrame(frame, text="Parameters", bg='white')
@@ -82,14 +81,15 @@ class VariablesProvider(dialog.Dialog):
         parameteres.grid(row=1, column=0, sticky='news', padx=5, pady=5)
         self._insertParameters(parameteres)
 
-        frame.grid(row=0, column=0, padx=5, pady=5)
+        frame.grid(row=0, column=0, sticky='news', padx=5, pady=5)
         gui.configureWeigths(frame)
+
 
     def _insertParameters(self, content):
         row = 0
         for param in self.params:
             paramValue = self._createVariablesValue(content, param)
-            paramValue.grid(row=row, column=0, sticky='ne', padx=5, pady=5)
+            paramValue.grid(row=row, column=0, sticky='news', padx=5, pady=5)
             row += 1
 
     def _createVariablesValue(self, frame, paramName):
@@ -115,16 +115,16 @@ class VariablesProvider(dialog.Dialog):
             cbox.current(valueIndex)
 
         def _selection_changed(event, param, newValue):
-            print("Nuevo elemento seleccionado: ", param, ': ', newValue)
             for value in self.values:
                 if value[0] == param:
                     value[1].set(newValue)
 
         paramValueFrame = tk.Frame(frame, bg='white')
+        gui.configureWeigths(paramValueFrame)
         label = tk.Label(paramValueFrame, text=(paramName + ': '))
-        label.grid(row=0, column=0, sticky='ne')
+        label.grid(row=0, column=0, sticky='news')
         combobox = ttk.Combobox(paramValueFrame, name=paramName, state="readonly")
-        combobox.grid(row=0, column=1, sticky='ne')
+        combobox.grid(row=0, column=1, sticky='news')
         combobox.bind("<<ComboboxSelected>>", lambda event: _selection_changed(event,
                                                                                combobox._name,
                                                                                combobox['value'][combobox.current()]))
@@ -333,8 +333,9 @@ class PKPDVariableTemplateWizard(Wizard):
     _targets = [(ProtPKPDImportFromText, ['variables'])]
 
     def show(self, form, *params):
-        label = params
+
         protocol = form.protocol
+        labels = self._getAllParams(protocol)
         fnCSV = protocol.getAttributeValue('inputFile', "")
         if not os.path.exists(fnCSV):
             form.showError("Select a valid CSV input file first.")
@@ -349,9 +350,21 @@ class PKPDVariableTemplateWizard(Wizard):
                     strToAdd += ("\n%s ; [Units/none] ; [numeric/text] ; "
                                  "[time/label/measurement] ; [Comment]"
                                  % (value.get()))
-                if strToAdd!="":
-                    currentValue = protocol.getAttributeValue(label, "")
-                    form.setVar(label, currentValue+strToAdd)
+                if strToAdd != "":
+                    for label in labels:
+                        currentValue = protocol.getAttributeValue(label, "")
+                        form.setVar(label, currentValue+strToAdd)
+
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
 
 
 class PKPDDoseTemplateWizard(Wizard):
@@ -437,8 +450,8 @@ class PKPDODEWizard(Wizard):
     _nonODE = [ProtPKPDGenericFit]
 
     def show(self, form, *params):
-        label = params
         protocol = form.protocol
+        labels = self._getAllParams(protocol)
         experiment = protocol.getAttributeValue('inputExperiment', None)
 
         if experiment is None:
@@ -457,12 +470,12 @@ class PKPDODEWizard(Wizard):
                 i = 0
                 for sampleName, sample in protocol.experiment.samples.iteritems():
                     sample.interpretDose()
-                    if i==0:
+                    if i == 0:
                         if not type(protocol) in PKPDODEWizard._nonODE:
                             protocol.model.drugSource.setDoses(sample.parsedDoseList,0,1) # Needed to correctly identify the parameters of the source
                         protocol.model.setSample(sample)
                         protocol.calculateParameterUnits(sample)
-                    i+=1
+                    i += 1
 
                 if not type(protocol) in PKPDODEWizard._nonODE:
                     dlg = PKPDODEDialog(form.root, "Select Parameter Bounds",
@@ -479,15 +492,27 @@ class PKPDODEWizard(Wizard):
                     boundStr = ""
                     i = 1
                     for bound in dlg.getBoundsList():
-                        if i>1:
-                            boundStr+="; "
+                        if i > 1:
+                            boundStr += "; "
                         boundStr += str(bound)
                         i += 1
-                    if boundStr!="":
-                        form.setVar(label, boundStr)
+                    if boundStr != "":
+                        for label in labels:
+                            form.setVar(label, boundStr)
             # except Exception as e:
                 # pass
                 # form.showError("Error: %s" % str(e))
+
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
 
 
 class MultiListDialog(ListDialog):

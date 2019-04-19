@@ -31,6 +31,7 @@ from pkpd.models.pk_models import PK_TwocompartmentsUrine
 # TESTED in test_workflow_gabrielsson_pk16.py
 # TESTED in test_workflow_gabrielsson_pk25.py
 
+
 class ProtPKPDTwoCompartmentsUrine(ProtPKPDODEBase):
     """ Fit a two-compartments model to a set of plasma and urine (cumulated) measurements ((any arbitrary dosing regimen is allowed)\n
         The differential equation is dC/dt = -Cl * C/V -Clp *(C-Cp)/V + 1/V * dD/dt, dCp/dt=Cl*C/Vp+Clp*(C-Cp)/Vp and dA/dt = fe * Cl * C\n
@@ -41,12 +42,18 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         Protocol created by http://www.kinestatpharma.com\n"""
     _label = 'two-compartments urine'
 
+    def __init__(self,**kwargs):
+        ProtPKPDODEBase.__init__(self,**kwargs)
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         self._defineParams1(form)
-        form.addParam('predictor', params.StringParam, label="Time variable", default="t")
-        form.addParam('predicted', params.StringParam, label="Plasma concentration", default="Cp")
-        form.addParam('Au', params.StringParam, label="Cumulated amount in urine", default="Au")
+        form.addParam('predictor', params.StringParam, label="Time variable", default="t",
+                      help='Y is predicted as an exponential function of X, Y=f(X)')
+        form.addParam('predicted', params.StringParam, label="Plasma concentration", default="Cp",
+                      help='Y is predicted as an exponential function of X, Y=f(X)')
+        form.addParam('Au', params.StringParam, label="Cumulated amount in urine", default="Au",
+                      help='Cumulated amount in urine')
         form.addParam('bounds', params.StringParam, label="Parameter bounds ([tlag], Cl, V, Clp, Vp, fe)", default="",
                       help="Bounds for the tlag (if it must be estimated), clearance, volume and fraction excreted."\
                       'Make sure that the bounds are expressed in the expected units (estimated from the sample itself).'\
