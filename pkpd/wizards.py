@@ -27,14 +27,117 @@
 
 import os
 import Tkinter as tk
+import ttk
 import pyworkflow.object as pwobj
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog
 from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.dialog import ListDialog
+import pyworkflow.gui as gui
 
 from pkpd.protocols import *
 from pkpd.viewers.tk_ode import PKPDODEDialog, PKPDFitDialog
+
+
+class VariablesProvider(dialog.Dialog):
+    """
+    This class create a frame with the pkpd variables
+    """
+    def __init__(self, parent, title, **kwargs):
+        """ From kwargs:
+                message: message tooltip to show when browsing.
+                selected: the item that should be selected.
+                validateSelectionCallback: a callback function to validate selected items.
+        """
+        self.targetProtocol = kwargs['targetProtocol']
+        self.params = kwargs['params']
+        self.values = []
+        self.experiment = kwargs['experiment']
+        self.provider = kwargs['provider']
+
+        dialog.Dialog.__init__(self, parent, title,
+                               buttons=[('Select', dialog.RESULT_YES),
+                                        ('Cancel', dialog.RESULT_CANCEL)])
+
+    def body(self, bodyFrame):
+        bodyFrame.config(bg='white')
+        gui.configureWeigths(bodyFrame)
+        self._createContent(bodyFrame)
+
+    def _createContent(self, content):
+        """
+        Create the wizard content
+        """
+        # Create the variables
+        frame = tk.Frame(content, bg='white')
+        variables = tk.LabelFrame(frame, text="Parameters", bg='white')
+
+        variables.grid(row=0, column=0, sticky='news', padx=5, pady=5)
+        self.samplesTree = self._addBoundTree(variables,
+                                              self.provider, 4)
+
+        # Create the content
+        parameteres = tk.LabelFrame(frame, text="Variables", bg='white')
+        parameteres.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+        self._insertParameters(parameteres)
+
+        frame.grid(row=0, column=0, sticky='news', padx=5, pady=5)
+        gui.configureWeigths(frame)
+
+    def _insertParameters(self, content):
+        row = 0
+        for param in self.params:
+            paramValue = self._createVariablesValue(content, param)
+            paramValue.grid(row=row, column=0, sticky='news', padx=5, pady=5)
+            row += 1
+
+    def _createVariablesValue(self, frame, paramName):
+        """
+        Create the wizard variables with the values
+        """
+        def _fillVariableValues(paramName, varValue, cbox):
+            self._objects = self.provider.getObjects()
+            index = 0
+            valueIndex = 0
+            valuesList = []
+            for obj in self._objects:
+                objDict = self.provider.getObjectInfo(obj)
+                if objDict is not None:
+                    key = objDict.get('key')
+                    # text = objDict.get('text', key)
+                    # parent = objDict.get('parent', None)
+                    valuesList.append(key)
+                    if key == varValue:
+                        valueIndex = index
+                    index += 1
+            cbox['values'] = valuesList
+            cbox.current(valueIndex)
+
+        def _selection_changed(event, param, newValue):
+            for value in self.values:
+                if value[0].lower() == param:
+                    value[1].set(newValue)
+
+        paramValueFrame = tk.Frame(frame, bg='white')
+        gui.configureWeigths(paramValueFrame)
+        label = tk.Label(paramValueFrame, text=(str(self.targetProtocol.getParam(paramName).label) + ': '))
+        label.grid(row=0, column=0, sticky='news')
+        combobox = ttk.Combobox(paramValueFrame, name=paramName.lower(), state="readonly")
+        combobox.grid(row=0, column=1, sticky='news')
+        combobox.bind("<<ComboboxSelected>>", lambda event: _selection_changed(event,
+                                                                               combobox._name,
+                                                                               combobox['value'][combobox.current()]))
+        varValue = getattr(self.targetProtocol, paramName, None)
+        self.values.append((paramName, varValue))
+        _fillVariableValues(paramName, varValue, combobox)
+
+        return paramValueFrame
+
+    def _addBoundTree(self, parent, provider, height):
+        bt = BoundTree(parent, provider, height=height)
+        bt.grid(row=0, column=0, sticky='news', padx=5, pady=5)
+        gui.configureWeigths(parent)
+        return bt
 
 
 class FilterVariablesTreeProvider(TreeProvider):
@@ -42,6 +145,7 @@ class FilterVariablesTreeProvider(TreeProvider):
     Additionally, we can filter by a given function. """
 
     def __init__(self, experiment, filter=None):
+        self.params = params
         self.experiment = experiment
         self.filter = filter or self._noFilter
 
@@ -67,76 +171,70 @@ class FilterVariablesTreeProvider(TreeProvider):
 
 
 class PKPDChooseVariableWizard(Wizard):
-    _targets = [(ProtPKPDRegressionLabel, ['labelX']),
-                (ProtPKPDRegressionLabel, ['labelY']),
+    _targets = [(ProtPKPDRegressionLabel, ['labelX', 'labelY']),
                 (ProtPKPDChangeUnits, ['labelToChange']),
                 (ProtPKPDStatsExp1Subgroups2Mean, ['labelToCompare']),
-                (ProtPKPDExponentialFit, ['predictor']),
-                (ProtPKPDExponentialFit, ['predicted']),
-                (ProtPKPDEliminationRate, ['predictor']),
-                (ProtPKPDEliminationRate, ['predicted']),
-                (ProtPKPDMonoCompartment, ['predictor']),
-                (ProtPKPDMonoCompartment, ['predicted']),
-                (ProtPKPDMonoCompartmentUrine, ['predictor']),
-                (ProtPKPDMonoCompartmentUrine, ['predicted']),
-                (ProtPKPDMonoCompartmentUrine, ['Au']),
-                (ProtPKPDMonoCompartmentLinkPD, ['predictor']),
-                (ProtPKPDMonoCompartmentLinkPD, ['predicted']),
-                (ProtPKPDMonoCompartmentLinkPD, ['E']),
-                (ProtPKPDMonoCompartmentPD, ['predictor']),
-                (ProtPKPDMonoCompartmentPD, ['predicted']),
-                (ProtPKPDMonoCompartmentPD, ['E']),
-                (ProtPKPDTwoCompartments, ['predictor']),
-                (ProtPKPDTwoCompartments, ['predicted']),
-                (ProtPKPDTwoCompartmentsClint, ['predictor']),
-                (ProtPKPDTwoCompartmentsClint, ['predicted']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['predictor']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['predicted']),
-                (ProtPKPDTwoCompartmentsClintMetabolite, ['metabolite']),
-                (ProtPKPDTwoCompartmentsAutoinduction, ['predictor']),
-                (ProtPKPDTwoCompartmentsAutoinduction, ['predicted']),
-                (ProtPKPDTwoCompartmentsBoth, ['predictor']),
-                (ProtPKPDTwoCompartmentsBoth, ['predicted']),
-                (ProtPKPDTwoCompartmentsBoth, ['Cperipheral']),
-                (ProtPKPDTwoCompartmentsBothPD, ['predictor']),
-                (ProtPKPDTwoCompartmentsBothPD, ['predicted']),
-                (ProtPKPDTwoCompartmentsBothPD, ['Cperipheral']),
-                (ProtPKPDTwoCompartmentsBothPD, ['E']),
+                (ProtPKPDExponentialFit, ['predictor', 'predicted']),
+                (ProtPKPDDissolutionFit, ['predictor', 'predicted']),
+                (ProtPKPDGenericFit, ['predictor', 'predicted']),
+                (ProtPKPDEliminationRate, ['predictor', 'predicted']),
+                (ProtPKPDMonoCompartment, ['predictor', 'predicted']),
+                (ProtPKPDMonoCompartmentUrine, ['predictor', 'predicted',
+                                                'Au']),
+                (ProtPKPDMonoCompartmentClint,['predictor', 'predicted']),
+                (ProtPKPDMonoCompartmentLinkPD, ['predictor', 'predicted',
+                                                 'E']),
+                (ProtPKPDMonoCompartmentPD, ['predictor', 'predicted', 'E']),
+                (ProtPKPDTwoCompartments, ['predictor', 'predicted']),
+                (ProtPKPDTwoCompartmentsUrine, ['predictor', 'predicted', 'Au']),
+                (ProtPKPDTwoCompartmentsClint, ['predictor', 'predicted']),
+                (ProtPKPDTwoCompartmentsClintMetabolite, ['predictor',
+                                                          'predicted',
+                                                          'metabolite']),
+                (ProtPKPDTwoCompartmentsAutoinduction, ['predictor',
+                                                        'predicted']),
+                (ProtPKPDTwoCompartmentsBoth, ['predictor', 'predicted',
+                                               'Cperipheral']),
+                (ProtPKPDTwoCompartmentsBothPD, ['predictor', 'predicted',
+                                                 'Cperipheral', 'E']),
                 (ProtPKPDMonoCompartmentUrine, ['predicted']),
                 (ProtPKPDSimulateGenericPD, ['predictor']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label1',
-                                                   'inputExperiment1']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label2',
-                                                   'inputExperiment2'])
+                (ProtPKPDStatsExp2Subgroups2Mean, ['label1', 'inputExperiment1',
+                                                   'label2', 'inputExperiment2'])
                 ]
 
     def show(self, form, *params):
         protocol = form.protocol
-        label = params
-
         fullParams = self._getAllParams(protocol)
-        experiment = None
-        if len(fullParams)>1:
-            experiment = protocol.getAttributeValue(fullParams[1], None)
-        else:
-            experiment = protocol.getAttributeValue('inputExperiment', None)
+        experiment = protocol.getAttributeValue('inputExperiment', None)
 
         if experiment is None:
             form.showError("Select input experiment first.")
         else:
             experiment.load()
             filterFunc = getattr(protocol, 'filterVarForWizard', None)
-            tp = FilterVariablesTreeProvider(experiment, filter=filterFunc)
-            dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
-                                    selectmode=self.getSelectMode())
+            provider = FilterVariablesTreeProvider(experiment)
+            dlg = VariablesProvider(form.root, self.getTitle(),
+                                    targetProtocol=protocol,
+                                    params=fullParams,
+                                    experiment=experiment,
+                                    provider=provider)
+            # tp = FilterVariablesTreeProvider(fullParams, experiment,
+            #                                  filter=filterFunc)
+            # dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
+            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
-                self.setFormValues(form, label, dlg.values)
+                for label in fullParams:
+                    for value in dlg.values:
+                        if value[0] == label:
+                            self.setFormValues(form, label, value[1])
+                            break
 
     def getTitle(self):
         return "Choose variable"
 
     def setFormValues(self, form, label, values):
-        form.setVar(label, values[0].varName)
+        form.setVar(label, values)
 
     def getSelectMode(self):
         return "browse"
@@ -155,6 +253,7 @@ class PKPDChooseVariableWizard(Wizard):
 
 class DoseTreeProvider(TreeProvider):
     def __init__(self, experiment):
+        self.params = params
         self.experiment = experiment
 
     def getColumns(self):
@@ -173,36 +272,58 @@ class DoseTreeProvider(TreeProvider):
 
 
 class PKPDChooseDoseWizard(Wizard):
-    _targets = [(ProtPKPDChangeVia, ['doseName','doseVia']),
+    _targets = [(ProtPKPDChangeVia, ['doseName', 'doseVia']),
                 ]
 
     def show(self, form, *params):
         protocol = form.protocol
-        label = params[0]
-
+        fullParams = self._getAllParams(protocol)
         experiment = protocol.getAttributeValue('inputExperiment', None)
 
         if experiment is None:
             form.showError("Select input experiment first.")
         else:
             experiment.load()
-            dlg = dialog.ListDialog(form.root, "Choose dose name",
-                                    DoseTreeProvider(experiment),
+            provider = DoseTreeProvider(experiment)
+
+            dlg = VariablesProvider(form.root, "Choose dose name",
+                                    targetProtocol=protocol,
+                                    params=fullParams,
+                                    experiment=experiment,
+                                    provider=provider,
                                     selectmode=self.getSelectMode())
+
+            # dlg = dialog.ListDialog(form.root, "Choose dose name",
+            #                         DoseTreeProvider(experiment),
+            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
-                self.setFormValues(form, label, dlg.values)
+                for label in fullParams:
+                    for value in dlg.values:
+                        if value[0] == label:
+                            self.setFormValues(form, label, value[1])
+                            break
 
     def setFormValues(self, form, label, values):
-        form.setVar('doseName', values[0].doseName)
-        form.setVar('doseVia', values[0].via)
+        form.setVar(label, values)
 
     def getSelectMode(self):
         return "browse"
 
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
+
 
 class PKPDChooseSeveralVariableWizard(PKPDChooseVariableWizard):
     _targets = [(ProtPKPDDropMeasurements, ['varsToDrop']),
-                (ProtPKPDScaleToCommonDose,['measurementsToChange'])]
+                (ProtPKPDScaleToCommonDose, ['measurementsToChange'])]
 
     def getTitle(self):
         return "Choose variable(s)"
@@ -234,12 +355,12 @@ class SimpleListTreeProvider(TreeProvider):
 
 
 class PKPDVariableTemplateWizard(Wizard):
-    _targets = [(ProtPKPDImportFromText, ['variables'])
-                ]
+    _targets = [(ProtPKPDImportFromText, ['variables'])]
 
     def show(self, form, *params):
-        label = params
+
         protocol = form.protocol
+        labels = self._getAllParams(protocol)
         fnCSV = protocol.getAttributeValue('inputFile', "")
         if not os.path.exists(fnCSV):
             form.showError("Select a valid CSV input file first.")
@@ -254,9 +375,21 @@ class PKPDVariableTemplateWizard(Wizard):
                     strToAdd += ("\n%s ; [Units/none] ; [numeric/text] ; "
                                  "[time/label/measurement] ; [Comment]"
                                  % (value.get()))
-                if strToAdd!="":
-                    currentValue = protocol.getAttributeValue(label, "")
-                    form.setVar(label, currentValue+strToAdd)
+                if strToAdd != "":
+                    for label in labels:
+                        currentValue = protocol.getAttributeValue(label, "")
+                        form.setVar(label, currentValue+strToAdd)
+
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
 
 
 class PKPDDoseTemplateWizard(Wizard):
@@ -336,14 +469,13 @@ class PKPDODEWizard(Wizard):
                 (ProtPKPDTwoCompartmentsClint, ['bounds']),
                 (ProtPKPDTwoCompartmentsClintMetabolite, ['bounds']),
                 (ProtPKPDTwoCompartmentsAutoinduction, ['bounds']),
-                (ProtPKPDGenericFit, ['bounds']),
-                ]
+                (ProtPKPDGenericFit, ['bounds'])]
 
     _nonODE = [ProtPKPDGenericFit]
 
     def show(self, form, *params):
-        label = params
         protocol = form.protocol
+        labels = self._getAllParams(protocol)
         experiment = protocol.getAttributeValue('inputExperiment', None)
 
         if experiment is None:
@@ -351,7 +483,8 @@ class PKPDODEWizard(Wizard):
         else:
             # try:
                 protocol.setInputExperiment() # this load the experiment
-                protocol.clearGroupParameters()
+                if not type(protocol) in PKPDODEWizard._nonODE:
+                    protocol.clearGroupParameters()
                 protocol.getXYvars()
                 if not type(protocol) in PKPDODEWizard._nonODE:
                     protocol.configureSource(protocol.createDrugSource())
@@ -362,12 +495,12 @@ class PKPDODEWizard(Wizard):
                 i = 0
                 for sampleName, sample in protocol.experiment.samples.iteritems():
                     sample.interpretDose()
-                    if i==0:
+                    if i == 0:
                         if not type(protocol) in PKPDODEWizard._nonODE:
                             protocol.model.drugSource.setDoses(sample.parsedDoseList,0,1) # Needed to correctly identify the parameters of the source
                         protocol.model.setSample(sample)
                         protocol.calculateParameterUnits(sample)
-                    i+=1
+                    i += 1
 
                 if not type(protocol) in PKPDODEWizard._nonODE:
                     dlg = PKPDODEDialog(form.root, "Select Parameter Bounds",
@@ -384,15 +517,27 @@ class PKPDODEWizard(Wizard):
                     boundStr = ""
                     i = 1
                     for bound in dlg.getBoundsList():
-                        if i>1:
-                            boundStr+="; "
+                        if i > 1:
+                            boundStr += "; "
                         boundStr += str(bound)
                         i += 1
-                    if boundStr!="":
-                        form.setVar(label, boundStr)
+                    if boundStr != "":
+                        for label in labels:
+                            form.setVar(label, boundStr)
             # except Exception as e:
                 # pass
                 # form.showError("Error: %s" % str(e))
+
+    def _getAllParams(self, protocol):
+        """ Return the list of all target parameters associated with this
+        protocol. This function is useful when more than one parameter is
+        associated to the wizard in the same protocol. """
+
+        for k, v in self._targets:
+            if k.__name__ == protocol.getClassName():
+                return v
+
+        return []
 
 
 class MultiListDialog(ListDialog):

@@ -31,6 +31,7 @@ from pkpd.models.pk_models import PK_TwocompartmentsUrine
 # TESTED in test_workflow_gabrielsson_pk16.py
 # TESTED in test_workflow_gabrielsson_pk25.py
 
+
 class ProtPKPDTwoCompartmentsUrine(ProtPKPDODEBase):
     """ Fit a two-compartments model to a set of plasma and urine (cumulated) measurements ((any arbitrary dosing regimen is allowed)\n
         The differential equation is dC/dt = -Cl * C/V -Clp *(C-Cp)/V + 1/V * dD/dt, dCp/dt=Cl*C/Vp+Clp*(C-Cp)/Vp and dA/dt = fe * Cl * C\n
@@ -40,6 +41,9 @@ Confidence intervals calculated by this fitting may be pessimistic because it as
 are independent, which are not. Use Bootstrap estimates instead.\n
         Protocol created by http://www.kinestatpharma.com\n"""
     _label = 'two-compartments urine'
+
+    def __init__(self,**kwargs):
+        ProtPKPDODEBase.__init__(self,**kwargs)
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):

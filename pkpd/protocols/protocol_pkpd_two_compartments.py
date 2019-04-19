@@ -41,6 +41,7 @@ from pkpd.models.pk_models import PK_Twocompartments
 # TESTED in test_workflow_gabrielsson_pk19.py
 # TESTED in test_workflow_gabrielsson_pk39.py
 
+
 class ProtPKPDTwoCompartments(ProtPKPDODEBase):
     """ Fit a two-compartmentx model to a set of measurements (any arbitrary dosing regimen is allowed)\n
         The central compartment is referred to as C, while the peripheral compartment as Cp.
