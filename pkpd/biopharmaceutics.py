@@ -311,7 +311,9 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             self.tmax=self.parameters[0]
             self.prepareBasis()
         fraction=np.sum( self.B(t) * np.asarray(self.parameters[1:]))
-        return max(self.Amax*(1-fraction),0.0)
+        fraction=np.clip(fraction,0.0,1.0)
+        #print(t,self.B(t),np.asarray(self.parameters[1:]),fraction)
+        return self.Amax*(1-fraction)
 
     def getEquation(self):
         retval="D(t) (tmax=%f)=(%f)*("%(self.parameters[0],self.Amax)
