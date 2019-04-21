@@ -27,10 +27,11 @@
 Biopharmaceutics: Drug sources and how they dissolve
 """
 import copy
-from itertools import izip
 import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight
+import bspline
+import bspline.splinelab as splinelab
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -185,7 +186,6 @@ class BiopharmaceuticsModelOrderFractional(BiopharmaceuticsModel):
         return self.paramterUnits
 
     def getAg(self,t):
-        # COSS Hay que pensar si esto es correcto
         if t<=0:
             return 0.0
         Amax = self.parameters[0]
@@ -280,6 +280,104 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
         return "First and First order absorption (%s)"%self.__class__.__name__
 
 
+class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
+    def __init__(self):
+        self.nknots=0
+        self.tmax=0
+
+    def prepareBasis(self):
+        p = 3 # Cubic splines
+        self.knots = np.linspace(0, self.tmax, self.nknots)  # create a knot vector without endpoint repeats
+        k = splinelab.augknt(self.knots, p)  # add endpoint repeats as appropriate for spline order p
+        self.B = bspline.Bspline(k, p)  # create spline basis of order p on knots k
+
+    def getDescription(self):
+        return ['B-spline model with %d knots'%self.nknots]
+
+    def getParameterNames(self):
+        retval = ['tmax']
+        retval+=['c%d'%i for i in range(self.nknots+2)]
+        return retval
+
+    def calculateParameterUnits(self,sample):
+        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
+        self.parameterUnits += [PKPDUnit.UNIT_NONE]*(self.nknots+2)
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0 or self.parameters[0]<=0:
+            return 0.0
+        if self.tmax!=self.parameters[0]:
+            self.tmax=self.parameters[0]
+            self.prepareBasis()
+        fraction=np.sum( self.B(t) * np.asarray(self.parameters[1:]))
+        return max(self.Amax*(1-fraction),0.0)
+
+    def getEquation(self):
+        retval="D(t) (tmax=%f)=(%f)*("%(self.parameters[0],self.Amax)
+        for i in range(self.nknots+2):
+            if i>0:
+                retval+="+"
+            retval+="(%f)*B_(%d,3)(t)"%(self.parameters[i+1],i)
+        retval+=")"
+        return retval
+
+    def getModelEquation(self):
+        # https://en.wikipedia.org/wiki/De_Boor%27s_algorithm
+        return "D(t)=sum_i ci*B_(i,3) with %d knots distributed until tmax"%self.nknots
+
+    def getDescription(self):
+        return "Bsplines with %d knots (%s)"%(self.nknots,self.__class__.__name__)
+
+    def areParametersValid(self, p):
+        return p[0]>0
+
+
+class BiopharmaceuticsModelSpline2(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 2
+
+class BiopharmaceuticsModelSpline3(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 3
+
+class BiopharmaceuticsModelSpline4(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 4
+
+class BiopharmaceuticsModelSpline5(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 5
+
+class BiopharmaceuticsModelSpline6(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 6
+
+class BiopharmaceuticsModelSpline7(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 7
+
+class BiopharmaceuticsModelSpline8(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 8
+
+class BiopharmaceuticsModelSpline9(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 9
+
+class BiopharmaceuticsModelSpline10(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 10
+
 class PKPDVia:
     def __init__(self):
         self.viaName = None
@@ -362,6 +460,24 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelOrderFractional()
                 elif self.via=="ev1-ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1AndOrder1()
+                elif self.via=="spline2":
+                    self.viaProfile=BiopharmaceuticsModelSpline2()
+                elif self.via=="spline3":
+                    self.viaProfile=BiopharmaceuticsModelSpline3()
+                elif self.via=="spline4":
+                    self.viaProfile=BiopharmaceuticsModelSpline4()
+                elif self.via=="spline5":
+                    self.viaProfile=BiopharmaceuticsModelSpline5()
+                elif self.via=="spline6":
+                    self.viaProfile=BiopharmaceuticsModelSpline6()
+                elif self.via=="spline7":
+                    self.viaProfile=BiopharmaceuticsModelSpline7()
+                elif self.via=="spline8":
+                    self.viaProfile=BiopharmaceuticsModelSpline8()
+                elif self.via=="spline9":
+                    self.viaProfile=BiopharmaceuticsModelSpline9()
+                elif self.via=="spline10":
+                    self.viaProfile=BiopharmaceuticsModelSpline10()
 
     def changeTimeUnitsToMinutes(self):
         if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
@@ -640,6 +756,9 @@ class PKPDDose:
 
     def getDUnitsString(self):
         return self.dunits._toString()
+
+    def getDoseUnits(self):
+        return self.dunits
 
 
 def createDeltaDose(doseAmount,via,t=0,dunits="mg"):
