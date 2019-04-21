@@ -821,9 +821,12 @@ def inverseUnits(unit):
     else:
         return PKPDUnit.UNIT_NONE
 
-def createUnit(unitName):
+def createUnit(unitNameOrCode):
     unit = PKPDUnit()
-    unit.unit = unit._fromString(unitName)
+    if type(unitNameOrCode)==int:
+        unit.unit = unitNameOrCode
+    else:
+        unit.unit = unit._fromString(unitNameOrCode)
     return unit
 
 # FIXME: Replace the use of this function by PKPDUnit.codeToString
