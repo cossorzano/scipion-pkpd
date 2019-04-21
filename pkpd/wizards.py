@@ -152,7 +152,6 @@ class VariablesProvider(dialog.Dialog):
                         value[1].set(pwobj.String(oldValue))
 
 
-
 class FilterVariablesTreeProvider(TreeProvider):
     """ Simplified view of VariablesTreeProvider with less columns.
     Additionally, we can filter by a given function. """
@@ -232,10 +231,6 @@ class PKPDChooseVariableWizard(Wizard):
                                     params=fullParams,
                                     experiment=experiment,
                                     provider=provider)
-            # tp = FilterVariablesTreeProvider(fullParams, experiment,
-            #                                  filter=filterFunc)
-            # dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
-            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
                 for label in fullParams:
                     for value in dlg.values:
@@ -309,9 +304,6 @@ class PKPDChooseDoseWizard(Wizard):
                                     provider=provider,
                                     selectmode=self.getSelectMode())
 
-            # dlg = dialog.ListDialog(form.root, "Choose dose name",
-            #                         DoseTreeProvider(experiment),
-            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
                 for label in fullParams:
                     for value in dlg.values:
