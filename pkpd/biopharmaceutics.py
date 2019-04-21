@@ -312,15 +312,18 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             self.prepareBasis()
         fraction=np.sum( self.B(t) * np.asarray(self.parameters[1:]))
         fraction=np.clip(fraction,0.0,1.0)
-        #print(t,self.B(t),np.asarray(self.parameters[1:]),fraction)
+        prm=np.asarray(self.parameters[1:])
+        np.sort(prm)
+        # print(t,self.B(t),prm,fraction)
         return self.Amax*(1-fraction)
 
     def getEquation(self):
         retval="D(t) (tmax=%f)=(%f)*("%(self.parameters[0],self.Amax)
+        prm=np.asarray(self.parameters[1:])
         for i in range(self.nknots+2):
             if i>0:
                 retval+="+"
-            retval+="(%f)*B_(%d,3)(t)"%(self.parameters[i+1],i)
+            retval+="(%f)*B_(%d,3)(t)"%(prm[i],i)
         retval+=")"
         return retval
 
