@@ -641,6 +641,13 @@ class PKPDExperiment(EMObject):
         else:
             return PKPDUnit.UNIT_NONE
 
+    def getDoseUnits(self):
+        if len(self.samples)==0:
+            return PKPDUnit.UNIT_NONE
+        listOfSamples = list(self.samples.values())
+        listOfSamples[0].interpretDose()
+        return listOfSamples[0].getDoseUnits()
+
     def addParameterToSample(self, sampleName, varName, varUnits, varDescr, varValue, rewrite=False):
         if not varName in self.variables:
             varX = PKPDVariable()
