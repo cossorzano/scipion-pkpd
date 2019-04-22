@@ -52,6 +52,7 @@ class VariablesProvider(dialog.Dialog):
         self.targetProtocol = kwargs['targetProtocol']
         self.params = kwargs['params']
         self.values = []
+        self.oldValues = {}
         self.experiment = kwargs['experiment']
         self.provider = kwargs['provider']
 
@@ -129,6 +130,7 @@ class VariablesProvider(dialog.Dialog):
                                                                                combobox['value'][combobox.current()]))
         varValue = getattr(self.targetProtocol, paramName, None)
         self.values.append((paramName, varValue))
+        self.oldValues[paramName] = varValue.get()
         _fillVariableValues(paramName, varValue, combobox)
 
         return paramValueFrame
@@ -138,6 +140,16 @@ class VariablesProvider(dialog.Dialog):
         bt.grid(row=0, column=0, sticky='news', padx=5, pady=5)
         gui.configureWeigths(parent)
         return bt
+
+    def restartValues(self, restartAll=False):
+        if restartAll:
+            for value in self.values:
+                self.oldValues[value[0]] = value[1].get()
+        else:
+            for key, oldValue in self.oldValues.items():
+                for value in self.values:
+                    if value[0] == key:
+                        value[1].set(pwobj.String(oldValue))
 
 
 class FilterVariablesTreeProvider(TreeProvider):
@@ -219,16 +231,15 @@ class PKPDChooseVariableWizard(Wizard):
                                     params=fullParams,
                                     experiment=experiment,
                                     provider=provider)
-            # tp = FilterVariablesTreeProvider(fullParams, experiment,
-            #                                  filter=filterFunc)
-            # dlg = dialog.ListDialog(form.root, self.getTitle(), tp,
-            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
                 for label in fullParams:
                     for value in dlg.values:
                         if value[0] == label:
                             self.setFormValues(form, label, value[1])
                             break
+                dlg.restartValues(restartAll=True)
+            else:
+                dlg.restartValues()
 
     def getTitle(self):
         return "Choose variable"
@@ -293,15 +304,15 @@ class PKPDChooseDoseWizard(Wizard):
                                     provider=provider,
                                     selectmode=self.getSelectMode())
 
-            # dlg = dialog.ListDialog(form.root, "Choose dose name",
-            #                         DoseTreeProvider(experiment),
-            #                         selectmode=self.getSelectMode())
             if dlg.resultYes():
                 for label in fullParams:
                     for value in dlg.values:
                         if value[0] == label:
                             self.setFormValues(form, label, value[1])
                             break
+                dlg.restartValues(restartAll=True)
+            else:
+                dlg.restartValues()
 
     def setFormValues(self, form, label, values):
         form.setVar(label, values)
