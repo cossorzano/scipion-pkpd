@@ -31,6 +31,7 @@ from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from test_workflow import TestWorkflow
+import copy
 
 
 class TestDissolutionWorkflow(TestWorkflow):
@@ -157,6 +158,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         fitting = PKPDFitting()
         fitting.load(prot.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.997)
+        protWeibull = copy.copy(prot)
 
 
         # Fit a Higuchi dissolution
@@ -214,9 +216,9 @@ class TestDissolutionWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot.outputExperiment.fnPKPD)
         Vmax = float(experiment.samples['Profile'].descriptors['Vmax'])
-        self.assertTrue(Vmax>86 and Vmax<86.5)
+        self.assertTrue(Vmax>80 and Vmax<86.5)
         K = float(experiment.samples['Profile'].descriptors['K'])
-        self.assertTrue(K>0.06 and K<0.07)
+        self.assertTrue(K>0.06 and K<0.12)
 
         fitting = PKPDFitting()
         fitting.load(prot.outputFitting.fnFitting)
@@ -236,15 +238,32 @@ class TestDissolutionWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot.outputExperiment.fnPKPD)
         Vmax = float(experiment.samples['Profile'].descriptors['Vmax'])
-        self.assertTrue(Vmax>82 and Vmax<83)
+        self.assertTrue(Vmax>80 and Vmax<83)
         K = float(experiment.samples['Profile'].descriptors['K'])
-        self.assertTrue(K>0.035 and K<0.045)
+        self.assertTrue((K>0.040 and K<0.045) or (K>0.15 and K<0.25))
         m = float(experiment.samples['Profile'].descriptors['m'])
-        self.assertTrue(m>8 and m<9)
+        self.assertTrue((m>1 and m<2) or (m>8 and m<9))
 
         fitting = PKPDFitting()
         fitting.load(prot.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.985)
+
+
+        # Check that fit bootstrap is working
+        print "Fitting bootstrap ..."
+        prot = self.newProtocol(ProtPKPDFitBootstrap,
+                                objLabel='pkpd - fit bootstrap')
+        prot.inputFit.set(protWeibull)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputPopulation.fnFitting, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDFitBootstrap', ProtPKPDFitBootstrap)
+
+        fitting = PKPDFitting("PKPDSampleFitBootstrap")
+        fitting.load(prot.outputPopulation.fnFitting)
+        mu, sigma, R, percentiles = fitting.getStats()
+        self.assertTrue(mu[0]>80.5 and mu[0]<81.5)
+        self.assertTrue(mu[1]>0.28 and mu[1]<0.29)
+        self.assertTrue(mu[2]>1.4 and mu[2]<1.5)
 
 if __name__ == "__main__":
     unittest.main()
