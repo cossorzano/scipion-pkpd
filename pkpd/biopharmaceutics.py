@@ -739,6 +739,21 @@ class PKPDDose:
             doseAmount=0
         return doseAmount
 
+    def getAmountReleasedUpTo(self, t0):
+        doseAmount = 0.0
+        if self.via.viaProfile == None:
+            doseAmount += self.getDoseAt(0.0,t0)
+        else:
+            if self.doseType!=PKPDDose.TYPE_INFUSION:
+                self.via.viaProfile.Amax = self.via.bioavailability*self.doseAmount
+                doseAmount += self.via.viaProfile.getAg(0.0)-\
+                              self.via.viaProfile.getAg( t0-self.t0-self.via.tlag)
+            else:
+                raise Exception("getAmountReleasedAt not implemented for non-iv infusion")
+        if doseAmount<0:
+            doseAmount=0
+        return doseAmount
+
     def isDoseABolus(self):
         if self.doseType != PKPDDose.TYPE_BOLUS:
             return False
@@ -807,6 +822,12 @@ class DrugSource:
         doseAmount = 0.0
         for dose in self.parsedDoseList:
             doseAmount+=dose.getAmountReleasedAt(t0,dt)
+        return doseAmount
+
+    def getAmountReleasedUpTo(self,t0):
+        doseAmount = 0.0
+        for dose in self.parsedDoseList:
+            doseAmount+=dose.getAmountReleasedUpTo(t0)
         return doseAmount
 
     def getEquation(self):
