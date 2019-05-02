@@ -38,6 +38,7 @@ from .protocol_pkpd_create_label_2exps import ProtPKPDCreateLabel2Exps
 from .protocol_pkpd_cumulated_dose import ProtPKPDCumulatedDose
 from .protocol_pkpd_dissolution_deconvolve import ProtPKPDDeconvolve
 from .protocol_pkpd_dissolution_fit import ProtPKPDDissolutionFit
+from .protocol_pkpd_dissolution_f2 import ProtPKPDDissolutionF2
 from .protocol_pkpd_dose_escalation import *
 from .protocol_pkpd_drop_measurements import ProtPKPDDropMeasurements
 from .protocol_pkpd_elimination_rate import ProtPKPDEliminationRate

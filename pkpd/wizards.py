@@ -188,6 +188,7 @@ class PKPDChooseVariableWizard(Wizard):
                 (ProtPKPDStatsExp1Subgroups2Mean, ['labelToCompare']),
                 (ProtPKPDExponentialFit, ['predictor', 'predicted']),
                 (ProtPKPDDissolutionFit, ['predictor', 'predicted']),
+                (ProtPKPDDissolutionF2, ['dissolutionVar']),
                 (ProtPKPDGenericFit, ['predictor', 'predicted']),
                 (ProtPKPDEliminationRate, ['predictor', 'predicted']),
                 (ProtPKPDMonoCompartment, ['predictor', 'predicted']),

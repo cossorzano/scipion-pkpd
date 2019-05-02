@@ -174,7 +174,9 @@ PKPDDataSet(name='Gabrielsson_PD11', folder='Gabrielsson_PD11',
 
 PKPDDataSet(name='Dissolution', folder='Dissolution',
         files={
-               'experiment': 'dissolution.pkpd'
+               'experiment': 'dissolution.pkpd',
+               'experiment12Test': 'dissolution12Test.pkpd',
+               'experiment12Ref': 'dissolution12Ref.pkpd',
                })
 
 PKPDDataSet(name='model',  folder='model',
