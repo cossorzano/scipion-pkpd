@@ -46,6 +46,8 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
         form.addSection('Input')
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments', help='Select a run of an ODE model')
+        form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
+                      help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -110,10 +112,13 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
 
             cumulatedDose=0.0
             A=t*0.0 # Allocate memory
+            totalReleased = drugSource.getAmountReleasedUpTo(10*t[-1])/100
             print("t(min) A(%s)"%Avar.units._toString())
             for i in range(t.size):
                 cumulatedDose+=drugSource.getAmountReleasedAt(t[i],deltaT)
                 A[i]=cumulatedDose
+                if self.normalize.get():
+                    A[i] /= totalReleased
                 print("%f %f"%(t[i],A[i]))
             self.addSample(sampleName,t,A)
 
