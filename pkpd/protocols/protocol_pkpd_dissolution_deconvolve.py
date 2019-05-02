@@ -34,6 +34,8 @@ from pkpd.pkpd_units import createUnit
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.biopharmaceutics import DrugSource
 
+# tested in test_workflow_deconvolution
+
 class ProtPKPDDeconvolve(ProtPKPDODEBase):
     """ Deconvolve the drug dissolution from a compartmental model."""
 

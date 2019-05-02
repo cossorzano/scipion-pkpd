@@ -33,7 +33,6 @@ from pkpd.objects import PKPDDataSet
 from test_workflow import TestWorkflow
 import copy
 
-
 class TestDissolutionWorkflow(TestWorkflow):
 
     @classmethod
