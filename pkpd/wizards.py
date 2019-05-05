@@ -99,7 +99,7 @@ class VariablesProvider(dialog.Dialog):
         def _fillVariableValues(paramName, varValue, cbox):
             self._objects = self.provider.getObjects()
             index = 0
-            valueIndex = 0
+            valueIndex = -1
             valuesList = []
             for obj in self._objects:
                 objDict = self.provider.getObjectInfo(obj)
@@ -112,7 +112,11 @@ class VariablesProvider(dialog.Dialog):
                         valueIndex = index
                     index += 1
             cbox['values'] = valuesList
-            cbox.current(valueIndex)
+            if valueIndex != -1:
+                cbox.current(valueIndex)
+            else:
+                _selection_changed(None, paramName, valuesList[0])
+                cbox.current(0)
 
         def _selection_changed(event, param, newValue):
             for value in self.values:
