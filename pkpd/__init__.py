@@ -33,7 +33,6 @@ PKPD functions
 import os
 import pyworkflow.em
 from pyworkflow.utils import Environ
-from .bibtex import _bibtex
 from .constants import *
 
 

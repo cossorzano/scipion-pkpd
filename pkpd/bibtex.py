@@ -25,11 +25,6 @@
 # *
 # **************************************************************************
 """
-Bibtex string file for Simple package.
-"""
-
-_bibtexStr = """
-
 @Article{CHMPEWP56095,
   Title                    = {Guideline on the investigation of drug interactions},
   Author                   = {European Medicines Agency Committee for Human Medicinal Products},
@@ -57,6 +52,17 @@ _bibtexStr = """
   Year                     = {2010},
   Doi                      = {http://books.apotekarsocieteten.se/sv/pharmacokinetic-pharmacodynamic-data-analysis-concepts-and-applications-ed-5-2},
   Url                      = {http://books.apotekarsocieteten.se/sv/pharmacokinetic-pharmacodynamic-data-analysis-concepts-and-applications-ed-5-2}
+}
+
+@Article{Islam2018,
+  Author                   = {Islam, M. M. and Begum, M.},
+  Title                    = {Bootstrap confidence intervals for dissolution similarity factor f2},
+  Journal                  = {Biometrics and Biostatistics Intl. J.},
+  Year                     = {2018},
+  Volume                   = {7},
+  Pages                    = {397-403},
+  Doi                      = {http://dx.doi.org/10.15406/bbij.2018.07.00237},
+  Url                      = {https://medcraveonline.com/BBIJ/BBIJ-07-00237.pdf}
 }
 
 @Article{Kanamitsu2000,
@@ -137,7 +143,3 @@ _bibtexStr = """
 }
 
 """
-
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)
