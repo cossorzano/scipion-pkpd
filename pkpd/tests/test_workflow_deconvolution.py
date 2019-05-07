@@ -149,8 +149,8 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         experiment.load(prot.outputExperiment.fnPKPD)
         A = np.asarray(experiment.samples['Individual1'].getValues('A'), dtype=np.float64)
         self.assertTrue(A[0] == 0.0)
-        self.assertTrue(A[64] > 42 and A[64] < 46)
-        self.assertTrue(A[200] > 90 and A[200] < 95)
+        self.assertTrue(A[64] > 42 and A[64] < 55)
+        self.assertTrue(A[200] > 90 and A[200] <=100)
 
 if __name__ == "__main__":
     unittest.main()
