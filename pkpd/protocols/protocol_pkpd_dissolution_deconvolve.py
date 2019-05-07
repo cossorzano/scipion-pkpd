@@ -112,7 +112,7 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
 
             cumulatedDose=0.0
             A=t*0.0 # Allocate memory
-            totalReleased = drugSource.getAmountReleasedUpTo(10*t[-1])/100
+            totalReleased = drugSource.getAmountReleasedUpTo(10*t[-1])/100 # Divided by 100 to have a number between 0 and 100
             print("t(min) A(%s)"%Avar.units._toString())
             for i in range(t.size):
                 cumulatedDose+=drugSource.getAmountReleasedAt(t[i],deltaT)
@@ -120,6 +120,7 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
                 if self.normalize.get():
                     A[i] /= totalReleased
                 print("%f %f"%(t[i],A[i]))
+                # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
             self.addSample(sampleName,t,A)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
