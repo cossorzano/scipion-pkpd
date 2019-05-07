@@ -30,7 +30,7 @@ import copy
 import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -298,23 +298,25 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
         return self.parameterUnits
 
     def getAg(self,t):
-        if t<0 or self.parameters[0]<=0:
+        if t<=0:
+            return self.Amax
+        self.tmax=self.parameters[0]
+        if t>=self.tmax or self.tmax<=0:
             return 0.0
         if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,self.parameters):
-            self.tmax=self.parameters[0]
             self.knots = np.linspace(0, self.tmax, self.nknots+2)
             self.knotsY = np.append(np.insert(self.parameters[1:],0,0),1)
-            self.B=UnivariateSpline(self.knots, self.knotsY)
+            self.knotsY=np.sort(self.knotsY)
+            self.B=InterpolatedUnivariateSpline(self.knots, self.knotsY,k=2)
             self.parametersPrepared=copy.copy(self.parameters)
         fraction=self.B(t)
         fraction=np.clip(fraction,0.0,1.0)
-        prm=np.asarray(self.parameters[1:])
-        np.sort(prm)
-        # print(t,self.B(t),prm,fraction)
+        #print("getAg t= %f B(t)= %f fraction= %f Ag= %f"%(t,self.B(t),fraction,self.Amax*(1-fraction)))
         return self.Amax*(1-fraction)
 
     def getEquation(self):
-        retval="D(t) interpolating spline at x=%s and y=%s"%(np.array2string(self.knots),np.array2string(self.knotsY*self.Amax))
+        self.knotsY=np.sort(self.knotsY)
+        retval="D(t) interpolating spline at x=%s and y=%s"%(np.array2string(self.knots,max_line_width=10000),np.array2string(self.knotsY*self.Amax,max_line_width=10000))
         return retval
 
     def getModelEquation(self):
