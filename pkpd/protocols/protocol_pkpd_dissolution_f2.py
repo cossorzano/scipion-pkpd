@@ -110,6 +110,8 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                         allF2.append(f2)
         strF1=self.printStats(allF1,"F1","sum(|pRef-pTest|)/sum(pRef)*100")
         strF2=self.printStats(allF2,"F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))")
+        np.savetxt(self._getExtraPath("f1.txt"),allF1)
+        np.savetxt(self._getExtraPath("f2.txt"),allF2)
 
         self.printSection("Results")
         fhSummary = open(self._getPath("summary.txt"),"w")
@@ -124,4 +126,8 @@ class ProtPKPDDissolutionF2(ProtPKPD):
     def _summary(self):
         retval = []
         self.addFileContentToMessage(retval,self._getPath("summary.txt"))
+        return retval
+
+    def _citations(self):
+        retval = ['Islam2018']
         return retval
