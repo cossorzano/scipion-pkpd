@@ -25,8 +25,6 @@
 # **************************************************************************
 
 import numpy as np
-import math
-import random
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
@@ -34,7 +32,9 @@ from pkpd.pkpd_units import createUnit
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.biopharmaceutics import DrugSource
 
-# tested in test_workflow_deconvolution
+# Tested in test_workflow_deconvolution
+# Tested by test_workflow_levyplot
+
 
 class ProtPKPDDeconvolve(ProtPKPDODEBase):
     """ Deconvolve the drug dissolution from a compartmental model."""

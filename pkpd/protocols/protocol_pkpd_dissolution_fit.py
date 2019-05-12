@@ -30,6 +30,8 @@ from .protocol_pkpd_fit_base import ProtPKPDFitBase
 from pkpd.models.dissolution_models import *
 
 # Tested by test_workflow_dissolution
+# Tested by test_workflow_levyplot
+
 
 class ProtPKPDDissolutionFit(ProtPKPDFitBase):
     """ Fit a dissolution model. The observed measurement is modelled as Y=f(t).\n

@@ -177,6 +177,7 @@ PKPDDataSet(name='Dissolution', folder='Dissolution',
                'experiment': 'dissolution.pkpd',
                'experiment12Test': 'dissolution12Test.pkpd',
                'experiment12Ref': 'dissolution12Ref.pkpd',
+               'invivo12': 'invivo12.pkpd',
                })
 
 PKPDDataSet(name='model',  folder='model',
