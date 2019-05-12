@@ -132,6 +132,7 @@ class PKPDUnit:
     UNIT_WEIGHTINVTIME_mmol_SEC = 371
     UNIT_WEIGHTINVTIME_umol_SEC = 372
     UNIT_WEIGHTINVTIME_nmol_SEC = 373
+    UNIT_INVTIME2_MIN2 = 400
     UNIT_NONE = 99999
 
     unitDictionary = {
@@ -246,6 +247,8 @@ class PKPDUnit:
         UNIT_WEIGHTINVTIME_mmol_SEC: "mmol/s",
         UNIT_WEIGHTINVTIME_umol_SEC: "umol/s",
         UNIT_WEIGHTINVTIME_nmol_SEC: "nmol/s",
+
+        UNIT_INVTIME2_MIN2: "1/min^2"
     }
 
     def __init__(self,unitString=""):
@@ -671,6 +674,12 @@ def multiplyUnits(unitX,unitY):
         elif unitY==PKPDUnit.UNIT_CONC_umol_L:
             return PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN
 
+    elif unitX==PKPDUnit.UNIT_INVTIME_MIN:
+        if unitY==PKPDUnit.UNIT_INVTIME_MIN:
+            return PKPDUnit.UNIT_INVTIME2_MIN2
+        else:
+            return PKPDUnit.UNIT_NONE
+
 
 def divideUnits(unitX,unitY):
     if unitX==PKPDUnit.UNIT_WEIGHT_g:
@@ -803,6 +812,12 @@ def divideUnits(unitX,unitY):
             return PKPDUnit.UNIT_VOLUMEINVTIME_nL_MIN
         elif unitY==PKPDUnit.UNIT_TIME_SEC:
             return PKPDUnit.UNIT_VOLUMEINVTIME_nL_SEC
+        else:
+            return PKPDUnit.UNIT_NONE
+
+    elif unitX==PKPDUnit.UNIT_VOLUMEINVTIME_L_MIN:
+        if unitY==PKPDUnit.UNIT_VOLUME_L:
+            return PKPDUnit.UNIT_INVTIME_MIN
         else:
             return PKPDUnit.UNIT_NONE
 
