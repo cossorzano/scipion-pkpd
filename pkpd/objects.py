@@ -980,6 +980,9 @@ class PKPDODEModel(PKPDModelBase2):
                 self.yPredicted.append(np.interp(x[j],Xt,Yt[:,j]))
         return self.yPredicted
 
+    def printOtherParameterization(self):
+        pass
+
 
 class PKPDOptimizer:
     def __init__(self,model,fitType,goalFunction="RMSE"):

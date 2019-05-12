@@ -419,6 +419,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
             optimizer2.setConfidenceInterval(self.confidenceInterval.get())
             self.setParameters(optimizer2.optimum)
             optimizer2.evaluateQuality()
+            self.model.printOtherParameterization()
 
             self.yPredictedList=self.separateLists(self.yPredicted)
             self.yPredictedLowerList=self.separateLists(self.yPredictedLower)

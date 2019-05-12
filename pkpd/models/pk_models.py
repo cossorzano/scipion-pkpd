@@ -32,7 +32,7 @@ import numpy as np
 
 from pkpd.objects import PKPDModel, PKPDODEModel
 from pkpd.pkpd_units import (inverseUnits, divideUnits, multiplyUnits,
-                             unitFromString, PKPDUnit)
+                             unitFromString, createUnit, PKPDUnit)
 
 
 class PKModel(PKPDModel):
@@ -360,6 +360,36 @@ class PK_Monocompartment(PKPDODEModel):
     def areParametersValid(self, p):
         return np.sum(p[0:1]<0)==0
 
+    def printOtherParameterization(self):
+        Cl=self.parameters[0]
+        V=self.parameters[1]
+        print(" ")
+        print("Model parameterization ===========")
+        print("The one compartment model (excluding the source) has been estimated according to the homogeneous equation:")
+        print("This is called the physiological parameterization")
+        print("dC/dt = -Cl/V * C")
+        print("where:")
+        print("C is the concentration in the central compartment")
+        print("with parameters:")
+        print("Cl=%f (%s) (Clearance from central compartment)"%(Cl,PKPDUnit.codeToString(self.parameterUnits[0])))
+        print("V=%f (%s) (Apparent volume of distribution in the central compartment)"%(V,PKPDUnit.codeToString(self.parameterUnits[1])))
+        print(" ")
+        print("An alternative formulation is given by its microconstants formulation:")
+        print("dA/dt = -ke * A")
+        print("where:")
+        print("A is the amount of drug in the central compartment (A=C*V)")
+        print("with parameters:")
+        ke=Cl/V
+        kunits = divideUnits(self.parameterUnits[0],self.parameterUnits[1])
+        print("ke=%f (%s) (Elimination from central compartment, ke=Cl/V)"%(ke,PKPDUnit.codeToString(kunits)))
+        print(" ")
+        print("An alternative formulation is given by its impulse response (response to an intravenous bolus of amount A0):")
+        print("A=A0*exp(-ke*t)")
+        print("where:")
+        print("A is the amount of drug in the central compartment")
+        print("A0 is the amount of drug given in the bolus")
+
+
 class PK_MonocompartmentClint(PKPDODEModel):
     # https://www.nps.org.au/australian-prescriber/articles/pharmacokinetics-made-easy-9-non-linear-pharmacokinetics
     def F(self, t, y):
@@ -539,6 +569,63 @@ class PK_Twocompartments(PKPDODEModel):
 
     def areParametersValid(self, p):
         return np.sum(p[0:1]<0)==0
+
+    def printOtherParameterization(self):
+        Cl=self.parameters[0]
+        V=self.parameters[1]
+        Clp=self.parameters[2]
+        Vp=self.parameters[3]
+        print(" ")
+        print("Model parameterization ===========")
+        print("The two compartment model (excluding the source) has been estimated according to the homogeneous equations:")
+        print("This is called the physiological parameterization")
+        print("dC/dt = -Cl/V * C - Clp/V * (C-Cp) and dCp/dt = Clp/Vp * (C-Cp)")
+        print("where:")
+        print("C is the concentration in the central compartment")
+        print("Cp is the concentration in the peripheral compartment")
+        print("with parameters:")
+        print("Cl=%f (%s) (Clearance from central compartment)"%(Cl,PKPDUnit.codeToString(self.parameterUnits[0])))
+        print("V=%f (%s) (Apparent volume of distribution in the central compartment)"%(V,PKPDUnit.codeToString(self.parameterUnits[1])))
+        print("Clp=%f (%s) (Clearance from the central to the peripheral compartment and viceversa)"%(Clp,PKPDUnit.codeToString(self.parameterUnits[2])))
+        print("Vp=%f (%s) (Apparent volume of distribution in the peripheral compartment)"%(Vp,PKPDUnit.codeToString(self.parameterUnits[3])))
+        print(" ")
+        print("An alternative formulation is given by its microconstants formulation:")
+        print("dA/dt = -k10 * A - k12 * A + k21 * Ap and dAp/dt = k12 * A - k21 * Ap")
+        print("where:")
+        print("A is the amount of drug in the central compartment (A=C*V)")
+        print("Ap is the amount of drug in the peripheral compartment (Ap=Cp*Vp)")
+        print("with parameters:")
+        k12=Clp/V
+        k21=Clp/Vp
+        k10=Cl/V
+        kunits = divideUnits(self.parameterUnits[0],self.parameterUnits[1])
+        print("k10=%f (%s) (Elimination from central compartment, k10=Cl/V)"%(k10,PKPDUnit.codeToString(kunits)))
+        print("k12=%f (%s) (Transfer from central to peripheral compartment, k12=Cl/V)"%(k12,PKPDUnit.codeToString(kunits)))
+        print("k21=%f (%s) (Transfer from peripheral to central compartment, k21=Cl/Vp)"%(k21,PKPDUnit.codeToString(kunits)))
+        print(" ")
+        print("An alternative formulation is given by its impulse response (response to an intravenous bolus of amount A0):")
+        print("A=A0*a*exp(-alpha*t)+A0*b*exp(-beta*t)")
+        print("where:")
+        print("A is the amount of drug in the central compartment")
+        print("A0 is the amount of drug given in the bolus")
+        print("The first exponential (alpha) should extinguish faster than the second (beta)")
+        print("with parameters:")
+        u=k21+k12+k10
+        v=k21*k10
+        k2units = multiplyUnits(kunits,kunits)
+        print("u=%f (%s) (auxiliary variable, u=k12+k21+k10)"%(u,PKPDUnit.codeToString(kunits)))
+        print("v=%f (%s) (auxiliary variable, u=k21*k10)"%(v,PKPDUnit.codeToString(k2units)))
+        print("alpha and beta are solved from:")
+        print("alpha+beta=u")
+        print("alpha*beta=v")
+        alpha=0.5*(u+math.sqrt(u*u-4*v))
+        beta= 0.5*(u-math.sqrt(u*u-4*v))
+        a=(alpha-k21)/(alpha-beta)
+        b=(k21-beta) /(alpha-beta)
+        print("a=%f (%s)     (Amplitude of first exponential,  a=(alpha-k21)/(alpha-beta))"%(a,PKPDUnit.codeToString(PKPDUnit.UNIT_NONE)))
+        print("alpha=%f (%s) (Decay of first exponential)"%(alpha,PKPDUnit.codeToString(PKPDUnit.UNIT_INVTIME_MIN)))
+        print("b=%f (%s)     (Amplitude of second exponential, b=(k21-beta)/(alpha-beta))"%(b,PKPDUnit.codeToString(PKPDUnit.UNIT_NONE)))
+        print("beta=%f (%s)  (Decay of second exponential)"%(beta,PKPDUnit.codeToString(PKPDUnit.UNIT_INVTIME_MIN)))
 
 class PK_TwocompartmentsClint(PKPDODEModel):
     def F(self, t, y):
