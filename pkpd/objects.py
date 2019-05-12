@@ -1214,16 +1214,24 @@ class PKPDLSOptimizer(PKPDOptimizer):
         if self.verbose>0:
             print("Optimizing with Least Squares (LS), a local optimizer")
             print("Initial parameters: "+str(self.model.parameters))
-        self.optimum, self.cov_x, self.info, mesg, _ = leastsq(self.getResiduals, self.model.parameters, full_output=True)
+        self.optimum, J, self.info, mesg, _ = leastsq(self.getResiduals, self.model.parameters, full_output=True)
+            # J is the jacobian C=MSE*inv(J'*J)
         if self.verbose>0:
             print("Best LS function value: "+str(self.goalFunction(self.optimum)))
             print("Best LS parameters: "+str(self.optimum))
             print("Covariance matrix:")
-            if self.cov_x is not None:
-                self.cov_x *= np.var(self.info["fvec"])
-                print(np.array_str(self.cov_x,max_line_width=120))
+            if J is not None:
+                e = self.getResiduals(self.optimum)
+                JtJ=np.matmul(np.transpose(J),J)
+                if np.linalg.det(JtJ)>1e-6:
+                    self.cov_x = np.var(e)*np.linalg.inv(JtJ)
+                    print(np.array_str(self.cov_x,max_line_width=120))
+                else:
+                    self.cov_x = None
+                    print("Singular Jacobian, we cannot estimate the covariance")
             else:
-                print("Singular covariance matrix, at least one of the variables seems to be irrelevant")
+                self.cov_x = None
+                print("Singular Jacobian, we cannot estimate the covariance")
         self.model.setParameters(self.optimum)
         if self.verbose>0:
             print(self.model.getEquation())
