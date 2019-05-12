@@ -61,7 +61,7 @@ class DissolutionModel(PKPDModel):
 
 class Dissolution0(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -125,7 +125,7 @@ class Dissolution0(DissolutionModel):
 
 class Dissolution1(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -193,7 +193,7 @@ class Dissolution1(DissolutionModel):
 
 class DissolutionAlpha(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -269,7 +269,7 @@ class DissolutionAlpha(DissolutionModel):
 
 class DissolutionWeibull(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -342,7 +342,7 @@ class DissolutionWeibull(DissolutionModel):
 
 class DissolutionHiguchi(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -405,7 +405,7 @@ class DissolutionHiguchi(DissolutionModel):
 
 class DissolutionKorsmeyer(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -471,7 +471,7 @@ class DissolutionKorsmeyer(DissolutionModel):
 
 class DissolutionHixson(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
@@ -539,7 +539,7 @@ class DissolutionHixson(DissolutionModel):
 
 class DissolutionHopfenberg(DissolutionModel):
     def forwardModel(self, parameters, x=None):
-        if x==None:
+        if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
