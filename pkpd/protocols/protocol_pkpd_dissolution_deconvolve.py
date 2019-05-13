@@ -88,7 +88,10 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
         Avar.varName = "A"
         Avar.varType = PKPDVariable.TYPE_NUMERIC
         Avar.role = PKPDVariable.ROLE_MEASUREMENT
-        Avar.units = createUnit(self.experiment.getDoseUnits())
+        if self.normalize.get():
+            Avar.units = createUnit("none")
+        else:
+            Avar.units = createUnit(self.experiment.getDoseUnits())
 
         self.outputExperiment.variables[tvar.varName] = tvar
         self.outputExperiment.variables[Avar.varName] = Avar
