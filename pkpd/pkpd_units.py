@@ -133,6 +133,7 @@ class PKPDUnit:
     UNIT_WEIGHTINVTIME_umol_SEC = 372
     UNIT_WEIGHTINVTIME_nmol_SEC = 373
     UNIT_INVTIME2_MIN2 = 400
+    UNIT_PERCENTAGE = 410
     UNIT_NONE = 99999
 
     unitDictionary = {
