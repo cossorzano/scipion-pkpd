@@ -62,30 +62,32 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
             t=sample.getValues("t")
             y=sample.getValues("A")
             allY.append((np.asarray(t,dtype=np.float64),np.asarray(y,dtype=np.float64)))
+        self.experimentInVivo = experiment
         return allY
 
     def getInVitroModels(self):
         allParameters = []
         self.protFit = self.inputInVitro.get()
-        self.experiment = self.readExperiment(self.protFit.outputExperiment.fnPKPD)
+        experiment = self.readExperiment(self.protFit.outputExperiment.fnPKPD)
         self.fitting = self.readFitting(self.protFit.outputFitting.fnFitting)
         self.varNameX = self.fitting.predictor.varName
         self.varNameY = self.fitting.predicted.varName
 
         self.protFit.model = self.protFit.createModel()
-        self.protFit.model.setExperiment(self.experiment)
+        self.protFit.model.setExperiment(experiment)
         self.protFit.model.setXVar(self.varNameX)
         self.protFit.model.setYVar(self.varNameY)
         self.protFit.setupFromFormParameters()
-        self.protFit.experiment = self.experiment
+        self.protFit.experiment = experiment
         self.protFit.setupModel()
 
         parameterNames = self.protFit.model.getParameterNames()
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.iteritems():
             parameters0 = []
             for parameterName in parameterNames:
                 parameters0.append(float(sample.descriptors[parameterName]))
             allParameters.append(parameters0)
+        self.experimentInVitro = experiment
         return allParameters
 
     def produceLevyPlot(self,tvitro,parameterInVitro,Avivo):
@@ -95,7 +97,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         tvivo=[]
         for i in range(tvitro.shape[0]):
             tvivo.append(B(Avitro[i]))
-        return (tvitro,np.asarray(tvivo,dtype=np.float64))
+        return (tvitro,np.asarray(tvivo,dtype=np.float64),Avitro)
 
     def addSample(self, sampleName, tvitro, tvivo):
         newSample = PKPDSample()
@@ -132,7 +134,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         i=1
         for parameterInVitro in parametersInVitro:
             for t,profileInVivo in profilesInVivo:
-                tvitro, tvivo = self.produceLevyPlot(t,parameterInVitro,profileInVivo)
+                tvitro, tvivo, _ = self.produceLevyPlot(t,parameterInVitro,profileInVivo)
                 self.addSample("levy_%04d"%i,tvitro,tvivo)
                 i+=1
 
@@ -148,5 +150,4 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
 
     def _summary(self):
         retval = []
-        #self.addFileContentToMessage(retval,self._getPath("summary.txt"))
         return retval

@@ -113,5 +113,17 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protLevy.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
+
+        # IVIVC
+        print "In vitro-in vivo correlation ..."
+        protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
+                                    objLabel='pkpd - ivivc'
+                                    )
+        protIVIVC.inputInVitro.set(protWeibull)
+        protIVIVC.inputInVivo.set(protDeconv)
+        self.launchProtocol(protIVIVC)
+        self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
+
 if __name__ == "__main__":
     unittest.main()

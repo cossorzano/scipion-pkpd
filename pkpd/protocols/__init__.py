@@ -39,6 +39,7 @@ from .protocol_pkpd_cumulated_dose import ProtPKPDCumulatedDose
 from .protocol_pkpd_dissolution_deconvolve import ProtPKPDDeconvolve
 from .protocol_pkpd_dissolution_fit import ProtPKPDDissolutionFit
 from .protocol_pkpd_dissolution_f2 import ProtPKPDDissolutionF2
+from .protocol_pkpd_dissolution_ivivc import ProtPKPDDissolutionIVIVC
 from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
 from .protocol_pkpd_dose_escalation import *
 from .protocol_pkpd_drop_measurements import ProtPKPDDropMeasurements
