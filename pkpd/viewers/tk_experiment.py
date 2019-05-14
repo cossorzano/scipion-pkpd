@@ -30,6 +30,7 @@ import numpy as np
 from itertools import izip
 import Tkinter as tk
 import ttk
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.object as pwobj
 import pyworkflow.gui as gui
@@ -556,10 +557,21 @@ class ExperimentWindow(gui.Window):
             else:
                 samples = self.experiment.samples.values()
 
+            xmin=1e38
+            xmax=-1e38
+            for s in samples:
+                xValues, _ = self.getPlotValues(s)
+                xmin = min(xmin, min(xValues))
+                xmax = max(xmax, max(xValues))
+
             dataDict = {} # key will be time values
+            xrange=np.arange(xmin,xmax,(xmax-xmin)/300.0)
             for s in samples:
                 xValues, yValues = self.getPlotValues(s)
-                for x, y in izip(xValues, yValues):
+                idx=np.argsort(xValues)
+                B = InterpolatedUnivariateSpline(xValues[idx], yValues[idx], k=1)
+                yrange = B(xrange)
+                for x, y in izip(xrange, yrange):
                     if x in dataDict:
                         dataDict[x].append(y)
                     else:
