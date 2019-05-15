@@ -969,7 +969,7 @@ class PKPDODEModel(PKPDModelBase2):
                 Yt[i]=yt
 
         # Get the values at x
-        if x==None:
+        if x is None:
             x = self.x
 
         self.yPredicted = []
