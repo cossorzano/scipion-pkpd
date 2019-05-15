@@ -113,7 +113,6 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protLevy.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
-
         # IVIVC
         print "In vitro-in vivo correlation ..."
         protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
@@ -125,5 +124,58 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
+        # Dissolution simulation
+        print "IVIV+PK simulation ..."
+        protIVIVPK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
+                                      objLabel='pkpd - ivivc+pk',
+                                      inputN=4,
+                                      tF=15,
+                                      addIndividuals=True
+                                    )
+        protIVIVPK.inputInVitro.set(protWeibull.outputFitting)
+        protIVIVPK.inputPK.set(protModelInVivo.outputFitting)
+        protIVIVPK.inputIvIvC.set(protIVIVC.outputExperiment)
+        self.launchProtocol(protIVIVPK)
+        self.assertIsNotNone(protIVIVPK.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
+        # Bootstrap dissolution
+        print "Dissolution bootstrap ..."
+        protDissolBootstrap = self.newProtocol(ProtPKPDFitBootstrap,
+                                      objLabel='pkpd - dissol bootstrap',
+                                      Nbootstrap=10
+                                      )
+        protDissolBootstrap.inputFit.set(protWeibull)
+        self.launchProtocol(protDissolBootstrap)
+        self.assertIsNotNone(protDissolBootstrap.outputPopulation.fnFitting, "There was a problem with the dissolution bootstrap ")
+        self.validateFiles('ProtPKPDFitBootstrap', ProtPKPDFitBootstrap)
+
+        # Bootstrap ODE
+        print "ODE bootstrap ..."
+        protODEBootstrap = self.newProtocol(ProtPKPDODEBootstrap,
+                                               objLabel='pkpd - ode bootstrap',
+                                               Nbootstrap=3
+                                               )
+        protODEBootstrap.inputODE.set(protModelInVivo)
+        self.launchProtocol(protODEBootstrap)
+        self.assertIsNotNone(protODEBootstrap.outputPopulation.fnFitting,
+                             "There was a problem with the ODE bootstrap ")
+        self.validateFiles('ProtPKPDODEBootstrap', ProtPKPDODEBootstrap)
+
+
+        # Dissolution simulation
+        print "IVIV+PK simulation ..."
+        protIVIVPKBoot = self.newProtocol(ProtPKPDDissolutionPKSimulation,
+                                      objLabel='pkpd - ivivc+pk bootstrap',
+                                      inputN=4,
+                                      tF=15,
+                                      addIndividuals=True
+                                      )
+        protIVIVPKBoot.inputInVitro.set(protDissolBootstrap.outputPopulation)
+        protIVIVPKBoot.inputPK.set(protODEBootstrap.outputPopulation)
+        protIVIVPKBoot.inputIvIvC.set(protIVIVC.outputExperiment)
+        self.launchProtocol(protIVIVPKBoot)
+        self.assertIsNotNone(protIVIVPKBoot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 if __name__ == "__main__":
     unittest.main()
