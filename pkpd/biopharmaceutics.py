@@ -329,7 +329,6 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
     def areParametersValid(self, p):
         return np.sum(p<0)==0 and np.sum(p[1:]>1)==0
 
-
 class BiopharmaceuticsModelSpline2(BiopharmaceuticsModelSplineGeneric):
     def __init__(self):
         BiopharmaceuticsModelSplineGeneric.__init__(self)
@@ -374,6 +373,47 @@ class BiopharmaceuticsModelSpline10(BiopharmaceuticsModelSplineGeneric):
     def __init__(self):
         BiopharmaceuticsModelSplineGeneric.__init__(self)
         self.nknots = 10
+
+
+class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
+    def setXYValues(self,t,A):
+        # A is the accumulated fraction released
+        self.B = InterpolatedUnivariateSpline(t,np.asarray(A,dtype=np.float64)/100.0,k=1)
+        self.tmin=np.min(t)
+        self.tmax=np.max(t)
+
+    def getDescription(self):
+        return ['Numerical source with t and A']
+
+    def getParameterNames(self):
+        return []
+
+    def calculateParameterUnits(self,sample):
+        self.parameterUnits = []
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return self.Amax
+        tToUse=t
+        if t>=self.tmax:
+            tToUse=self.tmax
+        fraction=self.B(tToUse)
+        fraction=np.clip(fraction,0.0,1.0)
+        return self.Amax*(1-fraction)
+
+    def getEquation(self):
+        return 'Numerical source with t and A'
+
+    def getModelEquation(self):
+        return 'Numerical source with t and A'
+
+    def getDescription(self):
+        return "Numerical source (%s)"%self.__class__.__name__
+
+    def areParametersValid(self, p):
+        return True
+
 
 class PKPDVia:
     def __init__(self):
@@ -475,6 +515,8 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelSpline9()
                 elif self.via=="spline10":
                     self.viaProfile=BiopharmaceuticsModelSpline10()
+                elif self.via=="numerical":
+                    self.viaProfile=BiopharmaceuticsModelNumerical()
 
     def changeTimeUnitsToMinutes(self):
         if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
@@ -891,3 +933,6 @@ class DrugSource:
         for via,viaPrmNo in self.vias:
             via.setParameters(p[currentToken:currentToken+viaPrmNo])
             currentToken+=viaPrmNo
+
+    def getVia(self):
+        return self.vias[0][0] # Only the first one is accessible through this function
