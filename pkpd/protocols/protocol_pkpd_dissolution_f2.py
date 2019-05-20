@@ -66,10 +66,20 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         return allY
 
     def calculateF(self,pRef,pTest):
-        diff = pRef-pTest
+        idxm85=np.argwhere(np.logical_and(pRef<=85,pTest<=85)).tolist()
+        idxm85 = [item for sublist in idxm85 for item in sublist]
+        idxp85=np.argwhere(np.logical_or(pRef>85,pTest>85)).tolist()
+        idxp85 = [item for sublist in idxp85 for item in sublist]
+        idx=idxm85
+        if len(idxp85)>0:
+            idxp85=np.random.choice(idxp85,1)
+            idx.append(idxp85[0])
+        idx=sorted(idx)
+
+        diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
-        f1= np.sum(np.abs(diff))/np.sum(pRef)*100
+        f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
         return f1, f2
 
     def printStats(self,allF,Fstr,Fformula):
