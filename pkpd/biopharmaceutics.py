@@ -321,7 +321,7 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
 
     def getModelEquation(self):
         # https://en.wikipedia.org/wiki/De_Boor%27s_algorithm
-        return "D(t)=interpolating BSpline3 with %d knots distributed until tmax"%self.nknots
+        return "D(t)=interpolating BSpline2 with %d knots distributed until tmax"%self.nknots
 
     def getDescription(self):
         return "BSplines with %d knots (%s)"%(self.nknots,self.__class__.__name__)
