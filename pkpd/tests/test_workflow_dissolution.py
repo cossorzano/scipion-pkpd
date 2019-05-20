@@ -248,6 +248,29 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.985)
 
 
+        # Fit a Hill dissolution
+        print "Fitting Hill order ..."
+        prot = self.newProtocol(ProtPKPDDissolutionFit,
+                                objLabel='pkpd - fit dissolution Hill',
+                                globalSearch=True, modelType=8)
+        prot.inputExperiment.set(protImport.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(prot.outputFitting.fnFitting, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        Vmax = float(experiment.samples['Profile'].descriptors['Vmax'])
+        self.assertTrue(Vmax>81 and Vmax<85)
+        d = float(experiment.samples['Profile'].descriptors['d'])
+        self.assertTrue(d>1.93 and d<2)
+        g = float(experiment.samples['Profile'].descriptors['g'])
+        self.assertTrue(g>1.73 and g<1.83)
+
+        fitting = PKPDFitting()
+        fitting.load(prot.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2>0.995)
+
         # Check that fit bootstrap is working
         print "Fitting bootstrap ..."
         prot = self.newProtocol(ProtPKPDFitBootstrap,
