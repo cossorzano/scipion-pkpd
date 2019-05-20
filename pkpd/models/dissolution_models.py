@@ -607,3 +607,84 @@ class DissolutionHopfenberg(DissolutionModel):
         else:
             self.parameterUnits=[yunits, x1units, PKPDUnit.UNIT_NONE]
         return self.parameterUnits
+
+class DissolutionHill(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x == None:
+            x = self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax = parameters[1]
+            g = parameters[2]
+            d = parameters[3]
+        else:
+            tlag=0.0
+            Vmax = parameters[0]
+            g = parameters[1]
+            d = parameters[2]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+
+        self.yPredicted = np.zeros(xToUse.shape[0])
+
+        xprime = xToUse**d
+
+        self.yPredicted = (Vmax*xprime)/(g**d+xprime)
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Hill (%s)" % self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            d = 1
+
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)
+            g = 5 / np.max(xToUse)
+
+            print("First estimate of Hill term: ")
+            print("Y  = (%f)*(t^(%f))/((%f)^(%f)+t^(%f))" % (Vmax,d,g,d,d))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((min(0.1 * Vmax, 10 * Vmax), max(0.1 * Vmax, 10 * Vmax)))
+            self.bounds.append((min(0.1 * g, 10 * g), max(0.1 * g, 10 * g)))
+            self.bounds.append((min(0.1 * d, 10 * d), max(0.1 * d, 10 * d)))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y = Vmax*(t-tlag)^d/(g^d+(t-tlag)^d)"
+        else:
+            return "Y = Vmax*t^d/(g^d+t^d)"
+
+    def getEquation(self):
+        if self.allowTlag:
+            toPrint = "Y  = (%f)*((t-(%f))^(%f))/((%f)^(%f)+(t-(%f))^(%f))" % (self.parameters[1],self.parameters[0],
+                                                                 self.parameters[3], self.parameters[2],
+                                                                 self.parameters[3], self.parameters[0], self.parameters[3])
+        else:
+            toPrint = "Y  = (%f)*(t^(%f))/((%f)^(%f)+t^(%f))" % (self.parameters[0],
+                                                                 self.parameters[2], self.parameters[1],
+                                                                 self.parameters[2], self.parameters[2])
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag', 'Vmax', 'g', 'd']
+        else:
+            return ['Vmax', 'g', 'd']
+
+    def getParameterDescriptions(self):
+        return ['Automatically fitted model of the form Y=Vmax*t^d/(g^d+t^d)'] * self.getNumberOfParameters()
+
+    def calculateParameterUnits(self, sample):
+        xunits = self.experiment.getVarUnits(self.xName)
+        if self.allowTlag:
+            self.parameterUnits = [xunits, PKPDUnit.UNIT_NONE, xunits, PKPDUnit.UNIT_NONE]
+        else:
+            self.parameterUnits = [PKPDUnit.UNIT_NONE, xunits, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits

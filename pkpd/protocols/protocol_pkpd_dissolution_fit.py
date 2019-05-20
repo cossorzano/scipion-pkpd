@@ -47,7 +47,7 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                       label="Allow lag", default=False,
                       help='Allow lag time before starting dissolution (t-tlag)')
         form.addParam('modelType', params.EnumParam, choices=["Zero order","First order","Fractional","Weibull","Higuchi",
-                                                              "Korsmeyer-Peppas","Hixson-Crowell","Hopfenberg"],
+                                                              "Korsmeyer-Peppas","Hixson-Crowell","Hopfenberg","Hill"],
                       label="Dissolution model", default=3,
                       help='Zero order: Y=K*(t-[tlag])\n'\
                            'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n'\
@@ -56,7 +56,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Higuchi: Y=Ymax*t^0.5\n'\
                            'Korsmeyer-Peppas: Y=Ymax*t^m\n'\
                            'Hixson-Crowell: Y=Ymax*(1-(1-K*t)^3)\n'
-                           'Hopfenberg: Y=Ymax*(1-(1-K*t)^m)')
+                           'Hopfenberg: Y=Ymax*(1-(1-K*t)^m)\n'
+                           'Hill: Y = Ymax*t^d/(g^d+t^d)')
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
@@ -70,7 +71,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Higuchi: [tlag]; Ymax\n'
                            'Korsmeyer-Peppas: [tlag]; Ymax; m\n'
                            'Hixson-Crowell: [tlag]; Ymax; K\n'
-                           'Hopfenberg: [tlag]; Ymax; K; m')
+                           'Hopfenberg: [tlag]; Ymax; K; m\n'
+                           'Hill: [tlag]; Ymax; g; d')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
 
@@ -95,6 +97,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
             return DissolutionHixson()
         elif self.modelType.get() == 7:
             return DissolutionHopfenberg()
+        elif self.modelType.get() == 8:
+            return DissolutionHill()
 
     def setupFromFormParameters(self):
         self.model.allowTlag = self.allowTlag.get()
