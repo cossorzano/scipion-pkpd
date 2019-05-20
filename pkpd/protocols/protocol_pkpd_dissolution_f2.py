@@ -73,6 +73,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         return f1, f2
 
     def printStats(self,allF,Fstr,Fformula):
+        allF=[f for f in allF if not np.isnan(f)]
         mu=np.mean(allF)
         sigma = np.std(allF)
         percentiles = np.percentile(allF,[0, 2.5, 25, 50, 75, 97.5, 100])
