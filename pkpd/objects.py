@@ -1196,7 +1196,7 @@ class PKPDDEOptimizer(PKPDOptimizer):
         from scipy.optimize import differential_evolution
         if self.verbose>0:
             print("Optimizing with Differential Evolution (DE), a global optimizer")
-        self.optimum = differential_evolution(self.goalFunction, self.model.getBounds())
+        self.optimum = differential_evolution(self.goalFunction, self.model.getBounds(), maxiter=30)
         if self.verbose>0:
             print("Best DE function value: "+str(self.optimum.fun))
             print("Best DE parameters: "+str(self.optimum.x))
