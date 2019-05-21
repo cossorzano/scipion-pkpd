@@ -163,14 +163,17 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.getIVIVProfiles()
         self.getPKModels()
 
-        if self.addIndividuals.get():
-            self.outputExperiment = PKPDExperiment()
-            tvar = PKPDVariable()
-            tvar.varName = "t"
-            tvar.varType = PKPDVariable.TYPE_NUMERIC
-            tvar.role = PKPDVariable.ROLE_TIME
-            tvar.units = createUnit("min")
+        self.outputExperiment = PKPDExperiment()
+        tvar = PKPDVariable()
+        tvar.varName = "t"
+        tvar.varType = PKPDVariable.TYPE_NUMERIC
+        tvar.role = PKPDVariable.ROLE_TIME
+        tvar.units = createUnit("min")
 
+        self.Cunits = self.fittingPK.predicted.units
+        self.AUCunits = multiplyUnits(tvar.units.unit, self.Cunits.unit)
+        self.AUMCunits = multiplyUnits(tvar.units.unit, self.AUCunits)
+        if self.addIndividuals.get():
             self.outputExperiment.variables["t"] = tvar
             self.outputExperiment.variables[self.fittingPK.predicted.varName]=self.fittingPK.predicted
             self.outputExperiment.general["title"]="Simulated ODE response from IVIVC dissolution profiles"
@@ -179,10 +182,6 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 self.outputExperiment.vias[via.viaName] = via
             for dose in self.pkModel.drugSource.parsedDoseList:
                 self.outputExperiment.doses[dose.doseName] = dose
-
-            self.Cunits = self.fittingPK.predicted.units
-            self.AUCunits = multiplyUnits(tvar.units.unit, self.Cunits.unit)
-            self.AUMCunits = multiplyUnits(tvar.units.unit, self.AUCunits)
 
             AUCvar = PKPDVariable()
             AUCvar.varName = "AUC0t"
