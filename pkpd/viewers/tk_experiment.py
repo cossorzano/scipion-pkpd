@@ -594,6 +594,7 @@ class ExperimentWindow(gui.Window):
             ax.plot(sortedTime, Y[:, 2], 'g', label="50% (Median)")
             ax.plot(sortedTime, Y[:, 3], 'b--', label="75%")
             ax.plot(sortedTime, Y[:, 4], 'r--', label="Maximum")
+            ax.grid(True)
 
             ax.legend()
             plotter.show()
