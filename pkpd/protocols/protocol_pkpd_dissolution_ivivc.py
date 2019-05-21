@@ -30,6 +30,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.utils import uniqueFloatValues
 from pkpd.pkpd_units import createUnit, PKPDUnit
 
 
@@ -157,7 +158,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
 
                 # Reinterpolate Fabs
                 if self.timeScale.get()>0:
-                    B = InterpolatedUnivariateSpline(tvitro, Fabs, k=1)
+                    tvitroUnique, FabsUnique = uniqueFloatValues(tvitro, Fabs)
+                    B = InterpolatedUnivariateSpline(tvitroUnique, FabsUnique, k=1)
                     Fabs = B(tvivo)
 
                 # Response scale

@@ -33,6 +33,7 @@ import ttk
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.object as pwobj
+from pkpd.utils import uniqueFloatValues
 import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import Button, HotButton, ComboBox
 from pyworkflow.gui.text import TaggedText
@@ -568,8 +569,8 @@ class ExperimentWindow(gui.Window):
             xrange=np.arange(xmin,xmax,(xmax-xmin)/300.0)
             for s in samples:
                 xValues, yValues = self.getPlotValues(s)
-                idx=np.argsort(xValues)
-                B = InterpolatedUnivariateSpline(xValues[idx], yValues[idx], k=1)
+                xValuesUnique,yValuesUnique = uniqueFloatValues(xValues,yValues)
+                B = InterpolatedUnivariateSpline(xValuesUnique,yValuesUnique, k=1)
                 yrange = B(xrange)
                 for x, y in izip(xrange, yrange):
                     if x in dataDict:

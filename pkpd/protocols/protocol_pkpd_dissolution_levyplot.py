@@ -29,6 +29,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.utils import uniqueFloatValues
 from pkpd.pkpd_units import createUnit
 from .protocol_pkpd import ProtPKPD
 
@@ -91,12 +92,14 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         return allParameters
 
     def produceLevyPlot(self,tvitro,parameterInVitro,Avivo):
-        B = InterpolatedUnivariateSpline(Avivo, tvitro, k=1)
+        Avivounique, tunique=uniqueFloatValues(Avivo,tvitro)
+        B = InterpolatedUnivariateSpline(Avivounique, tunique, k=1)
         self.protFit.model.x=tvitro
         Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
         tvivo=[]
         for i in range(tvitro.shape[0]):
             tvivo.append(B(Avitro[i]))
+            # print("tvitro=%f Avitro=%f Avivo=%f tvivoeqv=%f"%(tvitro[i],Avitro[i],Avivo[i],B(Avitro[i])))
         return (tvitro,np.asarray(tvivo,dtype=np.float64),Avitro)
 
     def addSample(self, sampleName, tvitro, tvivo):

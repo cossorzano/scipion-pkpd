@@ -30,8 +30,7 @@ import numpy as np
 import math
 import time
 import hashlib
-from os.path import (exists, join, splitext, isdir, isfile, islink, expanduser,
-                     expandvars, basename, dirname, split, relpath, getmtime)
+from os.path import (exists, splitext, getmtime)
 
 def parseRange(auxString):
     if auxString=="":
@@ -87,3 +86,13 @@ def verifyMD5(fn):
     if fn.endswith(".md5"):
         fn=fnFile
     return getMD5String(fn)==md5StringFile
+
+def uniqueFloatValues(x,y):
+    xp=np.asarray(x,dtype=np.float64)
+    yp=np.asarray(y,dtype=np.float64)
+    TOL = np.max(xp.flat) / 1e5
+    idx = np.argsort(xp.flat)
+    d = np.append(True, np.diff(xp.flat[idx]))
+    xunique = xp.flat[idx[d > TOL]]
+    yunique = yp.flat[idx[d > TOL]]
+    return xunique,yunique

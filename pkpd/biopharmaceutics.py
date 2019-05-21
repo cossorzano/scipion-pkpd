@@ -30,6 +30,7 @@ import copy
 import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight
+from pkpd.utils import uniqueFloatValues
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 class BiopharmaceuticsModel:
@@ -307,7 +308,8 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             self.knots = np.linspace(0, self.tmax, self.nknots+2)
             self.knotsY = np.append(np.insert(self.parameters[1:],0,0),1)
             self.knotsY=np.sort(self.knotsY)
-            self.B=InterpolatedUnivariateSpline(self.knots, self.knotsY,k=2)
+            knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
+            self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
             self.parametersPrepared=copy.copy(self.parameters)
         fraction=self.B(t)
         fraction=np.clip(fraction,0.0,1.0)
@@ -378,7 +380,8 @@ class BiopharmaceuticsModelSpline10(BiopharmaceuticsModelSplineGeneric):
 class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
     def setXYValues(self,t,A):
         # A is the accumulated fraction released
-        self.B = InterpolatedUnivariateSpline(t,np.asarray(A,dtype=np.float64)/100.0,k=1)
+        tUnique, Aunique = uniqueFloatValues(t,np.asarray(A,dtype=np.float64)/100.0)
+        self.B = InterpolatedUnivariateSpline(tUnique, Aunique,k=1)
         self.tmin=np.min(t)
         self.tmax=np.max(t)
 
