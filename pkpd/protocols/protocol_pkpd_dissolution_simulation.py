@@ -30,6 +30,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable, PKPDFitting
+from pkpd.utils import uniqueFloatValues
 from .protocol_pkpd import ProtPKPD
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.models.dissolution_models import *
@@ -242,7 +243,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             # In vitro-in vivo correlation
             nfit = int(random.uniform(0, len(self.allIVIV)))
             Adissol, Fabs = self.allIVIV[nfit]
-            B=InterpolatedUnivariateSpline(Adissol,Fabs,k=1)
+            AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
+            B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
             A=np.asarray(B(A)[0],dtype=np.float64)
 
             # Set the dissolution profile
