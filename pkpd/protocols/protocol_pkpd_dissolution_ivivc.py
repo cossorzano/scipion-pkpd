@@ -193,6 +193,21 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self.summarize(fh,allB,"B")
         self.doublePrint(fh," ")
         self.summarize(fh,allR,"Correlation coefficient (R)")
+        self.doublePrint(fh," ")
+
+        if self.timeScale.get() == 0:
+            timeStr = "t"
+        elif self.timeScale.get() == 1:
+            timeStr = "t-tlag"
+        elif self.timeScale.get() == 2:
+            timeStr = "k*t"
+        elif self.timeScale.get() == 3:
+            timeStr = "k*(t-tlag)"
+        if self.responseScale.get() == 0:
+            eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
+        elif self.responseScale.get() == 1:
+            eqStr = "Fabs(%s)=A*Adissol(t)+B" % timeStr
+        self.doublePrint(fh,"IVIVC equation: %s"%eqStr)
         fh.close()
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
