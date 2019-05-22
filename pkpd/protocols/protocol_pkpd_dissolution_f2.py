@@ -80,6 +80,14 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         D2 = (np.square(diff)).mean(axis=None)
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
         f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
+
+        print("Bootstrap sample %d" % self.b)
+        print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
+        print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
+        print("f1=%f f2=%f"%(f1,f2))
+        print(" ")
+        self.b = self.b + 1
+
         return f1, f2
 
     def printStats(self,allF,Fstr,Fformula):
@@ -106,8 +114,13 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         if len(profilesRef)>0:
             idx = [k for k in range(0, len(profilesRef[0]))]
             Nidx = len(idx)
+        self.printSection("Calculations")
+        self.b=1
         for profileRef in profilesRef:
+            print("Full reference profile: %s"%np.array2string(profileRef,max_line_width=10000))
             for profileTest in profilesTest:
+                print("Full test profile: %s" % np.array2string(profileTest, max_line_width=10000))
+                print(" ")
                 f1,f2=self.calculateF(profileRef,profileTest)
                 allF1.append(f1)
                 allF2.append(f2)
