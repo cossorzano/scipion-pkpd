@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-from numpy import genfromtxt
+from numpy import genfromtxt, isnan
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
 from pyworkflow.em.viewers.plotter import EmPlotter
@@ -42,10 +42,10 @@ class PKPDDissolutionF2Viewer(Viewer):
 
         plotter = EmPlotter()
         plotter.createSubPlot("Histogram of f1", "f1", "Count")
-        plotter.plotHist(f1, 50)
+        plotter.plotHist(f1[~isnan(f1)], 50)
         plotter.show()
 
         plotter = EmPlotter()
         plotter.createSubPlot("Histogram of f2", "f2", "Count")
-        plotter.plotHist(f2, 50)
+        plotter.plotHist(f2[~isnan(f2)], 50)
         plotter.show()
