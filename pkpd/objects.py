@@ -701,6 +701,16 @@ class PKPDExperiment(EMObject):
                 nonBolusList.append(sampleName)
         return nonBolusList
 
+    def addSampleToGroup(self,groupName,sample):
+        if not groupName in self.groups.keys():
+            self.groups[groupName] = PKPDGroup(groupName)
+        self.groups[groupName].sampleList.append(sample.sampleName)
+
+    def addSample(self,sample):
+        self.samples[sample.sampleName] = sample
+        for groupName in sample.groupList:
+            self.addSampleToGroup(groupName,sample)
+
 
 class PKPDModelBase(object):
     def __init__(self):
