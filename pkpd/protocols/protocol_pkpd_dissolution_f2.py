@@ -85,7 +85,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             allY.append(y)
         return allY
 
-    def calculateF(self,pRef,pTest):
+    def randomIdx(self,pRef,pTest):
         idxm85=np.argwhere(np.logical_and(pRef<=85,pTest<=85)).tolist()
         idxm85 = [item for sublist in idxm85 for item in sublist]
         idxp85=np.argwhere(np.logical_or(pRef>85,pTest>85)).tolist()
@@ -94,7 +94,12 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         if len(idxp85)>0:
             idxp85=np.random.choice(idxp85,1)
             idx.append(idxp85[0])
-        idx=sorted(idx)
+        return sorted(idx)
+
+    def calculateF(self,pRef,pTest):
+        idx=self.randomIdx(pRef,pTest)
+        while len(idx)<3:
+            idx=self.randomIdx(pRef,pTest)
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
