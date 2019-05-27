@@ -59,8 +59,10 @@ class ProtPKPDJoinSamples(ProtPKPD):
     #--------------------------- INSERT steps functions --------------------------------------------
 
     def _insertAllSteps(self):
+        prefix1="" if self.prefix1.get() is None else self.prefix1.get()
+        prefix2="" if self.prefix2.get() is None else self.prefix2.get()
         self._insertFunctionStep('runJoin',self.inputExperiment1.get().getObjId(), self.inputExperiment1.get().getObjId(), \
-                                 self.prefix1.get(), self.prefix2.get())
+                                 prefix1, prefix2)
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
@@ -94,24 +96,24 @@ class ProtPKPDJoinSamples(ProtPKPD):
         # Doses
         for key, value in experiment1.doses.iteritems():
             dose = copy.copy(value)
-            dose.varName = "%s%s"%(self.prefix1.get(),key)
+            dose.varName = "%s%s"%(prefix1,key)
             self.experiment.doses[dose.varName] = dose
         for key, value in experiment2.doses.iteritems():
             dose = copy.copy(value)
-            dose.varName = "%s%s"%(self.prefix2.get(),key)
+            dose.varName = "%s%s"%(prefix2,key)
             self.experiment.doses[dose.varName] = dose
 
         # Samples
         for key, value in experiment1.samples.iteritems():
             sample = copy.copy(value)
-            sample.sampleName = "%s%s"%(self.prefix1.get(),key)
-            sample.doseList = ["%s%s"%(self.prefix1.get(),doseName) for doseName in sample.doseList]
-            self.experiment.samples[sample.sampleName] = sample
+            sample.sampleName = "%s%s"%(prefix1,key)
+            sample.doseList = ["%s%s"%(prefix1,doseName) for doseName in sample.doseList]
+            self.experiment.addSample(sample)
         for key, value in experiment2.samples.iteritems():
             sample = copy.copy(value)
-            sample.sampleName = "%s%s"%(self.prefix2.get(),key)
-            sample.doseList = ["%s%s"%(self.prefix2.get(),doseName) for doseName in sample.doseList]
-            self.experiment.samples[sample.sampleName] = sample
+            sample.sampleName = "%s%s"%(prefix2,key)
+            sample.doseList = ["%s%s"%(prefix2,doseName) for doseName in sample.doseList]
+            self.experiment.addSample(sample)
 
         # Print and save
         self.writeExperiment(self.experiment,self._getPath("experiment.pkpd"))
@@ -140,10 +142,6 @@ class ProtPKPDJoinSamples(ProtPKPD):
             for sampleName1 in experiment1.samples:
                 if sampleName1 in experiment2.samples:
                     errors.append("Sample %s is repeated in both experiments"%sampleName1)
-        # if self.prefix1.get()!="" and not re.match("[_A-Za-z][_a-zA-Z0-9]*$",self.prefix1.get()):
-        #     errors.append("Prefix1 is not well formatted")
-        # if self.prefix2.get()!="" and not re.match("[_A-Za-z][_a-zA-Z0-9]*$",self.prefix2.get()):
-        #     errors.append("Prefix2 is not well formatted")
         if len(errors)>0:
             errors.append("Use the prefixes in the Advanced options")
         return errors
