@@ -48,6 +48,9 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments', help='Select a run of an ODE model')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
+        form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
+                      help='If set to True, then the deconvolution is performed ignoring the the tlag in the absorption.'
+                           'This homogeneizes the different responses.')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -109,8 +112,11 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
             drugSource.setDoses(sample.parsedDoseList, 0.0, timeRange[1])
 
             p=[]
+            tlag=0
             for paramName in drugSource.getParameterNames():
                 p.append(float(sample.getDescriptorValue(paramName)))
+                if paramName.endswith('_tlag') and self.removeTlag.get():
+                    tlag=float(sample.getDescriptorValue(paramName))
             drugSource.setParameters(p)
 
             cumulatedDose=0.0
@@ -124,7 +130,7 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
                     A[i] /= totalReleased
                 print("%f %f"%(t[i],A[i]))
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
-            self.addSample(sampleName,t,A)
+            self.addSample(sampleName,t-tlag,A)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
 
