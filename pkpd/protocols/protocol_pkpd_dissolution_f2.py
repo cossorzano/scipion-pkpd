@@ -98,8 +98,12 @@ class ProtPKPDDissolutionF2(ProtPKPD):
 
     def calculateF(self,pRef,pTest):
         idx=self.randomIdx(pRef,pTest)
+        counter=0
         while len(idx)<3:
             idx=self.randomIdx(pRef,pTest)
+            counter+=1
+            if counter>20:
+                return np.nan, np.nan
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
