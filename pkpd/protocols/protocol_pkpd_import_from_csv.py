@@ -89,6 +89,11 @@ class ProtPKPDImportFromText(ProtPKPD):
     def readTextFile(self):
         pass
 
+    def addSample(self,samplename,tokens):
+        self.experiment.samples[samplename] = PKPDSample()
+        self.experiment.samples[samplename].parseTokens(tokens, self.experiment.variables, self.experiment.doses,
+                                                        self.experiment.groups)
+
     def createOutputStep(self, objId):
         fnFile = os.path.basename(self.inputFile.get())
         copyFile(self.inputFile.get(),self._getPath(fnFile))
@@ -113,42 +118,43 @@ class ProtPKPDImportFromText(ProtPKPD):
             self.experiment.variables[varname].parseTokens(tokens)
 
         # Read vias
-        for line in self.vias.get().replace('\n',';;').split(';;'):
-            if line!="":
-                tokens = line.split(';')
-                if len(tokens)<2:
-                    print("Skipping via: ",line)
-                    ok = False
-                    continue
-                vianame = tokens[0].strip()
-                self.experiment.vias[vianame] = PKPDVia()
-                self.experiment.vias[vianame].parseTokens(tokens)
+        if self.vias.get():
+            for line in self.vias.get().replace('\n',';;').split(';;'):
+                if line!="":
+                    tokens = line.split(';')
+                    if len(tokens)<2:
+                        print("Skipping via: ",line)
+                        ok = False
+                        continue
+                    vianame = tokens[0].strip()
+                    self.experiment.vias[vianame] = PKPDVia()
+                    self.experiment.vias[vianame].parseTokens(tokens)
 
         # Read the doses
-        for line in self.doses.get().replace('\n',';;').split(';;'):
-            if line!="":
-                tokens = line.split(';')
-                if len(tokens)<5:
-                    print("Skipping dose: ",line)
-                    ok = False
-                    continue
-                dosename = tokens[0].strip()
-                self.experiment.doses[dosename] = PKPDDose()
-                self.experiment.doses[dosename].parseTokens(tokens,self.experiment.vias)
+        if self.doses.get():
+            for line in self.doses.get().replace('\n',';;').split(';;'):
+                if line!="":
+                    tokens = line.split(';')
+                    if len(tokens)<5:
+                        print("Skipping dose: ",line)
+                        ok = False
+                        continue
+                    dosename = tokens[0].strip()
+                    self.experiment.doses[dosename] = PKPDDose()
+                    self.experiment.doses[dosename].parseTokens(tokens,self.experiment.vias)
 
         # Read the sample doses
-        for line in self.dosesToSamples.get().replace('\n',';;').split(';;'):
-            try:
-                tokens = line.split(';')
-                samplename = tokens[0].strip()
-                if len(tokens)>1:
-                    tokens[1]="dose="+tokens[1]
-                self.experiment.samples[samplename] = PKPDSample()
-                self.experiment.samples[samplename].parseTokens(tokens, self.experiment.variables, self.experiment.doses,
-                                                                self.experiment.groups)
-            except Exception as e:
-                ok = False
-                print("Problem with line: ",line,str(e))
+        if self.dosesToSamples.get():
+            for line in self.dosesToSamples.get().replace('\n',';;').split(';;'):
+                try:
+                    tokens = line.split(';')
+                    samplename = tokens[0].strip()
+                    if len(tokens)>1:
+                        tokens[1]="dose="+tokens[1]
+                    self.addSample(samplename,tokens)
+                except Exception as e:
+                    ok = False
+                    print("Problem with line: ",line,str(e))
 
         if ok:
             # Read the measurements
@@ -200,8 +206,7 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
                 varNo = 0
                 sampleName = tokens[iSampleName].strip()
                 if not sampleName in self.experiment.samples:
-                    print("Skipping sample: The sample %s does not have a dose"%sampleName)
-                    continue
+                    self.addSample(sampleName,[sampleName])
                 samplePtr=self.experiment.samples[sampleName]
                 for skip in listOfSkips:
                     if not skip:

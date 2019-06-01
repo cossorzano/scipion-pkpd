@@ -99,8 +99,9 @@ class ProtPKPDExportToCSV(ProtPKPD):
                 sampleDict=headerDefaultDict.copy()
                 sampleDict["SampleID"]=counter
                 sampleDict["SampleName"]=sampleName
-                for descriptor,value in sample.descriptors.iteritems():
-                    sampleDict[descriptor]=str(value)
+                if sample.descriptors:
+                    for descriptor,value in sample.descriptors.iteritems():
+                        sampleDict[descriptor]=str(value)
                 for i in range(sample.getNumberOfMeasurements()):
                     lineDict=sampleDict.copy()
                     for varName in listOfVariables:
