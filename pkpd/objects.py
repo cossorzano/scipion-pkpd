@@ -66,6 +66,11 @@ class PKPDVariable:
     def parseTokens(self, tokens):
         # t ; h ; numeric[%f] ; time ;
 
+        strippedTokens=[]
+        for token in tokens:
+            strippedTokens.append(token.replace(';',''))
+        tokens=strippedTokens
+
         # Get name
         self.varName = tokens[0].strip()
 
