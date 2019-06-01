@@ -387,12 +387,10 @@ class PKPDVariableTemplateWizard(Wizard):
                                     selectmode='extended')
             if dlg.resultYes():
                 strToAdd = ""
-                print("dlg.values",dlg.values)
                 for value in dlg.values:
                     strToAdd += ("\n%s ; [Units/none] ; [numeric/text] ; "
                                  "[time/label/measurement] ; [Comment]"
                                  % (value.get()))
-                print("strToAdd",strToAdd)
                 if strToAdd != "":
                     for label in labels:
                         currentValue = protocol.getAttributeValue(label, "")
