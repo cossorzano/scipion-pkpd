@@ -58,9 +58,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point'], default=0,
                       help='Bootstrapping per vessel will take all the samples from the same vessel (some time points may be repeated). '
                            'The total number of samples is Nref*Ntest*Nbootstrap where Nref is the number of reference vessels, Ntest the number of test vessels, '
-                           'and Nbootstrap the number of bootstrap samples.'
-                           'Bootstrapping per time point will mix all vessels so that at each time point a random sample from any of the vessels is taken.'
-                           'The total number of samples is Nbootstrap samples')
+                           'and Nbootstrap the number of bootstrap samples.')
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
@@ -98,8 +96,12 @@ class ProtPKPDDissolutionF2(ProtPKPD):
 
     def calculateF(self,pRef,pTest):
         idx=self.randomIdx(pRef,pTest)
+        counter=0
         while len(idx)<3:
             idx=self.randomIdx(pRef,pTest)
+            counter+=1
+            if counter>20:
+                return np.nan,np.nan
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
@@ -169,7 +171,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                             allF1.append(f1)
                             allF2.append(f2)
         else:
-            for n in range(self.Nbootstrap.get()):
+            for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePoint(profilesRef)
                 profileTestB = self.bootstrapByTimePoint(profilesTest)
                 f1, f2 = self.calculateF(profileRefB, profileTestB)
