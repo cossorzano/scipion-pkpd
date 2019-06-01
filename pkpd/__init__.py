@@ -66,7 +66,21 @@ class Plugin(pyworkflow.em.Plugin):
     #
     @classmethod
     def defineBinaries(cls, env):
-        pass
+        scons = tryAddPipModule(env, 'openpyxl', '2.6.2')
+
+def tryAddPipModule(env, moduleName, *args, **kwargs):
+    """ To try to add certain pipModule.
+        If it fails due to it is already add by other plugin or Scipion,
+          just returns its name to use it as a dependency.
+        Raise the exception if unknown error is gotten.
+    """
+    try:
+        return env.addPipModule(moduleName, *args, **kwargs)._name
+    except Exception as e:
+        if str(e) == "Duplicated target '%s'" % moduleName:
+            return moduleName
+        else:
+            raise Exception(e)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
