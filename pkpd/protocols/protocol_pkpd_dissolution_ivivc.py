@@ -27,6 +27,7 @@
 from math import sqrt
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import differential_evolution
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
@@ -54,14 +55,19 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                       pointerClass='ProtPKPDDeconvolve', help='Select an experiment with dissolution profiles')
         form.addParam('timeScale', params.EnumParam, label="Time scaling",
                       choices=["None (Fabs(t)=Adissol(t))",
-                               "tlag (Fabs(t-tlag)=Adissol(t)",
+                               "t0 (Fabs(t-t0)=Adissol(t)",
                                "Linear scale (Fabs(k*t)=Adissol(t))",
-                               "Affine transformation (Fabs(k*(t-tlag))=Adissol(t)"], default=0,
+                               "Affine transformation (Fabs(k*(t-t0))=Adissol(t)"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
+        form.addParam('t0Bounds',params.StringParam,label='Bounds t0',default='[-100,100]',
+                      help='Make sure it is in the same time units as the inputs')
+        form.addParam('kBounds',params.StringParam,label='Bounds k',default='[0.1,10]')
         form.addParam('responseScale', params.EnumParam, label="Response scaling",
                       choices=["Linear scale (Fabs(t)=A*Adissol(t))",
                                "Affine transformation (Fabs(t)=A*Adissol(t)+B"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
+        form.addParam('ABounds',params.StringParam,label='Bounds A',default='[0.1,10]')
+        form.addParam('BBounds',params.StringParam,label='Bounds B',default='[-50,50]')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -69,7 +75,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def addSample(self, sampleName, Fabs, Adissol,tlag,k,A,B,R):
+    def addSample(self, sampleName, Fabs, Adissol,optimum,R):
         newSample = PKPDSample()
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
@@ -79,17 +85,27 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         newSample.addMeasurementColumn("Fabs",Fabs)
         self.outputExperiment.samples[sampleName] = newSample
         if self.timeScale.get()==1:
-            timeScaleMsg="tvivo=tvitro-tlag"
+            timeScaleMsg="tvivo=tvitro-t0"
         elif self.timeScale.get()==2:
             timeScaleMsg = "tvivo=k*tvitro"
         elif self.timeScale.get()==3:
-            timeScaleMsg = "tvivo=k*(tvitro-tlag)"
+            timeScaleMsg = "tvivo=k*(tvitro-t0)"
         if self.responseScale.get()==0:
             responseMsg="Fabs(t)=A*Adissol(t)"
         elif self.responseScale.get()==1:
             responseMsg="Fabs(t)=A*Adissol(t)+B"
-        if not tlag is None:
-            self.outputExperiment.addParameterToSample(sampleName, "tlag", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, tlag)
+
+        t0=None
+        k=None
+        A=None
+        B=None
+        i=0
+        for prm in self.parameters:
+            exec ("%s=%f" % (prm, optimum[i]))
+            i+=1
+
+        if not t0 is None:
+            self.outputExperiment.addParameterToSample(sampleName, "t0", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, t0)
         if not k is None:
             self.outputExperiment.addParameterToSample(sampleName, "k", PKPDUnit.UNIT_NONE, timeScaleMsg, k)
         if not A is None:
@@ -102,6 +118,28 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if len(x)>0:
             p = np.percentile(x,[2.5, 50, 97.5],axis=0)
             self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
+
+    def goalFunction(self,x):
+        t0=0.0
+        k=1.0
+        A=1.0
+        B=0.0
+        i=0
+        for prm in self.parameters:
+            exec ("%s=%f" % (prm, x[i]))
+            i+=1
+        tvivo=k*(self.tvitro-t0)
+        self.FabsReinterpolated = self.B(tvivo)
+        self.residuals = self.Adissol-(A*self.FabsReinterpolated+B)
+        error=np.sqrt(np.mean(self.residuals**2))
+        if error<self.bestError:
+            print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
+            self.bestError=error
+        return error
+
+    def parseBounds(self,bounds):
+        tokens=bounds.strip()[1:-1].split(',')
+        return np.asarray(tokens,dtype=np.float64)
 
     def calculateAllIvIvC(self, objId1, objId2):
         parametersInVitro=self.getInVitroModels()
@@ -128,66 +166,57 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
 
         i=1
-        allTlag=[]
+        allt0=[]
         allk=[]
         allA=[]
         allB=[]
         allR=[]
+        self.parameters=[]
+        self.bounds=[]
+        if self.timeScale.get() == 1:  # tvivo=tvitro-t0
+            self.parameters.append('t0')
+            self.bounds.append(self.parseBounds(self.t0Bounds.get()))
+        elif self.timeScale.get() == 2:  # tvivo=k*tvitro
+            self.parameters.append('k')
+            self.bounds.append(self.parseBounds(self.kBounds.get()))
+        elif self.timeScale.get() == 3:  # tvivo=k*(tvitro-t0)
+            self.parameters.append('k')
+            self.parameters.append('t0')
+            self.bounds.append(self.parseBounds(self.kBounds.get()))
+            self.bounds.append(self.parseBounds(self.t0Bounds.get()))
+        self.parameters.append('A')
+        self.bounds.append(self.parseBounds(self.ABounds.get()))
+        if self.responseScale.get() == 1:  # Affine
+            self.parameters.append('B')
+            self.bounds.append(self.parseBounds(self.BBounds.get()))
+
         for parameterInVitro in parametersInVitro:
-            for t,Fabs in profilesInVivo:
-                tvitro, tvivo, Adissol = self.produceLevyPlot(t, parameterInVitro, Fabs)
+            for t,self.Fabs in profilesInVivo:
+                print("New combination %d"%i)
+                self.tvitro, self.tvivo, self.Adissol = self.produceLevyPlot(t, parameterInVitro, self.Fabs)
 
-                # Time scale
-                tlag=None
-                k=None
-                if self.timeScale.get()==1: # tvivo=tvitro-tlag
-                    tlag=np.mean(tvitro)-np.mean(tvivo)
-                    allTlag.append(tlag)
-                    tvivo = tvitro-tlag
-                elif self.timeScale.get()==2: # tvivo=k*tvitro
-                    k=np.mean(tvivo)/np.mean(tvitro)
-                    allk.append(k)
-                    tvivo = k*tvitro
-                elif self.timeScale.get()==3: # tvivo=k*(tvitro-tlag)
-                    p=np.polyfit(tvitro,tvivo,deg=1)
-                    k=p[0]
-                    tlag=p[1]/k
-                    allTlag.append(tlag)
-                    allk.append(k)
-                    tvivo = k * (tvitro - tlag)
+                tvitroUnique, FabsUnique = uniqueFloatValues(self.tvitro, self.Fabs)
+                self.B = InterpolatedUnivariateSpline(tvitroUnique, FabsUnique, k=1)
 
-                # Reinterpolate Fabs
-                if self.timeScale.get()>0:
-                    tvitroUnique, FabsUnique = uniqueFloatValues(tvitro, Fabs)
-                    B = InterpolatedUnivariateSpline(tvitroUnique, FabsUnique, k=1)
-                    Fabs = B(tvivo)
+                self.bestError = 1e38
+                optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
+                self.goalFunction(optimum.x)
 
-                # Response scale
-                A=None
-                B=None
-                if self.responseScale.get()==0: # Linear
-                    A=np.mean(Fabs)/np.mean(Adissol)
-                    allA.append(A)
-                    Fabs=A*Adissol
-                elif self.responseScale.get()==1: # Affine
-                    p=np.polyfit(Adissol,Fabs,deg=1)
-                    A=p[0]
-                    B=p[1]
-                    allA.append(A)
-                    allB.append(B)
-                    Fabs=A*Adissol+B
+                j = 0
+                for prm in self.parameters:
+                    exec ("all%s.append(%f)" % (prm, optimum.x[j]))
+                    j += 1
 
                 # Evaluate correlation
-                residuals = Fabs-Adissol
-                R2=1-np.var(residuals)/np.var(Fabs)
+                R2=np.clip(1-np.var(self.residuals)/np.var(self.Adissol),0.0,1.0)
                 R=sqrt(R2)
                 allR.append(R)
 
-                self.addSample("ivivc_%04d"%i,Adissol,Fabs,tlag,k,A,B,R)
+                self.addSample("ivivc_%04d"%i,self.Adissol,self.FabsReinterpolated,optimum.x,R)
                 i+=1
 
         fh=open(self._getPath("summary.txt"),"w")
-        self.summarize(fh,allTlag,"tlag")
+        self.summarize(fh,allt0,"t0")
         self.summarize(fh,allk,"k")
         self.summarize(fh,allA,"A")
         self.summarize(fh,allB,"B")
@@ -198,11 +227,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if self.timeScale.get() == 0:
             timeStr = "t"
         elif self.timeScale.get() == 1:
-            timeStr = "t-tlag"
+            timeStr = "t-t0"
         elif self.timeScale.get() == 2:
             timeStr = "k*t"
         elif self.timeScale.get() == 3:
-            timeStr = "k*(t-tlag)"
+            timeStr = "k*(t-t0)"
         if self.responseScale.get() == 0:
             eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
         elif self.responseScale.get() == 1:
@@ -220,11 +249,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if self.timeScale.get()==0:
             retval.append("Time scaling: none")
         elif self.timeScale.get()==1:
-            retval.append("Time scaling: tlag (tvivo=tvitro-tlag)")
+            retval.append("Time scaling: t0 (tvivo=tvitro-t0)")
         elif self.timeScale.get()==2:
             retval.append("Time scaling: linear transformation (tvivo=k*tvitro)")
         elif self.timeScale.get()==3:
-            retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-tlag))")
+            retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-t0))")
         if self.responseScale.get()==0:
             retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
         elif self.responseScale.get()==1:
