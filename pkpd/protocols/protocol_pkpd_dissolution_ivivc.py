@@ -129,21 +129,33 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         A=1.0
         B=0.0
         i=0
-        for prm in self.parameters:
-            exec ("%s=%f" % (prm, x[i]))
-            i+=1
-        tvitro=k*(self.tvivo-t0)
-        self.AdissolReinterpolated = self.B(tvitro)
-        self.residuals = A*self.AdissolReinterpolated+B-self.Fabs
-        error=np.sqrt(np.mean(self.residuals**2))
-        if error<self.bestError:
-            print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
-            self.bestError=error
+        try:
+            for prm in self.parameters:
+                exec ("%s=%f" % (prm, x[i]))
+                i+=1
+            tvitroUnique=np.clip(k*(self.tvivoUnique-t0),self.tvitroMin,self.tvitroMax)
+            self.AdissolReinterpolatedUnique = np.clip(A*self.B(tvitroUnique)+B,0.0,None)
+            self.residuals = self.AdissolReinterpolatedUnique-self.FabsUnique
+            error=np.sqrt(np.mean(self.residuals**2))
+            if error<self.bestError:
+                print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
+                self.bestError=error
+            if self.verbose:
+                for i in range(len(self.AdissolReinterpolatedUnique)):
+                    print("i=",i,"tvitro[i]=",tvitroUnique[i],"tvivo[i]=",self.tvivoUnique[i],"AdissolReinterpolated[i]=",self.AdissolReinterpolatedUnique[i],"Fabs[i]",self.FabsUnique[i])
+        except:
+            return 1e38
         return error
 
     def parseBounds(self,bounds):
         tokens=bounds.strip()[1:-1].split(',')
         return np.asarray(tokens,dtype=np.float64)
+
+    def produceAdissol(self,parameterInVitro,tmax):
+        tvitro = np.arange(0,tmax,1)
+        self.protFit.model.x = tvitro
+        Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
+        return (tvitro, Avitro)
 
     def calculateAllIvIvC(self, objId1, objId2):
         parametersInVitro, vesselNames=self.getInVitroModels()
@@ -195,17 +207,25 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.bounds.append(self.parseBounds(self.BBounds.get()))
 
         invitroIdx=0
+        self.verbose=False
         for parameterInVitro in parametersInVitro:
             invivoIdx=0
-            for t,self.Fabs in profilesInVivo:
+            for self.tvivo,self.Fabs in profilesInVivo:
                 print("New combination %d"%i)
-                self.tvitro, self.tvivo, self.Adissol = self.produceLevyPlot(t, parameterInVitro, self.Fabs)
-
-                tvivoUnique, AdissolUnique = uniqueFloatValues(self.tvivo, self.Adissol)
-                self.B = InterpolatedUnivariateSpline(tvivoUnique, AdissolUnique, k=1)
+                self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
+                self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
+                self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
+                self.tvitroMin=np.min(self.tvitroUnique)
+                self.tvitroMax=np.max(self.tvitroUnique)
+                # for i in range(len(self.tvivoUnique)):
+                #    print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
+                # for i in range(len(self.tvitroUnique)):
+                #    print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
+                self.B = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
 
                 self.bestError = 1e38
                 optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
+                # self.verbose=True
                 self.goalFunction(optimum.x)
 
                 j = 0
@@ -219,11 +239,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                     j += 1
 
                 # Evaluate correlation
-                R2=np.clip(1-np.var(self.residuals)/np.var(self.Adissol),0.0,1.0)
+                R2=np.clip(1-np.var(self.residuals)/np.var(self.Fabs),0.0,1.0)
                 R=sqrt(R2)
                 allR.append(R)
 
-                self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],A*self.AdissolReinterpolated+B,self.Fabs,optimum.x,R)
+                self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],self.AdissolReinterpolatedUnique,self.FabsUnique,optimum.x,R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
