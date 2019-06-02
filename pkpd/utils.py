@@ -96,3 +96,25 @@ def uniqueFloatValues(x,y):
     xunique = xp.flat[idx[d > TOL]]
     yunique = yp.flat[idx[d > TOL]]
     return xunique,yunique
+
+def uniqueFloatValues2(x1,x2,y):
+    x1p=np.asarray(x1,dtype=np.float64)
+    x2p=np.asarray(x2,dtype=np.float64)
+    yp=np.asarray(y,dtype=np.float64)
+
+    TOL1 = np.max(x1p.flat) / 1e5
+    idx1 = np.argsort(x1p.flat)
+    d1 = np.append(True, np.diff(x1p.flat[idx1]))
+
+    TOL2 = np.max(x2p.flat) / 1e5
+    idx2 = np.argsort(x1p.flat)
+    d2 = np.append(True, np.diff(x2p.flat[idx2]))
+
+    if np.sum(d1>TOL1)>np.sum(d2>TOL2):
+        takeIdx=idx1[d1>TOL1]
+    else:
+        takeIdx=idx2[d2>TOL2]
+    x1unique = x1p.flat[takeIdx]
+    x2unique = x2p.flat[takeIdx]
+    yunique = yp.flat[takeIdx]
+    return x1unique,x2unique,yunique
