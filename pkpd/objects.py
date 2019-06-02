@@ -455,6 +455,8 @@ class PKPDExperiment(EMObject):
             self.fnPKPD.set(fnExperiment)
         if verifyIntegrity and not verifyMD5(self.fnPKPD.get()):
             raise Exception("The file %s has been modified since its creation"%self.fnPKPD.get())
+        if self.fnPKPD.get() is None:
+            return
         fh=open(self.fnPKPD.get(),'r')
         if not fh:
             raise Exception("Cannot open the file "+self.fnPKPD)
