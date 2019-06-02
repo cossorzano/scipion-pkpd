@@ -58,6 +58,9 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         form.addParam('inputDose', params.FloatParam, label="Dose", default=1,
                       help='Make sure that it is in the same units as the ones at which the PK was estimated. '\
                            'This dose will be given simpy once (single dose).')
+        form.addParam('includeTlag', params.BooleanParam, label="Include tlag", default=True,
+                      help='If you include the tlag (if available), the simulations will be done with the same tlag as '
+                           'the input population. If not, tlag will be set to 0.')
         form.addParam('inputN', params.IntParam, label="Number of simulations", default=100, expertLevel=LEVEL_ADVANCED)
         form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
         form.addParam('tF', params.FloatParam, label="Final time (h)", default=48)
@@ -84,11 +87,15 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
     def getIVIVProfiles(self):
         experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
-        self.allIVIV = []
+        self.allIVIV = {}
         for sampleName, sample in experiment.samples.iteritems():
             Fabs=sample.getValues("Fabs")
             Adissol=sample.getValues("Adissol")
-            self.allIVIV.append((np.asarray(Adissol,dtype=np.float64),np.asarray(Fabs,dtype=np.float64)))
+            fromSample=sample.getDescriptorValue("from")
+            fromIndividual,_=fromSample.split("---")
+            if not fromIndividual in self.allIVIV.keys():
+                self.allIVIV[fromIndividual]=[]
+            self.allIVIV[fromIndividual].append((np.asarray(Adissol,dtype=np.float64),np.asarray(Fabs,dtype=np.float64)))
 
     def getPKModels(self):
         fnFitting = self.inputPK.get().fnFitting
@@ -108,7 +115,17 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.pkPopulation = cls!=""
         self.pkNParams = self.pkModel.getNumberOfParameters()
 
-    def addSample(self, sampleName, t, y):
+        self.tlagIdx=None
+        if self.includeTlag.get():
+            i=0
+            for prmName in self.fittingPK.modelParameters:
+                if prmName.endswith('_tlag'):
+                    self.tlagIdx=i
+                    print("Found tlag in %s at position %d"%(prmName,i))
+                    break
+                i+=1
+
+    def addSample(self, sampleName, t, y, fromSamples):
         newSample = PKPDSample()
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
@@ -124,7 +141,9 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         newSample.descriptors["MRT"] = self.MRT
         newSample.descriptors["Cmax"] = self.Cmax
         newSample.descriptors["Tmax"] = self.Tmax
+
         self.outputExperiment.samples[sampleName] = newSample
+        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", fromSamples)
 
     def NCA(self, t, C):
         self.AUC0t = 0
@@ -229,37 +248,43 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         for i in range(0,inputN):
             print("Simulation no. %d ----------------------"%i)
 
+            # Get a random PK model
+            nfit = int(random.uniform(0, len(self.fittingPK.sampleFits)))
+            sampleFitVivo = self.fittingPK.sampleFits[nfit]
+            print("In vivo sample name=",sampleFitVivo.sampleName)
+            if self.pkPopulation:
+                nbootstrap = int(random.uniform(0,sampleFitVivo.parameters.shape[0]))
+                pkPrmAll= sampleFitVivo.parameters[nbootstrap,:]
+            else:
+                pkPrmAll = sampleFitVivo.parameters
+            pkPrm=pkPrmAll[-self.pkNParams:] # Get the last Nparams
+            print("PK parameters: ",pkPrm)
+
+            tlag=0
+            if self.includeTlag.get() and (not self.tlagIdx is None):
+                tlag=pkPrmAll[self.tlagIdx]
+                print("tlag: ",tlag)
+
             # Get a random dissolution profile
             nfit = int(random.uniform(0, len(self.fittingInVitro.sampleFits)))
-            sampleFit = self.fittingInVitro.sampleFits[nfit]
+            sampleFitVitro = self.fittingInVitro.sampleFits[nfit]
             if self.dissolutionPopulation:
-                nbootstrap = int(random.uniform(0,sampleFit.parameters.shape[0]))
-                dissolutionPrm = sampleFit.parameters[nbootstrap,:]
+                nbootstrap = int(random.uniform(0,sampleFitVitro.parameters.shape[0]))
+                dissolutionPrm = sampleFitVitro.parameters[nbootstrap,:]
             else:
-                dissolutionPrm = sampleFit.parameters
-            print("Dissolution parameters: ",dissolutionPrm)
-            A=self.dissolutionModel.forwardModel(dissolutionPrm,t)
+                dissolutionPrm = sampleFitVitro.parameters
+            print("Dissolution parameters: ", np.array2string(dissolutionPrm,max_line_width=1000))
+            A=self.dissolutionModel.forwardModel(dissolutionPrm,t-tlag)
 
             # In vitro-in vivo correlation
-            nfit = int(random.uniform(0, len(self.allIVIV)))
-            Adissol, Fabs = self.allIVIV[nfit]
+            nfit = int(random.uniform(0, len(self.allIVIV[sampleFitVivo.sampleName])))
+            Adissol, Fabs = self.allIVIV[sampleFitVivo.sampleName][nfit]
             AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
             B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
             A=np.asarray(B(A)[0],dtype=np.float64)
 
             # Set the dissolution profile
             self.pkModel.drugSource.getVia().viaProfile.setXYValues(t,A)
-
-            # Get a random PK model
-            nfit = int(random.uniform(0, len(self.fittingPK.sampleFits)))
-            sampleFit = self.fittingPK.sampleFits[nfit]
-            if self.pkPopulation:
-                nbootstrap = int(random.uniform(0,sampleFit.parameters.shape[0]))
-                pkPrm = sampleFit.parameters[nbootstrap,:]
-            else:
-                pkPrm = sampleFit.parameters
-            pkPrm=pkPrm[-self.pkNParams:] # Get the last Nparams
-            print("PK parameters: ",pkPrm)
             C=self.pkModel.forwardModel(pkPrm,[t])[0] # forwardModel returns a list of arrays
 
             self.NCA(t,C)
@@ -270,7 +295,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             TmaxArray[i] = self.Tmax
 
             if self.addIndividuals:
-                self.addSample("Simulation_%d"%i, t, C)
+                self.addSample("Simulation_%d"%i, t, C, "%s---%s"%(sampleFitVivo.sampleName,sampleFitVitro.sampleName))
 
         # Report NCA statistics
         alpha_2 = (100-95)/2
@@ -283,8 +308,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(MRTarray)))
         limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CmaxArray)))
-        limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(CmaxArray)))
+        limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(TmaxArray)))
         fhSummary.close()
 
         if self.addIndividuals:
