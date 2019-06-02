@@ -64,7 +64,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         form.addParam('inputN', params.IntParam, label="Number of simulations", default=100, expertLevel=LEVEL_ADVANCED)
         form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
         form.addParam('tF', params.FloatParam, label="Final time (h)", default=48)
-        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=False, expertLevel=LEVEL_ADVANCED,
+        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=True, expertLevel=LEVEL_ADVANCED,
                       help="Individual simulations are added to the output")
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -273,7 +273,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 dissolutionPrm = sampleFitVitro.parameters[nbootstrap,:]
             else:
                 dissolutionPrm = sampleFitVitro.parameters
-            print("Dissolution parameters: ", np.array2string(dissolutionPrm,max_line_width=1000))
+            print("Dissolution parameters: ", np.array2string(np.asarray(dissolutionPrm,dtype=np.float64),max_line_width=1000))
             A=self.dissolutionModel.forwardModel(dissolutionPrm,t-tlag)
 
             # In vitro-in vivo correlation
