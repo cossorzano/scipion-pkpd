@@ -684,6 +684,35 @@ class PKPDExperiment(EMObject):
                 sample.descriptors={}
             sample.descriptors[varName] = varValue
 
+    def addLabelToSample(self, sampleName, varName, varDescr, varValue, rewrite=False):
+        if not varName in self.variables:
+            varX = PKPDVariable()
+            varX.varName = varName
+            varX.varType = PKPDVariable.TYPE_TEXT
+            varX.displayString = "%s"
+            varX.role = PKPDVariable.ROLE_LABEL
+            varX.comment = varDescr
+            varX.units = PKPDUnit()
+            varX.units.unit = PKPDUnit.UNIT_NONE
+            self.variables[varName] = varX
+        else:
+            varPresent = self.variables[varName]
+            if varPresent.role!=PKPDVariable.ROLE_LABEL:
+                raise Exception("Only labels can be reused (%s)"%varName)
+
+            if rewrite:
+                varPresent.comment = varDescr
+                varPresent.units.unit = PKPDUnit.UNIT_NONE
+            else:
+                if varPresent.comment!=varDescr:
+                    raise Exception("%s is already a variable in the experiment with a different purpose"%varName)
+
+        if sampleName in self.samples:
+            sample = self.samples[sampleName]
+            if sample.descriptors==None:
+                sample.descriptors={}
+            sample.descriptors[varName] = varValue
+
     def getSubGroup(self,condition):
         if condition=="":
             return self.samples
