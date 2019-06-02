@@ -128,7 +128,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         print "IVIV+PK simulation ..."
         protIVIVPK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk',
-                                      inputN=4,
+                                      inputN=100,
                                       tF=15,
                                       addIndividuals=True
                                     )
@@ -167,7 +167,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         print "IVIV+PK simulation ..."
         protIVIVPKBoot = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk bootstrap',
-                                      inputN=4,
+                                      inputN=100,
                                       tF=15,
                                       addIndividuals=True
                                       )
