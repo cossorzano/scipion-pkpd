@@ -55,19 +55,22 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                       pointerClass='ProtPKPDDeconvolve', help='Select an experiment with dissolution profiles')
         form.addParam('timeScale', params.EnumParam, label="Time scaling",
                       choices=["None (Fabs(t)=Adissol(t))",
-                               "t0 (Fabs(t-t0)=Adissol(t)",
-                               "Linear scale (Fabs(k*t)=Adissol(t))",
-                               "Affine transformation (Fabs(k*(t-t0))=Adissol(t)"], default=0,
+                               "t0 (Fabs(t)=Adissol(t-t0)",
+                               "Linear scale (Fabs(t)=Adissol(k*t))",
+                               "Affine transformation (Fabs(t)=Adissol(k*(t-t0))"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
         form.addParam('t0Bounds',params.StringParam,label='Bounds t0',default='[-100,100]',
+                      condition='timeScale==1 or timeScale==3',
                       help='Make sure it is in the same time units as the inputs')
-        form.addParam('kBounds',params.StringParam,label='Bounds k',default='[0.1,10]')
+        form.addParam('kBounds',params.StringParam,label='Bounds k',default='[0.1,10]',
+                      condition='timeScale==2 or timeScale==3')
         form.addParam('responseScale', params.EnumParam, label="Response scaling",
                       choices=["Linear scale (Fabs(t)=A*Adissol(t))",
                                "Affine transformation (Fabs(t)=A*Adissol(t)+B"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
         form.addParam('ABounds',params.StringParam,label='Bounds A',default='[0.1,10]')
-        form.addParam('BBounds',params.StringParam,label='Bounds B',default='[-50,50]')
+        form.addParam('BBounds',params.StringParam,label='Bounds B',default='[-50,50]',
+                      condition='responseScale==1')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -75,7 +78,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def addSample(self, sampleName, Fabs, Adissol,optimum,R):
+    def addSample(self, sampleName, individualFrom, vesselFrom, Fabs, Adissol,optimum,R):
         newSample = PKPDSample()
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
@@ -85,11 +88,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         newSample.addMeasurementColumn("Fabs",Fabs)
         self.outputExperiment.samples[sampleName] = newSample
         if self.timeScale.get()==1:
-            timeScaleMsg="tvivo=tvitro-t0"
+            timeScaleMsg="tvitro=tvivo-t0"
         elif self.timeScale.get()==2:
-            timeScaleMsg = "tvivo=k*tvitro"
+            timeScaleMsg = "tvitro=k*tvivo"
         elif self.timeScale.get()==3:
-            timeScaleMsg = "tvivo=k*(tvitro-t0)"
+            timeScaleMsg = "tvitro=k*(tvivo-t0)"
         if self.responseScale.get()==0:
             responseMsg="Fabs(t)=A*Adissol(t)"
         elif self.responseScale.get()==1:
@@ -104,6 +107,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             exec ("%s=%f" % (prm, optimum[i]))
             i+=1
 
+        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
         if not t0 is None:
             self.outputExperiment.addParameterToSample(sampleName, "t0", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, t0)
         if not k is None:
@@ -128,9 +132,9 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         for prm in self.parameters:
             exec ("%s=%f" % (prm, x[i]))
             i+=1
-        tvivo=k*(self.tvitro-t0)
-        self.FabsReinterpolated = self.B(tvivo)
-        self.residuals = self.Adissol-(A*self.FabsReinterpolated+B)
+        tvitro=k*(self.tvivo-t0)
+        self.AdissolReinterpolated = self.B(tvitro)
+        self.residuals = A*self.AdissolReinterpolated+B-self.Fabs
         error=np.sqrt(np.mean(self.residuals**2))
         if error<self.bestError:
             print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
@@ -142,8 +146,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return np.asarray(tokens,dtype=np.float64)
 
     def calculateAllIvIvC(self, objId1, objId2):
-        parametersInVitro=self.getInVitroModels()
-        profilesInVivo=self.getInVivoProfiles()
+        parametersInVitro, vesselNames=self.getInVitroModels()
+        profilesInVivo, sampleNames=self.getInVivoProfiles()
 
         self.outputExperiment = PKPDExperiment()
         AdissolVar = PKPDVariable()
@@ -173,13 +177,13 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         allR=[]
         self.parameters=[]
         self.bounds=[]
-        if self.timeScale.get() == 1:  # tvivo=tvitro-t0
+        if self.timeScale.get() == 1:  # tvitro=tvivo-t0
             self.parameters.append('t0')
             self.bounds.append(self.parseBounds(self.t0Bounds.get()))
-        elif self.timeScale.get() == 2:  # tvivo=k*tvitro
+        elif self.timeScale.get() == 2:  # tvitro=k*tvivo
             self.parameters.append('k')
             self.bounds.append(self.parseBounds(self.kBounds.get()))
-        elif self.timeScale.get() == 3:  # tvivo=k*(tvitro-t0)
+        elif self.timeScale.get() == 3:  # tvitro=k*(tvivo-t0)
             self.parameters.append('k')
             self.parameters.append('t0')
             self.bounds.append(self.parseBounds(self.kBounds.get()))
@@ -190,20 +194,27 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.parameters.append('B')
             self.bounds.append(self.parseBounds(self.BBounds.get()))
 
+        invitroIdx=0
         for parameterInVitro in parametersInVitro:
+            invivoIdx=0
             for t,self.Fabs in profilesInVivo:
                 print("New combination %d"%i)
                 self.tvitro, self.tvivo, self.Adissol = self.produceLevyPlot(t, parameterInVitro, self.Fabs)
 
-                tvitroUnique, FabsUnique = uniqueFloatValues(self.tvitro, self.Fabs)
-                self.B = InterpolatedUnivariateSpline(tvitroUnique, FabsUnique, k=1)
+                tvivoUnique, AdissolUnique = uniqueFloatValues(self.tvivo, self.Adissol)
+                self.B = InterpolatedUnivariateSpline(tvivoUnique, AdissolUnique, k=1)
 
                 self.bestError = 1e38
                 optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
                 self.goalFunction(optimum.x)
 
                 j = 0
+                t0 = 0.0
+                k = 1.0
+                A = 1.0
+                B = 0.0
                 for prm in self.parameters:
+                    exec ("%s=%f" % (prm, optimum.x[j]))
                     exec ("all%s.append(%f)" % (prm, optimum.x[j]))
                     j += 1
 
@@ -212,8 +223,10 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 R=sqrt(R2)
                 allR.append(R)
 
-                self.addSample("ivivc_%04d"%i,self.Adissol,self.FabsReinterpolated,optimum.x,R)
+                self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],A*self.AdissolReinterpolated+B,self.Fabs,optimum.x,R)
                 i+=1
+                invivoIdx+=1
+            invitroIdx+=1
 
         fh=open(self._getPath("summary.txt"),"w")
         self.summarize(fh,allt0,"t0")

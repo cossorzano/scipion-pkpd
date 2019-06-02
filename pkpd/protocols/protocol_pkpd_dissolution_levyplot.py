@@ -59,12 +59,14 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
     def getInVivoProfiles(self):
         experiment = self.readExperiment(self.inputInVivo.get().outputExperiment.fnPKPD)
         allY = []
+        sampleNames = []
         for sampleName, sample in experiment.samples.iteritems():
             t=sample.getValues("t")
             y=sample.getValues("A")
             allY.append((np.asarray(t,dtype=np.float64),np.asarray(y,dtype=np.float64)))
+            sampleNames.append(sampleName)
         self.experimentInVivo = experiment
-        return allY
+        return allY, sampleNames
 
     def getInVitroModels(self):
         allParameters = []
@@ -83,13 +85,15 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         self.protFit.setupModel()
 
         parameterNames = self.protFit.model.getParameterNames()
+        vesselNames=[]
         for sampleName, sample in experiment.samples.iteritems():
+            vesselNames.append(sampleName)
             parameters0 = []
             for parameterName in parameterNames:
                 parameters0.append(float(sample.descriptors[parameterName]))
             allParameters.append(parameters0)
         self.experimentInVitro = experiment
-        return allParameters
+        return allParameters, vesselNames
 
     def produceLevyPlot(self,tvitro,parameterInVitro,Avivo):
         Avivounique, tunique=uniqueFloatValues(Avivo,tvitro)
@@ -113,8 +117,8 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         self.outputExperiment.samples[sampleName] = newSample
 
     def calculateAllLevy(self, objId1, objId2):
-        parametersInVitro=self.getInVitroModels()
-        profilesInVivo=self.getInVivoProfiles()
+        parametersInVitro, _ =self.getInVitroModels()
+        profilesInVivo, _ =self.getInVivoProfiles()
 
         self.outputExperiment = PKPDExperiment()
         tvitrovar = PKPDVariable()
