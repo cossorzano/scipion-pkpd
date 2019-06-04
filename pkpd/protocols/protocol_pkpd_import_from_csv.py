@@ -45,6 +45,9 @@ class ProtPKPDImportFromText(ProtPKPD):
         if type=="CSV":
             inputFileHelp += "The field separator must be a semicolon (;), decimal point must be a dot (.).\n"
             inputFileHelp += "The first row must contain the variable names and one of them must be SampleName which will serve as identifier."
+        elif type=="ExcelTable":
+            inputFileHelp += "The first column must be time, the rest of the columns must be measurements of each one of the individuals\n"
+            inputFileHelp += "A column by each individual."
         form.addParam('inputFile', params.PathParam,
                       label="File path", allowsNull=False, help=inputFileHelp)
         form.addParam('title', params.StringParam, label="Title", default="My experiment")
@@ -77,7 +80,8 @@ class ProtPKPDImportFromText(ProtPKPD):
                            "The sample name should have no space or special character\n"\
                            "\nIt is important that there is one semicolon.\n"\
                            "Examples:\n"\
-                           "FemaleRat1 ; Bolus0,Bolus1,Infusion0\n")
+                           "FemaleRat1 ; Bolus0,Bolus1,Infusion0\n"\
+                           "If left empty, all individuals are assigned to the first dose")
 
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -90,7 +94,8 @@ class ProtPKPDImportFromText(ProtPKPD):
         pass
 
     def addSample(self,samplename,tokens):
-        self.experiment.samples[samplename] = PKPDSample()
+        if not samplename in self.experiment.samples.keys():
+            self.experiment.samples[samplename] = PKPDSample()
         self.experiment.samples[samplename].parseTokens(tokens, self.experiment.variables, self.experiment.doses,
                                                         self.experiment.groups)
 
@@ -159,6 +164,12 @@ class ProtPKPDImportFromText(ProtPKPD):
         if ok:
             # Read the measurements
             self.readTextFile()
+            
+            if self.dosesToSamples.get()=="" and self.experiment.doses: # There are doses but they are not assigned
+               dosename = self.experiment.doses.keys()[0]
+               for samplename in self.experiment.samples:
+                   self.experiment.samples[samplename].doseList.append(dosename)
+
             self.experiment.write(self._getPath("experiment.pkpd"))
             self.experiment._printToStream(sys.stdout)
             self._defineOutputs(outputExperiment=self.experiment)
@@ -227,6 +238,64 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
                                 raise Exception("Time measurements cannot be NA")
                     varNo+=1
             lineNo+=1
+
+
+class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
+    """ Import experiment from Excel.\n
+        Protocol created by http://www.kinestatpharma.com\n"""
+    _label = 'import from excel'
+
+    #--------------------------- DEFINE param functions --------------------------------------------
+
+    def _defineParams(self, form):
+        ProtPKPDImportFromText._defineParams(self,form,"ExcelTable")
+
+    def readTextFile(self):
+        import openpyxl
+        wb = openpyxl.load_workbook(self.inputFile.get())
+        sampleNames = []
+        allT = []
+        allSamples = []
+        sheet = wb.get_sheet_by_name(wb.get_sheet_names()[0]) # First sheet only
+        for i in range(sheet.max_row):
+            print(i)
+            if i > 0:
+                allMeasurements = []
+            for j in range(sheet.max_column):
+                cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
+                if cellValue == "":
+                    continue
+                if i == 0 and j >= 1:
+                    sampleName = cellValue
+                    if sampleName[0] in "0123456789":
+                        sampleName="d"+sampleName
+                    sampleNames.append(sampleName)
+                elif i > 0:
+                    if j == 0:
+                        allT.append(cellValue)
+                    else:
+                        allMeasurements.append(cellValue)
+            if i > 0:
+                allSamples.append(allMeasurements)
+
+        tvarName = None
+        xvarName = None
+        for varName in self.experiment.variables:
+            if self.experiment.variables[varName].role == PKPDVariable.ROLE_TIME:
+                tvarName = varName
+            elif self.experiment.variables[varName].role == PKPDVariable.ROLE_MEASUREMENT:
+                xvarName = varName
+
+        for sampleName in sampleNames:
+            self.addSample(sampleName,[sampleName])
+            samplePtr=self.experiment.samples[sampleName]
+            samplePtr.addMeasurementPattern([sampleName, tvarName, xvarName])
+            exec ("samplePtr.measurement_%s=%s" % (tvarName, allT))
+
+        for i in range(len(allT)):
+            for j in range(len(sampleNames)):
+                samplePtr=self.experiment.samples[sampleNames[j]]
+                exec ('samplePtr.measurement_%s.append("%s")' % (xvarName, allSamples[i][j]))
 
 
 def getSampleNamesFromCSVfile(fnCSV):
