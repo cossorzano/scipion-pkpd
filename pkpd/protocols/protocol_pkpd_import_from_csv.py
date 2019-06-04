@@ -164,7 +164,7 @@ class ProtPKPDImportFromText(ProtPKPD):
         if ok:
             # Read the measurements
             self.readTextFile()
-            
+
             if self.dosesToSamples.get()=="" and self.experiment.doses: # There are doses but they are not assigned
                dosename = self.experiment.doses.keys()[0]
                for samplename in self.experiment.samples:
