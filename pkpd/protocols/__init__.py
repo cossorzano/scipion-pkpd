@@ -68,6 +68,7 @@ from .protocol_pkpd_monocompartment_urine import ProtPKPDMonoCompartmentUrine
 from .protocol_pkpd_nca_iv_exp import ProtPKPDNCAIVExp
 from .protocol_pkpd_nca_iv_obs import ProtPKPDNCAIVObs
 from .protocol_pkpd_nca_niv import ProtPKPDNCAEV
+from .protocol_pkpd_nca_numeric import ProtPKPDNCANumeric
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from .protocol_pkpd_ode_bootstrap import ProtPKPDODEBootstrap
 from .protocol_pkpd_ode_refine import ProtPKPDODERefine
