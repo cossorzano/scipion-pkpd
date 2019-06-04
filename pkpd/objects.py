@@ -361,7 +361,8 @@ class PKPDSample:
             xPartial =[]
             yPartial = []
             for x, y in izip(xs, ys):
-                if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ":
+                if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
+                   x!= "None" and y!="None":
                     xPartial.append(float(x))
                     yPartial.append(float(y))
             xl.append(np.array(xPartial))
