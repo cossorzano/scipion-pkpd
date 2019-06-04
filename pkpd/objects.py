@@ -319,7 +319,7 @@ class PKPDSample:
             return [None, None]
         else:
             aux = getattr(self,"measurement_%s"%varName)
-            aux = [x for x in aux if x != "NA" and x!="LLOQ" and x!="ULOQ"]
+            aux = [x for x in aux if x != "NA" and x!="LLOQ" and x!="ULOQ" and x!="None"]
             x = np.asarray(aux, dtype=np.double)
             return [x.min(),x.max()]
 
