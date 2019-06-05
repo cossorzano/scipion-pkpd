@@ -153,9 +153,38 @@ class ProtPKPDNCANumeric(ProtPKPD):
         self.outputExperiment.variables["Cmax"] = Cmaxvar
         self.outputExperiment.variables["Tmax"] = Tmaxvar
 
+        inputN = len(self.outputExperiment.samples)
+        AUCarray = np.zeros(inputN)
+        AUMCarray = np.zeros(inputN)
+        MRTarray = np.zeros(inputN)
+        CmaxArray = np.zeros(inputN)
+        TmaxArray = np.zeros(inputN)
+        i=0
         for sampleName, sample in self.outputExperiment.samples.iteritems():
             [t,Cp] = sample.getXYValues(tvarName,xvarName)
             self.analyzeSample(sample, t[0], Cp[0])
+
+            AUCarray[i] = self.AUC0t
+            AUMCarray[i] = self.AUMC0t
+            MRTarray[i] = self.MRT
+            CmaxArray[i] = self.Cmax
+            TmaxArray[i] = self.Tmax
+            i+=1
+
+        # Report NCA statistics
+        alpha_2 = (100-95)/2
+        limits = np.percentile(AUCarray,[alpha_2,100-alpha_2])
+        fhSummary=open(self._getPath("summary.txt"),"w")
+        self.doublePrint(fhSummary,"AUC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.AUCunits),np.mean(AUCarray)))
+        limits = np.percentile(AUMCarray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
+        limits = np.percentile(MRTarray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(MRTarray)))
+        limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Cmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CmaxArray)))
+        limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(TmaxArray)))
+        fhSummary.close()
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
 
@@ -167,4 +196,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
     def _summary(self):
         msg=[]
         msg.append("Non-compartmental analysis for the observations of the variable %s"%self.xVar.get())
+        msg.append(" ")
+        self.addFileContentToMessage(msg,self._getPath("summary.txt"))
         return msg
+
