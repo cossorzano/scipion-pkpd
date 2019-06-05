@@ -40,6 +40,7 @@ from .protocol_pkpd_dissolution_deconvolve import ProtPKPDDeconvolve
 from .protocol_pkpd_dissolution_fit import ProtPKPDDissolutionFit
 from .protocol_pkpd_dissolution_f2 import ProtPKPDDissolutionF2
 from .protocol_pkpd_dissolution_ivivc import ProtPKPDDissolutionIVIVC
+from .protocol_pkpd_dissolution_ivivc_internal_validity import ProtPKPDIVIVCInternalValidity
 from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
 from .protocol_pkpd_dissolution_simulation import ProtPKPDDissolutionPKSimulation
 from .protocol_pkpd_dose_escalation import *

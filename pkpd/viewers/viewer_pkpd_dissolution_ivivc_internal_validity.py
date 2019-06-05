@@ -1,7 +1,6 @@
 # **************************************************************************
 # *
-# * Authors: Yunior C. Fonseca Reyna    (cfonseca@cnb.csic.es)
-# *
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@gmail.com)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -21,15 +20,32 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'scipion@cnb.csic.es'
+# *  e-mail address 'jmdelarosa@cnb.csic.es'
 # *
 # **************************************************************************
 
-from .viewer import (PKPDExperimentViewer, PKPDFittingViewer, PKPDCSVViewer,
-                     PKPDAnalysisViewer, PKPDStatisticsLabelViewer,
-                     PKPDRegressionLabelsViewer, PKPDPopulationViewer,
-                     PKPDAllometricScalingViewer)
-from .viewer_pkpd_dissolution_f2 import PKPDDissolutionF2Viewer
-from .viewer_pkpd_dissolution_ivivc_internal_validity import PKPDDissolutionIVIVCInternalValidityViewer
-from .viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
-from .viewer_pkpd_simulate_liver_flow import PKPDSimulateLiverFlowViewer
+from numpy import genfromtxt, isnan
+
+from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
+from pyworkflow.em.viewers.plotter import EmPlotter
+
+from pkpd.protocols import ProtPKPDIVIVCInternalValidity
+
+class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
+    _targets = [ProtPKPDIVIVCInternalValidity]
+    _environments = [DESKTOP_TKINTER]
+
+    def visualize(self, obj, **kwargs):
+        prot = obj
+        auc = genfromtxt(prot._getExtraPath('errorAUC.txt'))
+        cmax = genfromtxt(prot._getExtraPath('errorCmax.txt'))
+
+        plotter = EmPlotter()
+        plotter.createSubPlot("Histogram of error AUC0t", "Error AUC0t", "Count")
+        plotter.plotHist(auc[~isnan(auc)], 50)
+        plotter.show()
+
+        plotter = EmPlotter()
+        plotter.createSubPlot("Histogram of error Cmax", "Error Cmax", "Count")
+        plotter.plotHist(cmax[~isnan(cmax)], 50)
+        plotter.show()
