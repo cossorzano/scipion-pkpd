@@ -309,7 +309,10 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             self.knotsY = np.append(np.insert(self.parameters[1:],0,0),1)
             self.knotsY=np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
-            self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            try:
+                self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            except:
+                print("Error en spline",knotsUnique, knotsYUnique)
             self.parametersPrepared=copy.copy(self.parameters)
         fraction=self.B(t)
         fraction=np.clip(fraction,0.0,1.0)
