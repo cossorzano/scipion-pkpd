@@ -47,7 +47,7 @@ class ProtPKPDChangeVia(ProtPKPD):
                       help='Name of the via you want to change')
         form.addParam('newViaType', params.StringParam, label="New via type",
                       help='New via type, leave it empty to keep current via. Valid vias are iv, ev0, ev1, ev01, evFractional, '
-                           'spline2, spline3, ..., spline10')
+                           'spline2, spline3, ..., spline20')
         form.addParam('tlag', params.StringParam, label="New tlag",
                       help='New tlag of the dose, leave it empty to let it free so that it can be optimized by an ODE model')
         form.addParam('bioavailability', params.StringParam, label="New bioavailability",

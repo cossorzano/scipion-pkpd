@@ -379,6 +379,55 @@ class BiopharmaceuticsModelSpline10(BiopharmaceuticsModelSplineGeneric):
         BiopharmaceuticsModelSplineGeneric.__init__(self)
         self.nknots = 10
 
+class BiopharmaceuticsModelSpline11(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 11
+
+class BiopharmaceuticsModelSpline12(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 12
+
+class BiopharmaceuticsModelSpline13(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 13
+
+class BiopharmaceuticsModelSpline14(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 14
+
+class BiopharmaceuticsModelSpline15(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 15
+
+class BiopharmaceuticsModelSpline16(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 16
+
+class BiopharmaceuticsModelSpline17(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 17
+
+class BiopharmaceuticsModelSpline18(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 18
+
+class BiopharmaceuticsModelSpline19(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 19
+
+class BiopharmaceuticsModelSpline20(BiopharmaceuticsModelSplineGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineGeneric.__init__(self)
+        self.nknots = 20
 
 class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
     def setXYValues(self,t,A):
@@ -521,6 +570,26 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelSpline9()
                 elif self.via=="spline10":
                     self.viaProfile=BiopharmaceuticsModelSpline10()
+                elif self.via == "spline11":
+                    self.viaProfile = BiopharmaceuticsModelSpline11()
+                elif self.via == "spline12":
+                    self.viaProfile = BiopharmaceuticsModelSpline12()
+                elif self.via == "spline13":
+                    self.viaProfile = BiopharmaceuticsModelSpline13()
+                elif self.via == "spline14":
+                    self.viaProfile = BiopharmaceuticsModelSpline14()
+                elif self.via == "spline15":
+                    self.viaProfile = BiopharmaceuticsModelSpline15()
+                elif self.via == "spline16":
+                    self.viaProfile = BiopharmaceuticsModelSpline16()
+                elif self.via == "spline17":
+                    self.viaProfile = BiopharmaceuticsModelSpline17()
+                elif self.via == "spline18":
+                    self.viaProfile = BiopharmaceuticsModelSpline18()
+                elif self.via == "spline19":
+                    self.viaProfile = BiopharmaceuticsModelSpline19()
+                elif self.via == "spline20":
+                    self.viaProfile = BiopharmaceuticsModelSpline20()
                 elif self.via=="numerical":
                     self.viaProfile=BiopharmaceuticsModelNumerical()
 
