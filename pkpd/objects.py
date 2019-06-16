@@ -1608,6 +1608,8 @@ class PKPDFitting(EMObject):
             self.sampleFittingClass = cls
 
     def isPopulation(self):
+        if self.fnFitting.get() is None:
+            return False
         return self.fnFitting.get().endswith("bootstrapPopulation.pkpd")
 
     def write(self, fnFitting):
