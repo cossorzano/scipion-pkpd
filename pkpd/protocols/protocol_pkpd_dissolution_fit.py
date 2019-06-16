@@ -47,7 +47,9 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                       label="Allow lag", default=False,
                       help='Allow lag time before starting dissolution (t-tlag)')
         form.addParam('modelType', params.EnumParam, choices=["Zero order","First order","Fractional","Weibull","Higuchi",
-                                                              "Korsmeyer-Peppas","Hixson-Crowell","Hopfenberg","Hill"],
+                                                              "Korsmeyer-Peppas","Hixson-Crowell","Hopfenberg","Hill",
+                                                              "Splines2", "Splines3", "Splines4", "Spline5", "Splines6",
+                                                              "Splines7", "Splines8", "Splines9", "Splines10"],
                       label="Dissolution model", default=3,
                       help='Zero order: Y=K*(t-[tlag])\n'\
                            'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n'\
@@ -57,7 +59,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Korsmeyer-Peppas: Y=Ymax*t^m\n'\
                            'Hixson-Crowell: Y=Ymax*(1-(1-K*t)^3)\n'
                            'Hopfenberg: Y=Ymax*(1-(1-K*t)^m)\n'
-                           'Hill: Y = Ymax*t^d/(g^d+t^d)')
+                           'Hill: Y = Ymax*t^d/(g^d+t^d)\n'
+                           'SplinesN: Y= Ymax*Bspline(t;N,tmax)\n')
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
@@ -72,7 +75,8 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Korsmeyer-Peppas: [tlag]; Ymax; m\n'
                            'Hixson-Crowell: [tlag]; Ymax; K\n'
                            'Hopfenberg: [tlag]; Ymax; K; m\n'
-                           'Hill: [tlag]; Ymax; g; d')
+                           'Hill: [tlag]; Ymax; g; d\n'
+                           'SplinesN: [tlag]; Ymax; tmax; c1; c2; ...; cN\n')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
 
@@ -99,6 +103,24 @@ are independent, which are not. Use Bootstrap estimates instead.\n
             return DissolutionHopfenberg()
         elif self.modelType.get() == 8:
             return DissolutionHill()
+        elif self.modelType.get() == 9:
+            return DissolutionSplines2()
+        elif self.modelType.get() == 10:
+            return DissolutionSplines3()
+        elif self.modelType.get() == 11:
+            return DissolutionSplines4()
+        elif self.modelType.get() == 12:
+            return DissolutionSplines5()
+        elif self.modelType.get() == 13:
+            return DissolutionSplines6()
+        elif self.modelType.get() == 14:
+            return DissolutionSplines7()
+        elif self.modelType.get() == 15:
+            return DissolutionSplines8()
+        elif self.modelType.get() == 16:
+            return DissolutionSplines9()
+        elif self.modelType.get() == 17:
+            return DissolutionSplines10()
 
     def setupFromFormParameters(self):
         self.model.allowTlag = self.allowTlag.get()

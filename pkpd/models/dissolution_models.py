@@ -27,12 +27,13 @@
 PD models
 """
 
+import copy
 import numpy as np
 
 from pkpd.objects import PKPDModel
 from pkpd.pkpd_units import inverseUnits, divideUnits, PKPDUnit
-
-import math
+from pkpd.utils import uniqueFloatValues
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 # Tested by test_workflow_dissolution
 
@@ -608,6 +609,7 @@ class DissolutionHopfenberg(DissolutionModel):
             self.parameterUnits=[yunits, x1units, PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
+
 class DissolutionHill(DissolutionModel):
     def forwardModel(self, parameters, x=None):
         if x == None:
@@ -688,3 +690,140 @@ class DissolutionHill(DissolutionModel):
         else:
             self.parameterUnits = [PKPDUnit.UNIT_NONE, xunits, PKPDUnit.UNIT_NONE]
         return self.parameterUnits
+
+
+class DissolutionSplinesGeneric(DissolutionModel):
+    def __init__(self):
+        self.nknots=0
+        self.parametersPrepared=None
+
+    def forwardModel(self, parameters, x=None):
+        if x is None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+
+        if self.allowTlag:
+            tlag=parameters[0]
+            Vmax=parameters[1]
+            tmax=parameters[2]
+            coefs=parameters[3:]
+            xToUse-=tlag
+        else:
+            Vmax=parameters[0]
+            tmax=parameters[1]
+            coefs=parameters[2:]
+
+        xToUse = np.clip(xToUse, 0.0, tmax)
+
+        if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,parameters):
+            self.knots = np.linspace(0, tmax, self.nknots+2)
+            self.knotsY = np.append(np.insert(coefs,0,0),1)
+            self.knotsY=np.sort(self.knotsY)
+            knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
+            self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            self.parametersPrepared=copy.copy(parameters)
+
+        fraction=self.B(xToUse)
+        fraction=np.clip(fraction,0.0,1.0)
+        self.yPredicted = Vmax*fraction
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Splines dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax))
+            self.bounds.append((0.0, np.max(xToUse)))
+            for i in range(self.nknots):
+                self.bounds.append((0.0,1.0))
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            return "Y=Vmax*Bspline(t-tlag,%d,tmax)"%self.nknots
+        else:
+            return "Y=Vmax*Bspline(t,%d,tmax)"%self.nknots
+
+    def getEquation(self):
+        if self.allowTlag:
+            tlag=self.parameters[0]
+            Vmax=self.parameters[1]
+            tmax=self.parameters[2]
+            coefs=self.parameters[3:]
+            toPrint="Y=(%f)*Bspline(t-(%f),%d,%f,coefs=%s)"%(Vmax,tlag,self.nknots,tmax,np.array2string(coefs,max_line_width=1000))
+        else:
+            Vmax=self.parameters[0]
+            tmax=self.parameters[1]
+            coefs=self.parameters[2:]
+            toPrint="Y=(%f)*Bspline(t,%d,%f,coefs=%s)"%(Vmax,self.nknots,tmax,np.array2string(coefs,max_line_width=1000))
+        return toPrint
+
+    def getParameterNames(self):
+        retval=['Vmax','tmax']
+        if self.allowTlag:
+            retval=['tlag']+retval
+        retval+=['dissol_spline%d_A%d'%(self.nknots,i) for i in range(self.nknots)]
+        return retval
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        self.parameterUnits=[]
+        if self.allowTlag:
+            self.parameterUnits+=[xunits]
+        self.parameterUnits+=[yunits,xunits]+[PKPDUnit.UNIT_NONE]*(self.nknots)
+        return self.parameterUnits
+
+class DissolutionSplines2(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 2
+
+class DissolutionSplines3(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 3
+
+class DissolutionSplines4(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 4
+
+class DissolutionSplines5(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 5
+
+class DissolutionSplines6(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 6
+
+class DissolutionSplines7(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 7
+
+class DissolutionSplines8(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 8
+
+class DissolutionSplines9(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 9
+
+class DissolutionSplines10(DissolutionSplinesGeneric):
+    def __init__(self):
+        DissolutionSplinesGeneric.__init__(self)
+        self.nknots = 10

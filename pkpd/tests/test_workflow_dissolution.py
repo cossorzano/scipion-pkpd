@@ -225,7 +225,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Hopfenberg dissolution
-        print "Fitting Hopfenberg order ..."
+        print "Fitting Hopfenberg model ..."
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hopfenberg',
                                 globalSearch=True, modelType=7)
@@ -249,7 +249,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Hill dissolution
-        print "Fitting Hill order ..."
+        print "Fitting Hill model ..."
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hill',
                                 globalSearch=True, modelType=8)
@@ -266,6 +266,27 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(d>1.93 and d<2)
         g = float(experiment.samples['Profile'].descriptors['g'])
         self.assertTrue(g>1.73 and g<1.83)
+
+        fitting = PKPDFitting()
+        fitting.load(prot.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2>0.995)
+
+        # Fit a Spline dissolution
+        print "Fitting Spline model ..."
+        prot = self.newProtocol(ProtPKPDDissolutionFit,
+                                objLabel='pkpd - fit dissolution Spline',
+                                globalSearch=True, modelType=9)
+        prot.inputExperiment.set(protImport.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(prot.outputFitting.fnFitting, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        Vmax = float(experiment.samples['Profile'].descriptors['Vmax'])
+        self.assertTrue(Vmax>80 and Vmax<83)
+        tmax = float(experiment.samples['Profile'].descriptors['tmax'])
+        self.assertTrue(tmax>9 and tmax<11)
 
         fitting = PKPDFitting()
         fitting.load(prot.outputFitting.fnFitting)
