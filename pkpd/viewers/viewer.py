@@ -45,9 +45,26 @@ from pkpd.protocols.protocol_pkpd_merge_populations import ProtPKPDMergePopulati
 from pkpd.viewers.tk_experiment import ExperimentWindow
 from pkpd.viewers.tk_populations import PopulationWindow
 
+class PKPDViewer(Viewer):
+    def _createExperiment(self):
+        """ Create a new experiment after manipulation of
+        the currently displayed experiment and register the action.
+        """
+        sampleKeys = self.windowDisplayed.samplesTree.selection()
+        samples = ';'.join([self.windowDisplayed.experiment.samples[k].sampleName
+                            for k in sampleKeys])
+
+        prot = self.protocol
+        project = prot.getProject()
+        newProt = project.newProtocol(BatchProtCreateExperiment)
+        newProt.inputExperiment.set(self.windowDisplayed.experiment)
+        newProt.listOfSamples.set(samples)
+        newProt.newTitle.set(self.windowDisplayed._titleVar.get())
+        newProt.newComment.set(self.windowDisplayed._commentText.getText())
+        project.launchProtocol(newProt)
 
 
-class PKPDExperimentViewer(Viewer):
+class PKPDExperimentViewer(PKPDViewer):
     """ Visualization of a given PKPDExperiment
     """
     _targets = [PKPDExperiment]
@@ -55,31 +72,14 @@ class PKPDExperimentViewer(Viewer):
 
     def visualize(self, obj, **kwargs):
         obj.load()
-        self.experimentWindow = self.tkWindow(ExperimentWindow,
+        self.windowDisplayed = self.tkWindow(ExperimentWindow,
                                            title='Experiment Viewer',
                                            experiment=obj,
                                            callback=self._createExperiment)
-        self.experimentWindow.show()
-
-    def _createExperiment(self):
-        """ Create a new experiment after manipulation of
-        the currently displayed experiment and register the action.
-        """
-        sampleKeys = self.experimentWindow.samplesTree.selection()
-        samples = ';'.join([self.experimentWindow.experiment.samples[k].sampleName
-                            for k in sampleKeys])
-
-        prot = self.protocol
-        project = prot.getProject()
-        newProt = project.newProtocol(BatchProtCreateExperiment)
-        newProt.inputExperiment.set(self.experimentWindow.experiment)
-        newProt.listOfSamples.set(samples)
-        newProt.newTitle.set(self.experimentWindow._titleVar.get())
-        newProt.newComment.set(self.experimentWindow._commentText.getText())
-        project.launchProtocol(newProt)
+        self.windowDisplayed.show()
 
 
-class PKPDFittingViewer(Viewer):
+class PKPDFittingViewer(PKPDViewer):
     """ Visualization of a given PKPDFitting
     """
     _targets = [PKPDFitting]
@@ -90,18 +90,24 @@ class PKPDFittingViewer(Viewer):
         if fitting.isPopulation():
             fitting.sampleFittingClass="PKPDSampleFitBootstrap"
             fitting.load()
-            self.populationWindow = self.tkWindow(PopulationWindow,
+            self.windowDisplayed = self.tkWindow(PopulationWindow,
                                                   title='Population Viewer',
                                                   population=fitting)
-            self.populationWindow.show()
+            self.windowDisplayed.show()
         else:
             fitting.load()
-            experiment = fitting.loadExperiment()
-            self.fittingWindow = self.tkWindow(ExperimentWindow,
+            if hasattr(self.protocol,"outputExperiment"):
+                experiment = self.protocol.outputExperiment
+                experiment.load()
+            else:
+                experiment = fitting.loadExperiment()
+
+            self.windowDisplayed = self.tkWindow(ExperimentWindow,
                                                title='Fitting Viewer',
                                                experiment=experiment,
-                                               fitting=fitting)
-            self.fittingWindow.show()
+                                               fitting=fitting,
+                                               callback=self._createExperiment)
+            self.windowDisplayed.show()
 
 
 class PKPDCSVViewer(Viewer):
