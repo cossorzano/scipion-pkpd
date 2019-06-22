@@ -152,7 +152,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return np.asarray(tokens,dtype=np.float64)
 
     def produceAdissol(self,parameterInVitro,tmax):
-        tvitro = np.arange(0,tmax,1)
+        tvitro = np.arange(0,tmax+1,1)
         self.protFit.model.x = tvitro
         Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
         return (tvitro, Avitro)

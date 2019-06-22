@@ -239,7 +239,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             self.outputExperiment.variables["Cmax"] = Cmaxvar
             self.outputExperiment.variables["Tmax"] = Tmaxvar
 
-        t=np.arange(self.t0.get()*60,self.tF.get()*60,1)
+        t=np.arange(self.t0.get()*60,self.tF.get()*60+1,1)
         AUCarray = np.zeros(inputN)
         AUMCarray = np.zeros(inputN)
         MRTarray = np.zeros(inputN)

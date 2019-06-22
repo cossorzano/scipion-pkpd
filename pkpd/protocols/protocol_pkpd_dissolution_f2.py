@@ -24,12 +24,14 @@
 # *
 # **************************************************************************
 
+import copy
 import numpy as np
 import math
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
+from pkpd.utils import uniqueFloatValues
 
 
 # tested in test_workflow_dissolution_f2.py
@@ -62,6 +64,9 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
+        form.addParam('keepResample', params.BooleanParam, label="Generate output with resampled profiles", default=False,
+                      condition='resampleT>0',
+                      help='Create an output experiment with the resampled profiles')
         form.addParam('confidence', params.FloatParam, label="Confidence (%%)", default=95,
                       help='Confidence level')
 
@@ -69,6 +74,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
         self._insertFunctionStep('calculateAllF',self.inputRef.get().getObjId(),self.inputTest.get().getObjId())
+        self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
     def getProfiles(self,prmExp,varNameT,varNameC):
@@ -78,9 +84,17 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             x=np.asarray(sample.getValues(varNameT),dtype=np.float64)
             y=np.asarray(sample.getValues(varNameC),dtype=np.float64)
             if self.resampleT.get()>0:
+                x, y = uniqueFloatValues(x, y)
                 B = InterpolatedUnivariateSpline(x, y, k=1)
-                y = B(np.arange(np.min(x),np.max(x),self.resampleT.get()))
+                xp = np.arange(np.min(x),np.max(x)+self.resampleT.get(),self.resampleT.get())
+                y = B(xp)
+                if self.keepResample.get():
+                    sample.setValues(varNameT, [str(xi) for xi in xp.tolist()])
+                    sample.setValues(varNameC, [str(yi) for yi in y.tolist()])
             allY.append(y)
+        if self.resampleT.get()>0 and self.keepResample.get():
+            self.experiment = experiment
+            self.experiment.write(self._getPath("experiment.pkpd"))
         return allY
 
     def randomIdx(self,pRef,pTest):
@@ -189,6 +203,12 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         self.doublePrint(fhSummary,"---------------------------")
         self.doublePrint(fhSummary,strF1)
         fhSummary.close()
+
+    def createOutputStep(self):
+        if self.resampleT.get()>0 and self.keepResample.get():
+            self._defineOutputs(outputExperiment=self.experiment)
+            self._defineSourceRelation(self.inputRef, self.experiment)
+            self._defineSourceRelation(self.inputTest, self.experiment)
 
     def _validate(self):
         return []

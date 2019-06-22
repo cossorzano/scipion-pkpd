@@ -24,14 +24,12 @@
 # *
 # **************************************************************************
 
+import os
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from test_workflow import TestWorkflow
-import copy
 
 class TestDissolutionF2Workflow(TestWorkflow):
 
@@ -48,14 +46,14 @@ class TestDissolutionF2Workflow(TestWorkflow):
                                       objLabel='pkpd - import experiment test',
                                       inputFile=self.exptTestFn)
         self.launchProtocol(protImportTest)
-        self.assertIsNotNone(protImportTest.outputExperiment.fnPKPD, "There was a problem with the import")
+        self.assertTrue(os.path.exists(protImportTest.outputExperiment.fnPKPD.get()), "There was a problem with the import")
         self.validateFiles('protImportTest', protImportTest)
 
         protImportRef = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment ref',
                                       inputFile=self.exptRefFn)
         self.launchProtocol(protImportRef)
-        self.assertIsNotNone(protImportRef.outputExperiment.fnPKPD, "There was a problem with the import")
+        self.assertTrue(os.path.exists(protImportRef.outputExperiment.fnPKPD.get()), "There was a problem with the import")
         self.validateFiles('protImportRef', protImportRef)
 
         prot = self.newProtocol(ProtPKPDDissolutionF2,
@@ -63,7 +61,32 @@ class TestDissolutionF2Workflow(TestWorkflow):
         prot.inputRef.set(protImportRef.outputExperiment)
         prot.inputTest.set(protImportTest.outputExperiment)
         self.launchProtocol(prot)
-        self.assertIsNotNone(prot._getPath("summary.txt"), "There was a problem with the import")
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+        fh = open(prot._getPath("summary.txt"))
+        for line in fh.readlines():
+            if line.startswith("F2 mean+-std:"):
+                tokens=line.split(":")
+                tokens=tokens[1].split("+-")
+                mean=float(tokens[0])
+                self.assertTrue(mean>75 and mean<85)
+            elif line.startswith("F1 mean+-std:"):
+                tokens=line.split(":")
+                tokens=tokens[1].split("+-")
+                mean=float(tokens[0])
+                self.assertTrue(mean>3 and mean<6)
+
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 resampling',
+                                resampleT=0.25,
+                                keepResample=True)
+        prot.inputRef.set(protImportRef.outputExperiment)
+        prot.inputTest.set(protImportTest.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+        self.assertTrue(os.path.exists(prot._getPath("experiment.pkpd")), "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(prot._getPath("experiment.pkpd"))
+        self.assertTrue(len(experiment.samples)==12)
 
 if __name__ == "__main__":
     unittest.main()
