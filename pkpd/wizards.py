@@ -216,8 +216,6 @@ class PKPDChooseVariableWizard(Wizard):
                                                  'Cperipheral', 'E']),
                 (ProtPKPDMonoCompartmentUrine, ['predicted']),
                 (ProtPKPDSimulateGenericPD, ['predictor']),
-                (ProtPKPDStatsExp2Subgroups2Mean, ['label1', 'inputExperiment1',
-                                                   'label2', 'inputExperiment2'])
                 ]
 
     def show(self, form, *params):
