@@ -25,13 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from test_workflow import TestWorkflow
-import copy
 
 class TestImportExportCSVExcelWorkflow(TestWorkflow):
 
@@ -40,6 +37,7 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
         tests.setupTestProject(cls)
         cls.dataset = PKPDDataSet.getDataSet('Dissolution')
         cls.exptFn = cls.dataset.getFile('excel')
+        cls.fnExcelInvivo = cls.dataset.getFile('excelinvivo')
 
     def testDissolutionWorkflow(self):
         print "Import Excel"
@@ -94,6 +92,20 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(protImport2.outputExperiment.fnPKPD)
         self.assertTrue(len(experiment.samples) == 12)
+
+
+        print "Import from Excel"
+        protImport = self.newProtocol(ProtPKPDImportFromExcel,
+                                       objLabel='pkpd - import from excel',
+                                       variables='t;h;numeric;time; ;; Cp;ug/L;numeric;measurement; Plasma concentration',
+                                       vias='Oral; spline2',
+                                       doses='Bolus;via=Oral;bolus;t=0 h; d=40000 ug',
+                                       inputFile=self.fnExcelInvivo)
+        self.launchProtocol(protImport)
+        self.assertIsNotNone(protImport.outputExperiment.fnPKPD, "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(protImport.outputExperiment.fnPKPD)
+        self.assertTrue(len(experiment.samples) == 2)
 
 if __name__ == "__main__":
     unittest.main()
