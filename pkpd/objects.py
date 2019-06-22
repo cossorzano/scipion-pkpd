@@ -364,6 +364,8 @@ class PKPDSample:
                 if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
                    x!= "None" and y!="None":
                     xPartial.append(float(x))
+                    if "[" in y:
+                        y=y.replace("[","").replace("]","")
                     yPartial.append(float(y))
             xl.append(np.array(xPartial))
             yl.append(np.array(yPartial))
