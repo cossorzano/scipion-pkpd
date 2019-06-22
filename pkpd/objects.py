@@ -462,7 +462,7 @@ class PKPDExperiment(EMObject):
                              % (len(self.variables), len(self.samples)))
         return self.infoStr.get()
 
-    def load(self, fnExperiment="", verifyIntegrity=True):
+    def load(self, fnExperiment="", verifyIntegrity=True, fullRead=True):
         if fnExperiment!="":
             self.fnPKPD.set(fnExperiment)
         if verifyIntegrity and not verifyMD5(self.fnPKPD.get()):
@@ -494,7 +494,10 @@ class PKPDExperiment(EMObject):
                 elif section=="[samples]":
                     state=PKPDExperiment.READING_SAMPLES
                 elif section=="[measurements]":
-                    state=PKPDExperiment.READING_MEASUREMENTS
+                    if fullRead:
+                        state=PKPDExperiment.READING_MEASUREMENTS
+                    else:
+                        break
                 else:
                     print("Skipping: ",line)
 
