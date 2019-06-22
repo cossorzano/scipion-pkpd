@@ -18,3 +18,5 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
 
  June 2019. Small changes:
  	- The simulation of PK models now keep Cmax, Cmin, Cavg, Tmax, and Tmin
+ 	- The Fitting viewer can now create a subset of experiments
+ 	
