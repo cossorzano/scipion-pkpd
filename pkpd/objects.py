@@ -283,10 +283,10 @@ class PKPDSample:
         setattr(self, "measurement_%s"%varName, [])
         if type(values)==list:
             for value in values:
-                exec("self.measurement_%s.append('%s')"%(varName,str(value)))
+                exec("self.measurement_%s.append('%s')"%(varName,str(float(value))))
         elif type(values)==np.ndarray:
             for i in range(values.size):
-                exec("self.measurement_%s.append('%s')"%(varName,str(values[i])))
+                exec("self.measurement_%s.append('%s')"%(varName,str(float(values[i]))))
 
     def getNumberOfVariables(self):
         return len(self.measurementPattern)
