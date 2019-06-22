@@ -413,7 +413,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             fluctuationArray[i] = self.fluctuation
             percentageAccumulationArray[i] = self.percentageAccumulation
             if self.addIndividuals or self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
-                self.addSample("Simulation_%d"%i, dosename, simulationsX, y)
+                self.addSample("Simulation_%d"%i, dosename, simulationsX, y[0])
 
         # Report NCA statistics
         fhSummary = open(self._getPath("summary.txt"),"w")
