@@ -27,10 +27,8 @@
 import numpy as np
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDVariable
-from pkpd.pkpd_units import createUnit, PKPDUnit, multiplyUnits, strUnit
-import math
 
+# Tested in test_workflow_leveyplot.py
 
 class ProtPKPDIVIVCInternalValidity(ProtPKPD):
     """ This protocol compares the AUC and Cmax predicted from an in vitro-in vivo experiment and
