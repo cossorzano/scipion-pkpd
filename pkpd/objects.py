@@ -116,6 +116,11 @@ class PKPDVariable:
 
     def _printToStream(self,fh):
         displayString = self.displayString.replace("%%","%%%%")
+        if displayString=="":
+            if self.varType == PKPDVariable.TYPE_NUMERIC:
+                displayString="%f"
+            elif self.varType == PKPDVariable.TYPE_TEXT:
+                displayString="%s"
 
         fh.write("%s ; %s ; %s[%s] ; %s ; %s\n" % (self.varName,
                                                    self.getUnitsString(),
@@ -276,8 +281,12 @@ class PKPDSample:
     def addMeasurementColumn(self,varName,values):
         self.measurementPattern.append(varName)
         setattr(self, "measurement_%s"%varName, [])
-        for value in values:
-            exec("self.measurement_%s.append('%s')"%(varName,str(value)))
+        if type(values)==list:
+            for value in values:
+                exec("self.measurement_%s.append('%s')"%(varName,str(value)))
+        elif type(values)==np.ndarray:
+            for i in range(values.size):
+                exec("self.measurement_%s.append('%s')"%(varName,str(values[i])))
 
     def getNumberOfVariables(self):
         return len(self.measurementPattern)
