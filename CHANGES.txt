@@ -1,9 +1,5 @@
 March 18, 2019. First version of scipion-pkpd plugin
 
-May, 2019. Numerical Non-compartmental Analysis added
-       This analysis does not require any fitting and it is only valid if
-           the concentration observations go to zero in the long term (for instance,
-           in an impulse response)
 May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
     - Fitting dissolution models: Weibull, Higuchi, Korsmeyer-Peppas,
                       Hixson-Crowell, Hopfenberg, Hill,
@@ -15,9 +11,17 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
     - In vitro-In vivo correlations
     - Simulation of In vivo response using a dissolution profile and an IVIVC profile
     - Verification of the internal validity of an IVIVC
+    - Importing Excel, CSV is now allowed
+    - Exporting to CSV is now allowed
+    - PK models can now have a spline via
+    - Numerical Non-compartmental Analysis added
+       This analysis does not require any fitting and it is only valid if
+           the concentration observations go to zero in the long term (for instance,
+           in an impulse response)
 
- June 2019. Small changes:
+ June 2019.
  	- The simulation of PK models now keep Cmax, Cmin, Cavg, Tmax, and Tmin
  	- The Fitting viewer can now create a subset of experiments
  	- We can now perform t-tests with different number of samples
+ 	- Kolmogorov-Smirnov test added to verify the compatibility of two distributions
 

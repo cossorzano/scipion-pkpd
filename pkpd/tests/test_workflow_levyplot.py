@@ -70,7 +70,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         # NCA numeric
         print "NCA numeric ..."
         protNCA = self.newProtocol(ProtPKPDNCANumeric,
-                                objLabel='nca numeric')
+                                objLabel='pkpd - nca numeric')
         protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
         self.launchProtocol(protNCA)
         self.assertIsNotNone(protNCA.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
@@ -203,7 +203,6 @@ class TestLevyPlotWorkflow(TestWorkflow):
                              "There was a problem with the ODE bootstrap ")
         self.validateFiles('ProtPKPDODEBootstrap', ProtPKPDODEBootstrap)
 
-
         # Dissolution simulation
         print "IVIV+PK simulation ..."
         protIVIVPKBoot = self.newProtocol(ProtPKPDDissolutionPKSimulation,
@@ -218,6 +217,42 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.launchProtocol(protIVIVPKBoot)
         self.assertIsNotNone(protIVIVPKBoot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
+        # t Test
+        print "T-test ..."
+        protTtest= self.newProtocol(ProtPKPDStatsExp2Subgroups2Mean,
+                                    objLabel='pkpd - t test',
+                                    label1 = 'MRT',
+                                    label2 = 'MRT'
+                                    )
+        protTtest.inputExperiment1.set(protIVIVPKBoot.outputExperiment)
+        protTtest.inputExperiment2.set(protIVIVPK.outputExperiment)
+        self.launchProtocol(protTtest)
+        fnSummary = protTtest._getPath("report.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+        for line in open(fnSummary).readlines():
+            if '-statistic' in line:
+                tokens = line.split('=')
+                pval=float(tokens[-1])
+                self.assertTrue(pval>0.1)
+
+        # Kolmogorov test
+        print "Kolmogorov test ..."
+        protKtest= self.newProtocol(ProtPKPDStatsExp2Subgroups2Kolmogorov,
+                                    objLabel='pkpd - Kolmogorov test',
+                                    label1='MRT',
+                                    label2='MRT'
+                                    )
+        protKtest.inputExperiment1.set(protIVIVPKBoot.outputExperiment)
+        protKtest.inputExperiment2.set(protIVIVPK.outputExperiment)
+        self.launchProtocol(protKtest)
+        fnSummary = protKtest._getPath("report.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+        for line in open(fnSummary).readlines():
+            if '-statistic' in line:
+                tokens = line.split('=')
+                pval=float(tokens[-1])
+                self.assertTrue(pval>0.1)
 
 if __name__ == "__main__":
     unittest.main()
