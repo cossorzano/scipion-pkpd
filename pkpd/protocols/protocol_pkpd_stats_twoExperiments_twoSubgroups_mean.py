@@ -30,6 +30,8 @@ from pkpd.objects import PKPDExperiment, PKPDVariable
 from scipy import stats
 import numpy as np
 
+# Tested in test_workflow_levyplot.py
+
 class ProtPKPDStatsExp2Subgroups2Mean(ProtPKPD):
     """ Compare two means from two subgroups from the same experiment .\n
         Protocol created by http://www.kinestatpharma.com\n """
