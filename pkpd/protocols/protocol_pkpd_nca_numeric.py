@@ -32,6 +32,7 @@ from pkpd.pkpd_units import createUnit, PKPDUnit, multiplyUnits, strUnit
 import math
 
 # Tested in test_workflow_deconvolution.py
+# Tested in test_workflow_levyplot.py
 
 class ProtPKPDNCANumeric(ProtPKPD):
     """ Non-compartmental analysis just based on the samples. The results are valid only up to T.\n
@@ -68,11 +69,12 @@ class ProtPKPDNCANumeric(ProtPKPD):
                 self.AUC0t  += 0.5*dt*(C[idx]+C[idx+1])
                 self.AUMC0t += 0.5*dt*(C[idx]*t[idx]+C[idx+1]*t[idx+1])
             else: # Log-trapezoidal in the decay
-                decrement = C[idx]/C[idx+1]
-                K = math.log(decrement)
-                B = K/dt
-                self.AUC0t  += dt*(C[idx]-C[idx+1])/K
-                self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
+                if C[idx+1]>0 and C[idx]>0:
+                    decrement = C[idx]/C[idx+1]
+                    K = math.log(decrement)
+                    B = K/dt
+                    self.AUC0t  += dt*(C[idx]-C[idx+1])/K
+                    self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
 
             if idx==0:
                 self.Cmax=C[idx]
@@ -89,6 +91,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
         print("   MRT=%f [min]"%self.MRT)
+        print("")
 
 
         sample.descriptors["Tmax"]=self.Tmax
@@ -163,6 +166,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         i=0
         for sampleName, sample in self.outputExperiment.samples.iteritems():
             [t,Cp] = sample.getXYValues(tvarName,xvarName)
+            print("Analyzing %s"%sampleName)
             self.analyzeSample(sample, t[0], Cp[0])
 
             AUCarray[i] = self.AUC0t
