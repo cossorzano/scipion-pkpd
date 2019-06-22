@@ -24,14 +24,12 @@
 # *
 # **************************************************************************
 
+import os
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from test_workflow import TestWorkflow
-import copy
 
 class TestLevyPlotWorkflow(TestWorkflow):
 
@@ -68,6 +66,27 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.launchProtocol(protImportInVivo)
         self.assertIsNotNone(protImportInVivo.outputExperiment.fnPKPD, "There was a problem with the import")
         self.validateFiles('protImport', protImportInVivo)
+
+        # NCA numeric
+        print "NCA numeric ..."
+        protNCA = self.newProtocol(ProtPKPDNCANumeric,
+                                objLabel='nca numeric')
+        protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
+        self.launchProtocol(protNCA)
+        self.assertIsNotNone(protNCA.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.validateFiles('prot', protNCA)
+        experiment = PKPDExperiment()
+        experiment.load(protNCA.outputExperiment.fnPKPD)
+        AUC0t = float(experiment.samples['Individual1'].descriptors['AUC0t'])
+        self.assertTrue(AUC0t > 325.5 and AUC0t < 327.5)
+        AUMC0t = float(experiment.samples['Individual1'].descriptors['AUMC0t'])
+        self.assertTrue(AUMC0t > 42165 and AUMC0t < 42170)
+        Cmax = float(experiment.samples['Individual1'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 1.9 and Cmax < 2.1)
+        Tmax = float(experiment.samples['Individual1'].descriptors['Tmax'])
+        self.assertTrue(Tmax > 39 and Tmax < 41)
+        MRT = float(experiment.samples['Individual1'].descriptors['MRT'])
+        self.assertTrue(MRT > 129 and MRT < 130)
 
         # Fit a Weibull dissolution
         print "Fitting Weibull model ..."
@@ -130,14 +149,36 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                       objLabel='pkpd - ivivc+pk',
                                       inputN=100,
                                       tF=15,
-                                      addIndividuals=True
-                                    )
+                                      addIndividuals=True,
+                                      inputDose=100
+                                      )
         protIVIVPK.inputInVitro.set(protWeibull.outputFitting)
         protIVIVPK.inputPK.set(protModelInVivo.outputFitting)
         protIVIVPK.inputIvIvC.set(protIVIVC.outputExperiment)
         self.launchProtocol(protIVIVPK)
         self.assertIsNotNone(protIVIVPK.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
+        # Internal validity
+        print "Internal validity ..."
+        protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
+                                       objLabel='pkpd - internal validity',
+                                       )
+        protInternal.inputExperiment.set(protNCA.outputExperiment)
+        protInternal.inputSimulated.set(protIVIVPK.outputExperiment)
+        self.launchProtocol(protInternal)
+        fnSummary = protInternal._getPath("summary.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+        lineNo = 0
+        for line in open(fnSummary).readlines():
+            tokens = line.split('=')
+            if lineNo==0:
+                AUCmean=float(tokens[-1])
+                self.assertTrue(AUCmean>0.4 and AUCmean<0.5)
+            elif lineNo==1:
+                Cmaxmean = float(tokens[-1])
+                self.assertTrue(Cmaxmean > 0.63 and Cmaxmean < 0.73)
+            lineNo+=1
 
         # Bootstrap dissolution
         print "Dissolution bootstrap ..."
@@ -177,5 +218,6 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.launchProtocol(protIVIVPKBoot)
         self.assertIsNotNone(protIVIVPKBoot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
 if __name__ == "__main__":
     unittest.main()
