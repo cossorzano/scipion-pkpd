@@ -108,6 +108,11 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         newSample.descriptors["AUC0t"] = self.AUC0t
         newSample.descriptors["AUMC0t"] = self.AUMC0t
         newSample.descriptors["MRT"] = self.MRT
+        newSample.descriptors["Cmax"] = self.Cmax
+        newSample.descriptors["Cmin"] = self.Cmin
+        newSample.descriptors["Cavg"] = self.Cavg
+        newSample.descriptors["Tmax"] = self.Tmax
+        newSample.descriptors["Tmin"] = self.Tmin
         self.outputExperiment.samples[sampleName] = newSample
 
     def NCA(self, t, C):
@@ -181,18 +186,25 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                    int(Tmaxlist[ndose]), fluctuation*100, Cavglist[ndose]/Cavglist[0]*100, accumn*100, Cavglist[ndose]/Cavglist[-1]*100, AUClist[ndose],strUnit(self.AUCunits),
                    AUMClist[ndose],strUnit(self.AUMCunits)))
 
-        self.AUC0t = AUClist[-1]
-        self.AUMC0t = AUMClist[-1]
+        self.AUC0t = float(AUClist[-1])
+        self.AUMC0t = float(AUMClist[-1])
         self.MRT = self.AUMC0t/self.AUC0t
-        self.Cmin = Cminlist[-1]
-        self.Cmax = Cmaxlist[-1]
-        self.Cavg = Cavglist[-1]
+        self.Cmin = float(Cminlist[-1])
+        self.Cmax = float(Cmaxlist[-1])
+        self.Tmin = float(Tminlist[-1])
+        self.Tmax = float(Tmaxlist[-1])
+        self.Cavg = float(Cavglist[-1])
         self.fluctuation = self.Cmax/self.Cmin
         self.percentageAccumulation = Cavglist[-1]/Cavglist[0]
 
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
         print("   MRT=%f [min]"%self.MRT)
+        print("   Cmax=%f [%s]"%(self.Cmax,strUnit(self.Cunits.unit)))
+        print("   Cmin=%f [%s]"%(self.Cmin,strUnit(self.Cunits.unit)))
+        print("   Cavg=%f [%s]"%(self.Cavg,strUnit(self.Cunits.unit)))
+        print("   Tmax=%f [min]"%self.Tmax)
+        print("   Tmin=%f [min]"%self.Tmin)
 
     def runSimulate(self, objId, Nsimulations, confidenceInterval, doses):
         self.protODE = self.inputODE.get()
@@ -290,6 +302,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         CminArray = np.zeros(Nsimulations)
         CmaxArray = np.zeros(Nsimulations)
         CavgArray = np.zeros(Nsimulations)
+        TminArray = np.zeros(Nsimulations)
+        TmaxArray = np.zeros(Nsimulations)
         fluctuationArray = np.zeros(Nsimulations)
         percentageAccumulationArray = np.zeros(Nsimulations)
         for i in range(0,Nsimulations):
@@ -343,9 +357,44 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     MRTvar.role = PKPDVariable.ROLE_LABEL
                     MRTvar.units = createUnit("min")
 
+                    Cmaxvar = PKPDVariable()
+                    Cmaxvar.varName = "Cmax"
+                    Cmaxvar.varType = PKPDVariable.TYPE_NUMERIC
+                    Cmaxvar.role = PKPDVariable.ROLE_LABEL
+                    Cmaxvar.units = createUnit(strUnit(self.Cunits.unit))
+
+                    Tmaxvar = PKPDVariable()
+                    Tmaxvar.varName = "Tmax"
+                    Tmaxvar.varType = PKPDVariable.TYPE_NUMERIC
+                    Tmaxvar.role = PKPDVariable.ROLE_LABEL
+                    Tmaxvar.units = createUnit("min")
+
+                    Cminvar = PKPDVariable()
+                    Cminvar.varName = "Cmin"
+                    Cminvar.varType = PKPDVariable.TYPE_NUMERIC
+                    Cminvar.role = PKPDVariable.ROLE_LABEL
+                    Cminvar.units = createUnit(strUnit(self.Cunits.unit))
+
+                    Tminvar = PKPDVariable()
+                    Tminvar.varName = "Tmin"
+                    Tminvar.varType = PKPDVariable.TYPE_NUMERIC
+                    Tminvar.role = PKPDVariable.ROLE_LABEL
+                    Tminvar.units = createUnit("min")
+
+                    Cavgvar = PKPDVariable()
+                    Cavgvar.varName = "Cavg"
+                    Cavgvar.varType = PKPDVariable.TYPE_NUMERIC
+                    Cavgvar.role = PKPDVariable.ROLE_LABEL
+                    Cavgvar.units = createUnit(strUnit(self.Cunits.unit))
+
                     self.outputExperiment.variables["AUC0t"] = AUCvar
                     self.outputExperiment.variables["AUMC0t"] = AUMCvar
                     self.outputExperiment.variables["MRT"] = MRTvar
+                    self.outputExperiment.variables["Cmax"] = Cmaxvar
+                    self.outputExperiment.variables["Tmax"] = Tmaxvar
+                    self.outputExperiment.variables["Cmin"] = Cminvar
+                    self.outputExperiment.variables["Tmin"] = Tminvar
+                    self.outputExperiment.variables["Cavg"] = Cavgvar
 
             # Evaluate AUC, AUMC and MRT in the last full period
             self.NCA(self.model.x,y[0])
@@ -359,29 +408,37 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             CminArray[i] = self.Cmin
             CmaxArray[i] = self.Cmax
             CavgArray[i] = self.Cavg
+            TminArray[i] = self.Tmin
+            TmaxArray[i] = self.Tmax
             fluctuationArray[i] = self.fluctuation
             percentageAccumulationArray[i] = self.percentageAccumulation
             if self.addIndividuals or self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
                 self.addSample("Simulation_%d"%i, dosename, simulationsX, y)
 
         # Report NCA statistics
+        fhSummary = open(self._getPath("summary.txt"),"w")
         alpha_2 = (100-self.confidenceLevel.get())/2
         limits = np.percentile(AUCarray,[alpha_2,100-alpha_2])
-        print("AUC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUCunits),np.mean(AUCarray)))
+        self.doublePrint(fhSummary,"AUC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUCunits),np.mean(AUCarray)))
         limits = np.percentile(AUMCarray,[alpha_2,100-alpha_2])
-        print("AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
+        self.doublePrint(fhSummary,"AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
         limits = np.percentile(MRTarray,[alpha_2,100-alpha_2])
-        print("MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(MRTarray)))
+        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(MRTarray)))
         limits = np.percentile(CminArray,[alpha_2,100-alpha_2])
-        print("Cmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CminArray)))
+        self.doublePrint(fhSummary,"Cmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CminArray)))
         limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
-        print("Cmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CmaxArray)))
+        self.doublePrint(fhSummary,"Cmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CmaxArray)))
         limits = np.percentile(CavgArray,[alpha_2,100-alpha_2])
-        print("Cavg %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CavgArray)))
+        self.doublePrint(fhSummary,"Cavg %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CavgArray)))
+        limits = np.percentile(TminArray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TminArray)))
+        limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TmaxArray)))
         limits = np.percentile(fluctuationArray,[alpha_2,100-alpha_2])
-        print("Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(fluctuationArray)*100))
+        self.doublePrint(fhSummary,"Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(fluctuationArray)*100))
         limits = np.percentile(percentageAccumulationArray,[alpha_2,100-alpha_2])
-        print("Accum(1) %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(percentageAccumulationArray)*100))
+        self.doublePrint(fhSummary,"Accum(1) %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(percentageAccumulationArray)*100))
+        fhSummary.close()
 
         # Calculate statistics
         if self.addStats:
@@ -422,9 +479,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         msg.append("Dose: %s"%self.doses.get())
         if self.paramsSource ==  ProtPKPDODESimulate.PRM_POPULATION:
             msg.append("Number of simulations: %d"%self.Nsimulations.get())
-            msg.append("Confidence level: %f"%self.confidenceLevel.get())
         else:
             msg.append("Parameters:\n"+self.prmUser.get())
+        msg.append(" ")
+        self.addFileContentToMessage(msg,self._getPath("summary.txt"))
         return msg
 
     def _validate(self):
