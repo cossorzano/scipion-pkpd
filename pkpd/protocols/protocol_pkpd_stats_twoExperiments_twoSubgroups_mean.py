@@ -44,7 +44,7 @@ class ProtPKPDStatsExp2Subgroups2Mean(ProtPKPD):
                       help='Select an experiment with samples')
         form.addParam('label1', params.StringParam, label="Label 1", default="",
                       help='Name of the label in the first experiment to compare between the two subroups')
-        form.addParam('expression1', params.StringParam, label="Subgroup 1", default="",
+        form.addParam('expression1', params.StringParam, label="Subgroup 1 (optional)", default="",
                       help='For example, $(weight)<100 and $(sex)=="male"')
         form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2", important=True,
                       pointerClass='PKPDExperiment',
@@ -54,7 +54,7 @@ class ProtPKPDStatsExp2Subgroups2Mean(ProtPKPD):
                       'If it is empty, Label 1 is also used as Label 2')
         form.addParam('paired', params.BooleanParam, label="Paired samples?", default=False,
                       help='If samples are paired, then the sample names found in Experiment 1 will be sought in Experiment 2')
-        form.addParam('expression2', params.StringParam, label="Subgroup 2", default="", condition="not paired",
+        form.addParam('expression2', params.StringParam, label="Subgroup 2 (optional)", default="", condition="not paired",
                       help='For example, $(weight)>=100 and $(sex)=="male". If it is empty, the same Expression 1 will be used for grouping in Experiment 2')
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -94,17 +94,19 @@ class ProtPKPDStatsExp2Subgroups2Mean(ProtPKPD):
                 [t,pval] = stats.ttest_rel(np.asarray(x1,np.double),np.asarray(x2,np.double),True)
                 self.doublePrint(fh,"T-test two paired samples: t-statistic=%f p-value=%f"%(t,pval))
             else:
-                [t,pval] = stats.ttest_ind(np.asarray(x1,np.double),np.asarray(x2,np.double),True)
+                [t,pval] = stats.ttest_ind_from_stats(np.mean(x1),np.std(x1),len(x1),
+                                                      np.mean(x2),np.std(x2),len(x2),True)
                 self.doublePrint(fh,"T-test two independent samples (same variance): t-statistic=%f p-value=%f"%(t,pval))
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         if not self.paired:
             try:
-                [t,pval] = stats.ttest_ind(x1,x2, False)
+                [t,pval] = stats.ttest_ind_from_stats(np.mean(x1),np.std(x1),len(x1),
+                                                      np.mean(x2),np.std(x2),len(x2),False)
                 self.doublePrint(fh,"T-test two independent samples (different variance, Welch's test): t-statistic=%f p-value=%f"%(t,pval))
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
         try:
             if self.paired:
