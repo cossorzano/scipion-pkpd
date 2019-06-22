@@ -31,6 +31,7 @@ from pkpd.objects import PKPDVariable
 from pkpd.pkpd_units import createUnit, PKPDUnit, multiplyUnits, strUnit
 import math
 
+# Tested in test_workflow_deconvolution.py
 
 class ProtPKPDNCANumeric(ProtPKPD):
     """ Non-compartmental analysis just based on the samples. The results are valid only up to T.\n

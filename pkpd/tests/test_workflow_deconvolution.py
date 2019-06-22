@@ -129,7 +129,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(Cl > 0.25 and Cl < 0.32)  # Gabrielsson p 515, Solution II: CL/F=0.2819
         self.assertTrue(V > 10 and V < 40)  # Gabrielsson p 515, Solution II: V/F=32.05 -------------- Mine: 27.5
         self.assertTrue(tlag > 0 and tlag < 25)  # Gabrielsson p 511, Solution II: tlag=16
-        self.assertTrue(a0 > 0.63 and a0 < 0.71)
+        self.assertTrue(a0 > 0.63 and a0 < 0.86)
         self.assertTrue(a1 > 0.2 and a1 < 0.88)
 
         fitting = PKPDFitting()
@@ -151,6 +151,27 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(A[0] == 0.0)
         self.assertTrue(A[64] > 42 and A[64] < 55)
         self.assertTrue(A[200] > 90 and A[200] <=100)
+
+        # Deconvolution
+        print "NCA numeric ..."
+        prot = self.newProtocol(ProtPKPDNCANumeric,
+                                objLabel='nca numeric')
+        prot.inputExperiment.set(protImport.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.validateFiles('prot', prot)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        AUC0t = float(experiment.samples['Individual1'].descriptors['AUC0t'])
+        self.assertTrue(AUC0t > 325.5 and AUC0t < 327.5)
+        AUMC0t = float(experiment.samples['Individual1'].descriptors['AUMC0t'])
+        self.assertTrue(AUMC0t > 42165 and AUMC0t < 42170)
+        Cmax = float(experiment.samples['Individual1'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 1.9 and Cmax < 2.1)
+        Tmax = float(experiment.samples['Individual1'].descriptors['Tmax'])
+        self.assertTrue(Tmax > 39 and Tmax < 41)
+        MRT = float(experiment.samples['Individual1'].descriptors['MRT'])
+        self.assertTrue(MRT > 129 and MRT < 130)
 
 if __name__ == "__main__":
     unittest.main()
