@@ -152,7 +152,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(A[64] > 42 and A[64] < 55)
         self.assertTrue(A[200] > 90 and A[200] <=100)
 
-        # Deconvolution
+        # NCA numeric
         print "NCA numeric ..."
         prot = self.newProtocol(ProtPKPDNCANumeric,
                                 objLabel='nca numeric')
