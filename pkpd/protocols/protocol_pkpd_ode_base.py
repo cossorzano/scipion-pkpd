@@ -412,8 +412,8 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
                 optimizer2 = PKPDLSOptimizer(self,fitType)
                 optimizer2.optimize()
             except Exception as e:
-                msg=str(e)
-                msg+="Errors in the local optimizer may be caused by starting from a bad initial guess\n"
+                msg="Error: "+str(e)
+                msg+="\nErrors in the local optimizer may be caused by starting from a bad initial guess\n"
                 msg+="Try performing a global search first or changing the bounding box"
                 raise Exception("Error in the local optimizer\n"+msg)
             optimizer2.setConfidenceInterval(self.confidenceInterval.get())
