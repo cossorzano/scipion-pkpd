@@ -135,3 +135,10 @@ def calculateAUC0t(t, C):
             else:
                 AUC0t[idx] = AUC0t[idx-1]
     return AUC0t
+
+def upper_tri_masking(A):
+    # Extract the upper triangular matrix without the diagonal
+    r = np.arange(A.shape[0])
+    c = np.arange(A.shape[1])
+    mask = r[:,None] < r
+    return A[mask]
