@@ -26,11 +26,13 @@
 
 import numpy as np
 from scipy import stats
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.spatial import distance
+
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.utils import upper_tri_masking
+from pkpd.utils import upper_tri_masking, uniqueFloatValues
 
 # Tested in test_workflow_levyplot.py
 
@@ -50,7 +52,10 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
                       pointerClass='PKPDExperiment',
                       help='Select an experiment with samples')
         form.addParam('labels', params.StringParam, label="Labels", default="",
-                      help='Name of the label in the first experiment to compare between the two subroups')
+                      help='Name of the labels to construct the multivariate vectors, e.g. Cl V\n'
+                           'The set of labels is either a set of labels or a single measurement.\n'
+                           'If you use a measurement, make sure that it does not have a measurement\n'
+                           'that is always the same, typically (0,0)')
         form.addParam('expression1', params.StringParam, label="Subgroup 1 (optional)", default="",
                       help='For example, $(weight)<100 and $(sex)=="male"')
         form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2 (optional)",
@@ -58,6 +63,9 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
                       help='Select an experiment with samples')
         form.addParam('expression2', params.StringParam, label="Subgroup 2 (optional)", default="",
                       help='For example, $(weight)>=100 and $(sex)=="male". If it is empty, the same Expression 1 will be used for grouping in Experiment 2')
+        form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
+                      help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
+                           'Leave it to -1 for no resampling. This is only valid when the label to compare is a measurement.')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
@@ -72,13 +80,53 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
             labels.append(token.strip())
         return labels
 
+    def analysisType(self, experiment):
+        Nlabels=0
+        Nmeasurements=0
+        N=len(self.getLabels())
+        for label in self.getLabels():
+            if experiment.variables[label].isLabel():
+                Nlabels+=1
+            elif experiment.variables[label].isMeasurement():
+                Nmeasurements+=1
+        if Nlabels==N:
+            return 0
+        if Nmeasurements==1 and N==1:
+            return 1
+        raise Exception("The set of labels is not correctly formed. It should be all labels or one measurement")
+
     def getValues(self,experiment,expression):
         allX=[]
-        for label in self.getLabels():
-            x1 = [float(x) for x in experiment.getSubGroupLabels(expression, label)]
-            allX.append(x1)
-        X=np.asarray(allX,dtype=np.double)
-        return np.transpose(X)
+        if self.analysisType(experiment)==0: # All labels
+            for label in self.getLabels():
+                x1 = [float(x) for x in experiment.getSubGroupLabels(expression, label)]
+                allX.append(x1)
+            X = np.asarray(allX, dtype=np.double)
+            return np.transpose(X)
+        else: # A measurement
+            Ylabel=self.getLabels()[0]
+            Xlabel=experiment.getTimeVariable()
+            temp=[]
+            minX=1e38
+            maxX=-1e38
+            for sampleName, sample in experiment.samples.iteritems():
+                x,y=sample.getXYValues(Xlabel,Ylabel)
+                minX=min(minX,np.min(x))
+                maxX=max(maxX,np.max(x))
+                temp.append((x[0],y[0]))
+
+            for x,y in temp:
+                if self.resampleT.get()>0:
+                    x,y = uniqueFloatValues(x, y)
+                    B = InterpolatedUnivariateSpline(x, y, k=1)
+                    xp = np.arange(minX, maxX + self.resampleT.get(), self.resampleT.get())
+                    y = B(xp)
+                allX.append(y)
+            X = np.asarray(allX, dtype=np.double)
+
+            v = np.var(X,0)
+            X=X[:,v>0] # Remove columns with no variance
+            return X
 
     def printStats(self,allF,Fstr,explanation):
         allF=[f for f in allF if not np.isnan(f)]
@@ -104,7 +152,7 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
         if self.inputExperiment2.get() is not None:
             self.experiment2 = self.readExperiment(self.inputExperiment2.get().fnPKPD, False)
             expression2ToUse = self.expression1.get() if self.expression2.get()=="" else self.expression2.get()
-            X2 = self.getValues(self.experiment2, self.expression2.get())
+            X2 = self.getValues(self.experiment2, expression2ToUse)
 
         print("Values in SubGroup 1:\n%s"%np.array2string(X1))
         if X2 is not None:
@@ -113,19 +161,31 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
         try:
             self.printSection("Results")
             C1 = np.cov(np.transpose(X1))
-            C1inv = np.linalg.inv(C1)
+            if np.abs(np.linalg.det(C1))<1e-10:
+                distanceStr='Euclidean'
+                self.doublePrint(fh,"The covariance matrix is singular (either there is a column of the data that is always the same or not enough data to define the covariance)")
+                self.doublePrint(fh,"Using Euclidean distance instead")
+                D11 = upper_tri_masking(distance.cdist(X1, X1, 'euclidean'))
+                D11/= X1.shape[1]
+            else:
+                distanceStr='Mahalanobis'
+                C1inv = np.linalg.inv(C1)
+                D11 = upper_tri_masking(distance.cdist(X1,X1,'mahalanobis',VI=C1inv))
 
-            D11 = upper_tri_masking(distance.cdist(X1,X1,'mahalanobis',VI=C1inv))
             np.savetxt(self._getExtraPath("D11.txt"),D11)
 
-            str11 = self.printStats(D11, "D11", "Mahalanobis distance Set 1 vs Set1")
+            str11 = self.printStats(D11, "D11", "%s distance Set 1 vs Set1"%distanceStr)
             self.doublePrint(fh, str11)
             if X2 is not None:
                 self.doublePrint(fh, "---------------------------")
-                D12 = distance.cdist(X1,X2,'mahalanobis',VI=C1inv).flatten()
+                if distanceStr=='Mahalanobis':
+                    D12 = distance.cdist(X1,X2,'mahalanobis',VI=C1inv).flatten()
+                    D12 /= X1.shape[1]
+                else:
+                    D12 = distance.cdist(X1, X2, 'euclidean').flatten()
                 np.savetxt(self._getExtraPath("D12.txt"),D12)
 
-                str12 = self.printStats(D12, "D12", "Mahalanobis distance Set 1 vs Set2")
+                str12 = self.printStats(D12, "D12", "%s distance Set 1 vs Set2"%distanceStr)
                 self.doublePrint(fh, str12)
 
                 [D,pval] = stats.ks_2samp(D11, D12)

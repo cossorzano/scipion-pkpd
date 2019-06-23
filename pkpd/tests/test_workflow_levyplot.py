@@ -49,6 +49,17 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protImportInVitro.outputExperiment.fnPKPD, "There was a problem with the import")
         self.validateFiles('protImport', protImportInVitro)
 
+        # Mahalanobis
+        print "Mahalanobis ..."
+        protMah1= self.newProtocol(ProtPKPDStatsMahalanobis,
+                                   objLabel='pkpd - Mahalanobis measurements',
+                                   labels='C'
+                                   )
+        protMah1.inputExperiment1.set(protImportInVitro.outputExperiment)
+        self.launchProtocol(protMah1)
+        fnSummary = protMah1._getPath("report.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+
         # Change the time unit to minute
         print "Change Units"
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
@@ -274,6 +285,19 @@ class TestLevyPlotWorkflow(TestWorkflow):
         #         tokens = line.split('=')
         #         pval=float(tokens[-1])
         #         self.assertTrue(pval>0.1)
+
+
+        # Mahalanobis
+        print "Mahalanobis ..."
+        protMah2 = self.newProtocol(ProtPKPDStatsMahalanobis,
+                                    objLabel='pkpd - Mahalanobis labels',
+                                    labels='AUC0t AUCM0t Cmax'
+                                    )
+        protMah2.inputExperiment1.set(protIVIVPKBoot.outputExperiment)
+        protMah2.inputExperiment2.set(protIVIVPK.outputExperiment)
+        self.launchProtocol(protMah2)
+        fnSummary = protMah2._getPath("report.txt")
+        self.assertTrue(os.path.exists(fnSummary))
 
 if __name__ == "__main__":
     unittest.main()
