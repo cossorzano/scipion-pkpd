@@ -42,7 +42,8 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         the Wagner-Nelson approach. This is only valid for profiles that have been
         modelled with a monocompartment PK model.
 
-        The formula is Fabs(t)=(Cp(t)+Cl*AUC0t(t))/(Cl*AUC0inf)
+        The formula is Fabs(t)=(Cp(t)+Ke*AUC0t(t))/(Ke*AUC0inf)
+        where Ke=Cl/V
 
         In this implementation it is assumed that AUC0inf is the last AUC0t observed,
         meaning that Cp(t) has almost vanished in the last samples"""
@@ -53,7 +54,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputExperiment', params.PointerParam, label="In-vivo profiles",
-                      pointerClass='PKPDExperiment', help='Make sure that it has a clearance parameter (Cl)')
+                      pointerClass='PKPDExperiment', help='Make sure that it has a clearance parameter (Cl) and central volume (V)')
         form.addParam('timeVar', params.StringParam, label="Time variable", default="t",
                       help='Which variable contains the time stamps.')
         form.addParam('concVar', params.StringParam, label="Concentration variable", default="Cp",
@@ -93,10 +94,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         Avar.varName = "A"
         Avar.varType = PKPDVariable.TYPE_NUMERIC
         Avar.role = PKPDVariable.ROLE_MEASUREMENT
-        if self.normalize.get():
-            Avar.units = createUnit("none")
-        else:
-            Avar.units = createUnit(self.experiment.getDoseUnits())
+        Avar.units = createUnit("none")
 
         self.outputExperiment.variables[tvar.varName] = tvar
         self.outputExperiment.variables[Avar.varName] = Avar
@@ -122,8 +120,10 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
 
             # Deconvolve
             Cl=float(sample.descriptors['Cl'])
+            V=float(sample.descriptors['V'])
+            Ke=Cl/V
             AUC0inf = float(AUC0t[-1])
-            A = (Cp + Cl * AUC0t) / (Cl * AUC0inf) * 100
+            A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
 
             self.addSample(sampleName,t,A)
 
