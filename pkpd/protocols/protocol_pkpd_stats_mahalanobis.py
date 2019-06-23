@@ -85,10 +85,13 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
         Nmeasurements=0
         N=len(self.getLabels())
         for label in self.getLabels():
-            if experiment.variables[label].isLabel():
-                Nlabels+=1
-            elif experiment.variables[label].isMeasurement():
-                Nmeasurements+=1
+            if label in experiment.variables:
+                if experiment.variables[label].isLabel():
+                    Nlabels+=1
+                elif experiment.variables[label].isMeasurement():
+                    Nmeasurements+=1
+            else:
+                raise Exception("Cannot find the label %s in one of the experiments"%label)
         if Nlabels==N:
             return 0
         if Nmeasurements==1 and N==1:
