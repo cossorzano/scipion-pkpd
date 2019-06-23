@@ -85,6 +85,7 @@ from .protocol_pkpd_simulate_generic_pd import ProtPKPDSimulateGenericPD
 from .protocol_pkpd_simulate_liver_flow import (PKPDLiver, PKPDLiverEV1,
                                                 ProtPKPDSimulateLiverFlow)
 from .protocol_pkpd_statistics_labels import ProtPKPDStatisticsLabel
+from .protocol_pkpd_stats_mahalanobis import ProtPKPDStatsMahalanobis
 from .protocol_pkpd_stats_oneExperiment_twoSubgroups_mean import ProtPKPDStatsExp1Subgroups2Mean
 from .protocol_pkpd_stats_twoExperiments_twoSubgroups_mean import ProtPKPDStatsExp2Subgroups2Mean
 from .protocol_pkpd_stats_twoExperiments_twoSubgroups_kolmogorov import ProtPKPDStatsExp2Subgroups2Kolmogorov

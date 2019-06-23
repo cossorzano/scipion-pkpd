@@ -24,63 +24,114 @@
 # *
 # **************************************************************************
 
+import numpy as np
+from scipy import stats
+from scipy.spatial import distance
+
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
-from scipy import stats
-import numpy as np
+from pkpd.utils import upper_tri_masking
 
 # Tested in test_workflow_levyplot.py
 
-class ProtPKPDStatsExp2Subgroups2Kolmogorov(ProtPKPD):
-    """ Check if two distributions come from the same distribution using the Kolmogorov Smirnov test.\n
+class ProtPKPDStatsMahalanobis(ProtPKPD):
+    """ Experiment 1 defines the mean and covariance for the Mahalanobis distance.
+        Then, the Mahalanobis distance of all elements in Experiment 1 with respect to the mean is calculated\n
+        If a second experiment is given, then all distances from the second to the mean of the first experiment\n
+        are also calculated.\n
         Protocol created by http://www.kinestatpharma.com\n """
-    _label = 'E'
+    _label = 'Mahalanobis'
 
     #--------------------------- DEFINE param functions --------------------------------------------
 
     def _defineParams(self, form):
         form.addSection('Input')
-        form.addParam('inputExperiment1', params.PointerParam, label="Experiment 1", important=True,
+        form.addParam('inputExperiment1', params.PointerParam, label="Experiment 1",
                       pointerClass='PKPDExperiment',
                       help='Select an experiment with samples')
-        form.addParam('label1', params.StringParam, label="Label 1", default="",
+        form.addParam('labels', params.StringParam, label="Labels", default="",
                       help='Name of the label in the first experiment to compare between the two subroups')
         form.addParam('expression1', params.StringParam, label="Subgroup 1 (optional)", default="",
                       help='For example, $(weight)<100 and $(sex)=="male"')
-        form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2", important=True,
-                      pointerClass='PKPDExperiment',
+        form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2 (optional)",
+                      pointerClass='PKPDExperiment', allowsNull=True,
                       help='Select an experiment with samples')
-        form.addParam('label2', params.StringParam, label="Label 2", default="",
-                      help='Name of the label in the second experiment to compare between the two subroups. '
-                      'If it is empty, Label 1 is also used as Label 2')
         form.addParam('expression2', params.StringParam, label="Subgroup 2 (optional)", default="",
                       help='For example, $(weight)>=100 and $(sex)=="male". If it is empty, the same Expression 1 will be used for grouping in Experiment 2')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep('runCompare',self.inputExperiment1.get().getObjId(), self.inputExperiment2.get().getObjId(),
-                                 self.label1.get(), self.label2.get(), self.expression1.get(), self.expression2.get())
+        self._insertFunctionStep('runCompare',self.inputExperiment1.get().getObjId(),
+                                 self.labels.get(), self.expression1.get(), self.expression2.get())
 
     #--------------------------- STEPS functions --------------------------------------------
-    def runCompare(self, objId1, objId2, label1, label2, expression1, expression2):
+    def getLabels(self):
+        labels=[]
+        for token in self.labels.get().split():
+            labels.append(token.strip())
+        return labels
+
+    def getValues(self,experiment,expression):
+        allX=[]
+        for label in self.getLabels():
+            x1 = [float(x) for x in experiment.getSubGroupLabels(expression, label)]
+            allX.append(x1)
+        X=np.asarray(allX,dtype=np.double)
+        return np.transpose(X)
+
+    def printStats(self,allF,Fstr,explanation):
+        allF=[f for f in allF if not np.isnan(f)]
+        mu=np.mean(allF)
+        sigma = np.std(allF)
+        alpha=1-95/100.0
+        percentiles = np.percentile(allF,[0, alpha/2*100, 25, 50, 75, (1-alpha/2)*100, 100])
+        retval=""
+        retval +="%s (%s)\n"%(Fstr,explanation)
+        retval +="%s mean+-std: %f+-%f\n"%(Fstr,mu,sigma)
+        retval +="%s minimum,maximum: [%f,%f]\n"%(Fstr,percentiles[0],percentiles[6])
+        retval +="%s percentile [%f,%f]%%: [%f,%f]\n"%(Fstr,alpha/2*100,(1-alpha/2)*100,percentiles[1],percentiles[5])
+        retval +="%s percentile [25,75]%%: [%f,%f]\n"%(Fstr,percentiles[2],percentiles[4])
+        retval +="%s percentile 50%%: %f\n"%(Fstr,percentiles[3])
+        return retval
+
+    def runCompare(self, objId1, labels, expression1, expression2):
         fh = open(self._getPath("report.txt"),'w')
 
-        self.experiment1 = self.readExperiment(self.inputExperiment1.get().fnPKPD)
-        self.experiment2 = self.readExperiment(self.inputExperiment2.get().fnPKPD)
-        label2ToUse = self.label1.get() if self.label2.get()=="" else self.label2.get()
-        expression2ToUse = self.expression1.get() if self.expression2.get()=="" else self.expression2.get()
-        x1 = [float(x) for x in self.experiment1.getSubGroupLabels(self.expression1.get(),self.label1.get())]
-        x2 = [float(x) for x in self.experiment2.getSubGroupLabels(expression2ToUse,label2ToUse)]
-        self.doublePrint(fh,"Values in SubGroup 1: %s"%str(x1))
-        self.doublePrint(fh,"Values in SubGroup 2: %s"%str(x2))
-        self.doublePrint(fh,"Testing H0: distribution(x1)=distribution(x2)")
-        self.doublePrint(fh," ")
+        self.experiment1 = self.readExperiment(self.inputExperiment1.get().fnPKPD, False)
+        X1 = self.getValues(self.experiment1,self.expression1.get())
+        X2 = None
+        if self.inputExperiment2.get() is not None:
+            self.experiment2 = self.readExperiment(self.inputExperiment2.get().fnPKPD, False)
+            expression2ToUse = self.expression1.get() if self.expression2.get()=="" else self.expression2.get()
+            X2 = self.getValues(self.experiment2, self.expression2.get())
+
+        print("Values in SubGroup 1:\n%s"%np.array2string(X1))
+        if X2 is not None:
+            print("Values in SubGroup 2:\n%s" % np.array2string(X2))
 
         try:
-            [D,pval] = stats.ks_2samp(x1, x2)
-            self.doublePrint(fh,"Kolmogorov-Smirnov test for two independent samples: D-statistic=%f p-value=%f"%(D,pval))
+            self.printSection("Results")
+            C1 = np.cov(np.transpose(X1))
+            C1inv = np.linalg.inv(C1)
+
+            D11 = upper_tri_masking(distance.cdist(X1,X1,'mahalanobis',VI=C1inv))
+            np.savetxt(self._getExtraPath("D11.txt"),D11)
+
+            str11 = self.printStats(D11, "D11", "Mahalanobis distance Set 1 vs Set1")
+            self.doublePrint(fh, str11)
+            if X2 is not None:
+                self.doublePrint(fh, "---------------------------")
+                D12 = distance.cdist(X1,X2,'mahalanobis',VI=C1inv).flatten()
+                np.savetxt(self._getExtraPath("D12.txt"),D12)
+
+                str12 = self.printStats(D12, "D12", "Mahalanobis distance Set 1 vs Set2")
+                self.doublePrint(fh, str12)
+
+                [D,pval] = stats.ks_2samp(D11, D12)
+                self.doublePrint(fh, "---------------------------")
+                self.doublePrint(fh,"Kolmogorov-Smirnov test for the compatibility of D11 and D12: D-statistic=%f p-value=%f"%(D,pval))
+            fh.close()
         except Exception as e:
             print(e)
 
@@ -88,38 +139,21 @@ class ProtPKPDStatsExp2Subgroups2Kolmogorov(ProtPKPD):
 
     #--------------------------- INFO functions --------------------------------------------
     def _summary(self):
-        import os
-        label2ToUse = self.label1.get() if self.label2.get()=="" else self.label2.get()
         expression2ToUse = self.expression1.get() if self.expression2.get()=="" else self.expression2.get()
-        msg=["Comparison between %s in Subgroup1 (%s) and %s in Subgroup2 (%s), independent samples"%(self.label1.get(),self.expression1.get(),label2ToUse,expression2ToUse)]
+        msg=["Comparison between %s in Subgroup1 (%s) and %s in Subgroup2 (%s), independent samples"%(self.labels.get(),self.expression1.get(),self.labels.get(),expression2ToUse)]
         msg.append(' ')
         self.addFileContentToMessage(msg,self._getPath("report.txt"))
         return msg
 
     def _validate(self):
         msg=[]
-        self.experiment1 = self.readExperiment(self.inputExperiment1.get().fnPKPD,False)
-        if not self.label1.get() in self.experiment1.variables:
-            msg.append("Cannot find %s amongst the Experiment 1 variables"%self.label1.get())
-        else:
-            variable = self.experiment1.variables[self.label1.get()]
-            if variable.role != PKPDVariable.ROLE_LABEL:
-                msg.append("Variable %s is not a label in Experiment 1"%self.label1.get())
-            if variable.varType != PKPDVariable.TYPE_NUMERIC:
-                msg.append("Variable %s is not a number in Experiment 1"%self.label1.get())
-
-        label2ToUse = self.label1.get() if self.label2.get()=="" else self.label2.get()
-        self.experiment2 = self.readExperiment(self.inputExperiment2.get().fnPKPD,False)
-        if not label2ToUse in self.experiment2.variables:
-            msg.append("Cannot find %s amongst the Experiment 2 variables"%label2ToUse)
-        else:
-            variable = self.experiment1.variables[label2ToUse]
-            if variable.role != PKPDVariable.ROLE_LABEL:
-                msg.append("Variable %s is not a label in Experiment 2"%label2ToUse)
-            if variable.varType != PKPDVariable.TYPE_NUMERIC:
-                msg.append("Variable %s is not a number in Experiment 2"%label2ToUse)
+        # self.experiment1 = self.readExperiment(self.inputExperiment1.get().fnPKPD,False)
+        # if self.inputExperiment2.get() is not None:
+        #     self.experiment2 = self.readExperiment(self.inputExperiment2.get().fnPKPD)
+        # for label in self.getLabels():
+        #     if not label in self.experiment1.variables:
+        #         msg.append("Cannot find %s amongst the Experiment 1 variables"%label)
+        #     if self.inputExperiment2.get() is not None:
+        #         if not label in self.experiment2.variables:
+        #             msg.append("Cannot find %s amongst the Experiment 2 variables" % label)
         return msg
-
-    def filterVarForWizard(self, v):
-        """ Define the type of variables required (used in wizard). """
-        return v.isNumeric() and v.isLabel()
