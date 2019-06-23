@@ -291,7 +291,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         print "Mahalanobis ..."
         protMah2 = self.newProtocol(ProtPKPDStatsMahalanobis,
                                     objLabel='pkpd - Mahalanobis labels',
-                                    labels='AUC0t AUCM0t Cmax'
+                                    labels='AUC0t AUMC0t Cmax'
                                     )
         protMah2.inputExperiment1.set(protIVIVPKBoot.outputExperiment)
         protMah2.inputExperiment2.set(protIVIVPK.outputExperiment)
