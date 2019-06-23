@@ -118,3 +118,20 @@ def uniqueFloatValues2(x1,x2,y):
     x2unique = x2p.flat[takeIdx]
     yunique = yp.flat[takeIdx]
     return x1unique,x2unique,yunique
+
+def calculateAUC0t(t, C):
+    # Make sure that the (0,0) sample is present
+    AUC0t = np.zeros(t.shape[0])
+    for idx in range(1,t.shape[0]):
+        dt = (t[idx]-t[idx-1])
+        if C[idx]>=C[idx-1]: # Trapezoidal in the raise
+            AUC0t[idx] = AUC0t[idx-1]+0.5*dt*(C[idx-1]+C[idx])
+        else: # Log-trapezoidal in the decay
+            if C[idx-1]>0 and C[idx]>0:
+                decrement = C[idx-1]/C[idx]
+                K = math.log(decrement)
+                B = K/dt
+                AUC0t[idx] = AUC0t[idx-1]+dt*(C[idx-1]-C[idx])/K
+            else:
+                AUC0t[idx] = AUC0t[idx-1]
+    return AUC0t
