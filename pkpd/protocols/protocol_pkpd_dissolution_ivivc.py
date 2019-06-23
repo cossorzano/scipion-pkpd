@@ -52,7 +52,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         form.addParam('inputInVitro', params.PointerParam, label="Dissolution profiles in vitro",
                       pointerClass='ProtPKPDDissolutionFit', help='Select an experiment with dissolution profiles')
         form.addParam('inputInVivo', params.PointerParam, label="Dissolution profiles in vivo",
-                      pointerClass='ProtPKPDDeconvolve', help='Select an experiment with dissolution profiles')
+                      pointerClass='ProtPKPDDeconvolve,ProtPKPDDeconvolutionWagnerNelson', help='Select an experiment with dissolution profiles')
         form.addParam('timeScale', params.EnumParam, label="Time scaling",
                       choices=["None (Fabs(t)=Adissol(t))",
                                "t0 (Fabs(t)=Adissol(t-t0)",

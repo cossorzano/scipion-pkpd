@@ -73,7 +73,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                 objLabel='pkpd - nca numeric')
         protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
         self.launchProtocol(protNCA)
-        self.assertIsNotNone(protNCA.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.assertIsNotNone(protNCA.outputExperiment.fnPKPD, "There was a problem with the NCA numeric")
         self.validateFiles('prot', protNCA)
         experiment = PKPDExperiment()
         experiment.load(protNCA.outputExperiment.fnPKPD)
@@ -95,8 +95,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                 globalSearch=True, modelType=3)
         protWeibull.inputExperiment.set(protChangeTimeUnit.outputExperiment)
         self.launchProtocol(protWeibull)
-        self.assertIsNotNone(protWeibull.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
-        self.assertIsNotNone(protWeibull.outputFitting.fnFitting, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protWeibull.outputExperiment.fnPKPD, "There was a problem with the dissolution model")
+        self.assertIsNotNone(protWeibull.outputFitting.fnFitting, "There was a problem with the dissolution model")
         self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
 
         # Fit Order 1
@@ -107,8 +107,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                        )
         protModelInVivo.inputExperiment.set(protImportInVivo.outputExperiment)
         self.launchProtocol(protModelInVivo)
-        self.assertIsNotNone(protModelInVivo.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
-        self.assertIsNotNone(protModelInVivo.outputFitting.fnFitting, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protModelInVivo.outputExperiment.fnPKPD, "There was a problem with the PK model")
+        self.assertIsNotNone(protModelInVivo.outputFitting.fnFitting, "There was a problem with the PK model")
         self.validateFiles('ProtPKPDMonoCompartment', ProtPKPDMonoCompartment)
 
         # Deconvolve the in vivo
@@ -118,8 +118,18 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                        )
         protDeconv.inputODE.set(protModelInVivo)
         self.launchProtocol(protDeconv)
-        self.assertIsNotNone(protDeconv.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protDeconv.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
         self.validateFiles('ProtPKPDDeconvolve', ProtPKPDDeconvolve)
+
+        # Deconvolve the in vivo
+        print "Deconvolving in vivo Wagner Nelson..."
+        protDeconvWN = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
+                                        objLabel='pkpd - deconvolution Wagner Nelson'
+                                       )
+        protDeconvWN.inputExperiment.set(protModelInVivo)
+        self.launchProtocol(protDeconvWN)
+        self.assertIsNotNone(protDeconvWN.outputExperiment.fnPKPD, "There was a problem with the deconvolution Wagner")
+        self.validateFiles('ProtPKPDDeconvolutionWagnerNelson', ProtPKPDDeconvolutionWagnerNelson)
 
         # Levy plot
         print "Levy plot ..."
@@ -129,7 +139,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protLevy.inputInVitro.set(protWeibull)
         protLevy.inputInVivo.set(protDeconv)
         self.launchProtocol(protLevy)
-        self.assertIsNotNone(protLevy.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protLevy.outputExperiment.fnPKPD, "There was a problem with the Levy plot")
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
         # IVIVC
@@ -140,7 +150,18 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVC.inputInVitro.set(protWeibull)
         protIVIVC.inputInVivo.set(protDeconv)
         self.launchProtocol(protIVIVC)
-        self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the IVIVC")
+        self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
+
+        # IVIVC Wagner
+        print "In vitro-in vivo correlation Wagner Nelson..."
+        protIVIVCWN = self.newProtocol(ProtPKPDDissolutionIVIVC,
+                                      objLabel='pkpd - ivivc'
+                                      )
+        protIVIVCWN.inputInVitro.set(protWeibull)
+        protIVIVCWN.inputInVivo.set(protDeconvWN)
+        self.launchProtocol(protIVIVCWN)
+        self.assertIsNotNone(protIVIVCWN.outputExperiment.fnPKPD, "There was a problem with the IVIVC")
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # Dissolution simulation
@@ -156,7 +177,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVPK.inputPK.set(protModelInVivo.outputFitting)
         protIVIVPK.inputIvIvC.set(protIVIVC.outputExperiment)
         self.launchProtocol(protIVIVPK)
-        self.assertIsNotNone(protIVIVPK.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protIVIVPK.outputExperiment.fnPKPD, "There was a problem with the simulation")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # Internal validity
@@ -188,7 +209,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
                                       )
         protDissolBootstrap.inputFit.set(protWeibull)
         self.launchProtocol(protDissolBootstrap)
-        self.assertIsNotNone(protDissolBootstrap.outputPopulation.fnFitting, "There was a problem with the dissolution bootstrap ")
+        self.assertIsNotNone(protDissolBootstrap.outputPopulation.fnFitting, "There was a problem with the dissolution bootstrap")
         self.validateFiles('ProtPKPDFitBootstrap', ProtPKPDFitBootstrap)
 
         # Bootstrap ODE
@@ -200,7 +221,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protODEBootstrap.inputODE.set(protModelInVivo)
         self.launchProtocol(protODEBootstrap)
         self.assertIsNotNone(protODEBootstrap.outputPopulation.fnFitting,
-                             "There was a problem with the ODE bootstrap ")
+                             "There was a problem with the ODE bootstrap")
         self.validateFiles('ProtPKPDODEBootstrap', ProtPKPDODEBootstrap)
 
         # Dissolution simulation
@@ -215,7 +236,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVPKBoot.inputPK.set(protODEBootstrap.outputPopulation)
         protIVIVPKBoot.inputIvIvC.set(protIVIVC.outputExperiment)
         self.launchProtocol(protIVIVPKBoot)
-        self.assertIsNotNone(protIVIVPKBoot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(protIVIVPKBoot.outputExperiment.fnPKPD, "There was a problem with the dissolution model")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # t Test
