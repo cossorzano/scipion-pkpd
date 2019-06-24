@@ -60,6 +60,15 @@ class TestLevyPlotWorkflow(TestWorkflow):
         fnSummary = protMah1._getPath("report.txt")
         self.assertTrue(os.path.exists(fnSummary))
 
+        # Average sample
+        print "Average sample ..."
+        protAvg= self.newProtocol(ProtPKPDAverageSample,
+                                   objLabel='pkpd - Average sample'
+                                   )
+        protAvg.inputExperiment.set(protImportInVitro.outputExperiment)
+        self.launchProtocol(protAvg)
+        self.assertIsNotNone(protAvg.outputExperiment.fnPKPD, "There was a problem with the import")
+
         # Change the time unit to minute
         print "Change Units"
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
