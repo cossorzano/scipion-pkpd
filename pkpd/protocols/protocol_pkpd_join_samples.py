@@ -96,12 +96,12 @@ class ProtPKPDJoinSamples(ProtPKPD):
         # Doses
         for key, value in experiment1.doses.iteritems():
             dose = copy.copy(value)
-            dose.varName = "%s%s"%(prefix1,key)
-            self.experiment.doses[dose.varName] = dose
+            dose.doseName = "%s%s"%(prefix1,key)
+            self.experiment.doses[dose.doseName] = dose
         for key, value in experiment2.doses.iteritems():
             dose = copy.copy(value)
-            dose.varName = "%s%s"%(prefix2,key)
-            self.experiment.doses[dose.varName] = dose
+            dose.doseName = "%s%s"%(prefix2,key)
+            self.experiment.doses[dose.doseName] = dose
 
         # Samples
         for key, value in experiment1.samples.iteritems():
