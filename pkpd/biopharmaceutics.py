@@ -312,7 +312,7 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             try:
                 self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
             except:
-                print("Error en spline",knotsUnique, knotsYUnique)
+                print("Error en spline",self.knots, self.knotsY, knotsUnique, knotsYUnique)
             self.parametersPrepared=copy.copy(self.parameters)
         fraction=self.B(t)
         fraction=np.clip(fraction,0.0,1.0)
