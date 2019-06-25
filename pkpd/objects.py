@@ -762,6 +762,18 @@ class PKPDExperiment(EMObject):
         for groupName in sample.groupList:
             self.addSampleToGroup(groupName,sample)
 
+    def getTimeVariable(self):
+        for varName in self.variables:
+            if self.variables[varName].isTime():
+                return varName
+
+    def getMeasurementVariables(self):
+        retval=[]
+        for varName in self.variables:
+            if self.variables[varName].isMeasurement():
+                retval.append(varName)
+        return retval
+
 
 class PKPDModelBase(object):
     def __init__(self):
@@ -1101,8 +1113,9 @@ class PKPDOptimizer:
         allDiffs = None
         for y, yTarget, yTargetLog in izip(yPredicted,self.yTarget,self.yTargetLogs):
             if self.takeYLogs:
+                diff = np.full(yTarget.shape,np.nan)
                 idx = np.logical_and(np.isfinite(y),y>=1e-20)
-                diff = yTargetLog[idx]-np.log10(y[idx])
+                diff[idx] = yTargetLog[idx]-np.log10(y[idx])
             else:
                 diff = yTarget - y
             if self.takeRelative:
@@ -1113,8 +1126,8 @@ class PKPDOptimizer:
             else:
                 allDiffs = np.concatenate([allDiffs, diff])
 
-            idx = np.logical_not(np.isfinite(allDiffs))
-            allDiffs[idx]=np.nan
+        idx = np.logical_not(np.isfinite(allDiffs))
+        allDiffs[idx]=np.nan
         e = allDiffs
         if e.size<parameters.size:
             return self.hugeError()
