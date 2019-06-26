@@ -95,6 +95,62 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(A[200]>90 and A[200]<95)
 
 
+        # Simulate PK
+        print "Simulate PK ..."
+        prot = self.newProtocol(ProtPKPDODESimulate,
+                                objLabel='PK simulate',
+                                paramsSource=1,
+                                prmUser='0.0, 0.035339, 0.2835, 28.7765',
+                                doses='Bolus ; via=Oral; bolus; t=0 h; d=1 ug',
+                                tF=24)
+        prot.inputODE.set(protEV1MonoCompartment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.validateFiles('prot', prot)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        AUC0t = float(experiment.samples['Simulation_0'].descriptors['AUC0t'])
+        self.assertTrue(AUC0t > 3.4 and AUC0t < 3.6)
+        AUMC0t = float(experiment.samples['Simulation_0'].descriptors['AUMC0t'])
+        self.assertTrue(AUMC0t > 455 and AUMC0t < 457)
+
+        # Fit a monocompartmental model with first order absorption
+        print "Fitting monocompartmental model..."
+        protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
+                                                  objLabel='pkpd - ev1 monocompartment simulated',
+                                                  bounds='(0.0, 20.0); (0.0, 0.2); (0.0, 1.0); (0.0, 100.0)')
+        protEV1MonoCompartment.inputExperiment.set(prot.outputExperiment)
+        self.launchProtocol(protEV1MonoCompartment)
+        self.assertIsNotNone(protEV1MonoCompartment.outputExperiment.fnPKPD,
+                             "There was a problem with the monocompartmental model ")
+        self.assertIsNotNone(protEV1MonoCompartment.outputFitting.fnFitting,
+                             "There was a problem with the monocompartmental model ")
+        self.validateFiles('protEV1MonoCompartment', protEV1MonoCompartment)
+
+        experiment = PKPDExperiment()
+        experiment.load(protEV1MonoCompartment.outputExperiment.fnPKPD)
+        Cl = float(experiment.samples['Simulation_0'].descriptors['Cl'])
+        V = float(experiment.samples['Simulation_0'].descriptors['V'])
+        Ka = float(experiment.samples['Simulation_0'].descriptors['Oral_Ka'])
+        tlag = float(experiment.samples['Simulation_0'].descriptors['Oral_tlag'])
+        self.assertTrue(Cl > 0.26 and Cl < 0.30)
+        self.assertTrue(V > 26 and V < 30)
+        self.assertTrue(tlag > 0 and tlag < 3)
+        self.assertTrue(Ka > 0.03 and Ka < 0.042)
+
+        # Deconvolution Fourier
+        print "Deconvolving Fourier ..."
+        prot = self.newProtocol(ProtPKPDDeconvolveFourier,
+                                objLabel='dissol deconv Fourier')
+        prot.inputODE.set(protEV1MonoCompartment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.validateFiles('prot', prot)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        A = np.asarray(experiment.samples['Simulation_0'].getValues('A'), dtype=np.float64)
+        self.assertTrue(A[400] > 97 and A[400] <= 100)
+
         # Change via
         print "Change via ..."
         protVia = self.newProtocol(ProtPKPDChangeVia,

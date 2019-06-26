@@ -38,6 +38,7 @@ from pkpd.models.pk_models import PK_Monocompartment
 # TESTED in test_workflow_gabrielsson_pk15.py
 # TESTED in test_workflow_gabrielsson_pk17.py
 # TESTED in test_workflow_gabrielsson_pk43.py
+# TESTED in test_workflow_deconvolution.py
 
 class ProtPKPDMonoCompartment(ProtPKPDODEBase):
     """ Fit a monocompartmental model to a set of measurements obtained by oral doses (any arbitrary dosing regimen is allowed)\n

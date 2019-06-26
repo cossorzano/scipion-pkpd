@@ -29,5 +29,6 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Comparison between sets of labels using Mahalanobis added
  	- Comparison between sets of measurements using Mahalanobis added
  	- Produce average sample added
+ 	- Fourier deconvolution added
  	
  	
