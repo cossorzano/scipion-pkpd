@@ -1115,6 +1115,8 @@ class PKPDOptimizer:
             if self.takeYLogs:
                 diff = np.full(yTarget.shape,np.nan)
                 idx = np.logical_and(np.isfinite(y),y>=1e-20)
+                if np.sum(idx)<0.8*diff.size:
+                    return self.hugeError()
                 diff[idx] = yTargetLog[idx]-np.log10(y[idx])
             else:
                 diff = yTarget - y
