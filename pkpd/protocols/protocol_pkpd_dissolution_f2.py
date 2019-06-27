@@ -24,10 +24,10 @@
 # *
 # **************************************************************************
 
-import copy
 import numpy as np
 import math
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.stats import norm
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
@@ -37,7 +37,7 @@ from pkpd.utils import uniqueFloatValues
 # tested in test_workflow_dissolution_f2.py
 
 class ProtPKPDDissolutionF2(ProtPKPD):
-    """ Calculate the f1 and f2 from two dissolution profiles."""
+    """ Calculate the f1 and f2 from two dissolution profiles. The bootstrap confidence interval is bias corrected and accelarated."""
 
     _label = 'dissol f1 and f2'
 
@@ -122,21 +122,19 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
         f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
 
-        print("Bootstrap sample %d" % self.b)
         print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
         print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
         print("f1=%f f2=%f"%(f1,f2))
         print(" ")
-        self.b = self.b + 1
 
         return f1, f2
 
-    def printStats(self,allF,Fstr,Fformula):
+    def printStats(self,allF,Fstr,Fformula,alphaL,alphaU):
         allF=[f for f in allF if not np.isnan(f)]
         mu=np.mean(allF)
         sigma = np.std(allF)
-        alpha=1-self.confidence.get()/100.0
-        percentiles = np.percentile(allF,[0, alpha/2*100, 25, 50, 75, (1-alpha/2)*100, 100])
+        percentiles = np.percentile(allF,[0, alphaL*100, 25, 50, 75, alphaU*100, 100])
+        alpha=1-self.confidence.get()/100
         retval=""
         retval +="%s = %s\n"%(Fstr,Fformula)
         retval +="%s distribution with B=%d bootstrap samples (total of %d samples)\n"%(Fstr,self.Nbootstrap.get(),len(allF))
@@ -160,45 +158,105 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         profilesRef=self.getProfiles(self.inputRef.get(), self.timeVar.get(), self.dissolutionVar.get())
         profilesTest=self.getProfiles(self.inputTest.get(),self.timeVar.get(), self.dissolutionVar.get())
 
-        allF1=[]
-        allF2=[]
+        # Sample estimate ----------------
+        self.printSection("Sample estimate")
+        allF10=[]
+        allF20=[]
+        for profileRef in profilesRef:
+            print("Full reference profile: %s" % np.array2string(profileRef, max_line_width=10000))
+            for profileTest in profilesTest:
+                print("Full test profile: %s" % np.array2string(profileTest, max_line_width=10000))
+                print(" ")
+                f1, f2 = self.calculateF(profileRef, profileTest)
+                allF10.append(f1)
+                allF20.append(f2)
+        f10=np.mean([f for f in allF10 if not np.isnan(f)])
+        f20=np.mean([f for f in allF20 if not np.isnan(f)])
+
+        # Jack knife ----------------
+        self.printSection("Jackknife")
+        allF1J=[]
+        allF2J=[]
+        for profileRef in profilesRef:
+            print("Full reference profile: %s" % np.array2string(profileRef, max_line_width=10000))
+            for profileTest in profilesTest:
+                print("Full test profile: %s" % np.array2string(profileTest, max_line_width=10000))
+                print(" ")
+                for i in range(profileRef.size):
+                    idx=[j for j in range(profileRef.size) if j != i]
+                    f1, f2 = self.calculateF(profileRef[idx], profileTest[idx])
+                    allF1J.append(f1)
+                    allF2J.append(f2)
+        f1J=np.mean([f for f in allF1J if not np.isnan(f)])
+        f2J=np.mean([f for f in allF2J if not np.isnan(f)])
+
+        # Bootstrapping ------------------
+        self.printSection("Bootstrapping")
+        allF1b=[]
+        allF2b=[]
         if len(profilesRef)>0:
             idx = [k for k in range(0, len(profilesRef[0]))]
             Nidx = len(idx)
-        self.printSection("Calculations")
         self.b=1
         if self.bootstrapBy.get()==ProtPKPDDissolutionF2.BYVECTOR:
             for profileRef in profilesRef:
-                print("Full reference profile: %s"%np.array2string(profileRef,max_line_width=10000))
                 for profileTest in profilesTest:
-                    print("Full test profile: %s" % np.array2string(profileTest, max_line_width=10000))
-                    print(" ")
-                    f1,f2=self.calculateF(profileRef,profileTest)
-                    allF1.append(f1)
-                    allF2.append(f2)
-                    if self.Nbootstrap.get()>0:
-                        for n in range(self.Nbootstrap.get()):
-                            idxB = sorted(np.random.choice(idx,Nidx))
-                            profileRefB = np.asarray([profileRef[i] for i in idxB])
-                            profileTestB = np.asarray([profileTest[i] for i in idxB])
-                            f1, f2 = self.calculateF(profileRefB, profileTestB)
-                            allF1.append(f1)
-                            allF2.append(f2)
+                    for n in range(self.Nbootstrap.get()):
+                        idxB = sorted(np.random.choice(idx,Nidx))
+                        profileRefB = np.asarray([profileRef[i] for i in idxB])
+                        profileTestB = np.asarray([profileTest[i] for i in idxB])
+                        print("Bootstrap sample %d" % self.b)
+                        f1, f2 = self.calculateF(profileRefB, profileTestB)
+                        allF1b.append(f1)
+                        allF2b.append(f2)
+                        self.b = self.b + 1
         else:
             for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePoint(profilesRef)
                 profileTestB = self.bootstrapByTimePoint(profilesTest)
+                print("Bootstrap sample %d" % self.b)
                 f1, f2 = self.calculateF(profileRefB, profileTestB)
-                allF1.append(f1)
-                allF2.append(f2)
+                allF1b.append(f1)
+                allF2b.append(f2)
+                self.b = self.b + 1
 
-        strF1=self.printStats(allF1,"F1","sum(|pRef-pTest|)/sum(pRef)*100")
-        strF2=self.printStats(allF2,"F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))")
-        np.savetxt(self._getExtraPath("f1.txt"),allF1)
-        np.savetxt(self._getExtraPath("f2.txt"),allF2)
+        # Bias corrected and accelerated --------------------
+        z0f1=norm.ppf(float(np.sum(allF1b<f10))/self.b)
+        z0f2=norm.ppf(float(np.sum(allF2b<f20))/self.b)
+        af1=np.sum(np.power(allF1J-f1J,3.0))/(6*np.power(np.sum(np.power(allF1J-f1J,2.0)),1.5))
+        af2=np.sum(np.power(allF2J-f2J,3.0))/(6*np.power(np.sum(np.power(allF2J-f2J,2.0)),1.5))
+        alpha = 1-self.confidence.get()/100
+        alphaLf1 = norm.cdf(z0f1+(z0f1+norm.ppf(alpha/2))/(1-af1*(z0f1+norm.ppf(alpha/2))))
+        alphaUf1 = norm.cdf(z0f1+(z0f1+norm.ppf(1-alpha/2))/(1-af1*(z0f1+norm.ppf(1-alpha/2))))
+        alphaLf2 = norm.cdf(z0f2+(z0f2+norm.ppf(alpha/2))/(1-af2*(z0f2+norm.ppf(alpha/2))))
+        alphaUf2 = norm.cdf(z0f2+(z0f2+norm.ppf(1-alpha/2))/(1-af2*(z0f2+norm.ppf(1-alpha/2))))
+
+        strF1=self.printStats(allF1b,"F1","sum(|pRef-pTest|)/sum(pRef)*100",alphaLf1,alphaUf1)
+        strF2=self.printStats(allF2b,"F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))",alphaLf2,alphaUf2)
+        np.savetxt(self._getExtraPath("f1.txt"),allF1b)
+        np.savetxt(self._getExtraPath("f2.txt"),allF2b)
 
         self.printSection("Results")
         fhSummary = open(self._getPath("summary.txt"),"w")
+
+        self.doublePrint(fhSummary,"Sample F1 mean=%f"%f10)
+        self.doublePrint(fhSummary,"Sample F2 mean=%f"%f20)
+        self.doublePrint(fhSummary," ")
+
+        self.doublePrint(fhSummary,"Jackknife F1 mean=%f"%f1J)
+        self.doublePrint(fhSummary,"Jackknife F2 mean=%f"%f2J)
+        self.doublePrint(fhSummary," ")
+
+        print("Bias correction z0 F1=%f (bias)"%z0f1)
+        print("Bias correction z0 F2=%f (bias)"%z0f2)
+        print("Bias correction a F1=%f (acceleration)"%af1)
+        print("Bias correction a F2=%f (acceleration)"%af2)
+        print("Bias correction alphaL F1=%f"%alphaLf1)
+        print("Bias correction alphaU F1=%f"%alphaUf1)
+        print("Bias correction alphaL F2=%f"%alphaLf2)
+        print("Bias correction alphaU F2=%f"%alphaUf2)
+        print(" ")
+
         self.doublePrint(fhSummary,strF2)
         self.doublePrint(fhSummary,"---------------------------")
         self.doublePrint(fhSummary,strF1)
