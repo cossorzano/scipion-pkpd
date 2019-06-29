@@ -457,7 +457,7 @@ class PKPDExperiment(EMObject):
 
     def __str__(self):
         if not self.infoStr.hasValue():
-            self.load()
+            self.load(fullRead=False)
             self.infoStr.set("variables: %d, samples: %d"
                              % (len(self.variables), len(self.samples)))
         return self.infoStr.get()
