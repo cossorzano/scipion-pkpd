@@ -600,8 +600,8 @@ class PK_Twocompartments(PKPDODEModel):
         k10=Cl/V
         kunits = divideUnits(self.parameterUnits[0],self.parameterUnits[1])
         print("k10=%f (%s) (Elimination from central compartment, k10=Cl/V)"%(k10,PKPDUnit.codeToString(kunits)))
-        print("k12=%f (%s) (Transfer from central to peripheral compartment, k12=Cl/V)"%(k12,PKPDUnit.codeToString(kunits)))
-        print("k21=%f (%s) (Transfer from peripheral to central compartment, k21=Cl/Vp)"%(k21,PKPDUnit.codeToString(kunits)))
+        print("k12=%f (%s) (Transfer from central to peripheral compartment, k12=Clp/V)"%(k12,PKPDUnit.codeToString(kunits)))
+        print("k21=%f (%s) (Transfer from peripheral to central compartment, k21=Clp/Vp)"%(k21,PKPDUnit.codeToString(kunits)))
         print(" ")
         print("An alternative formulation is given by its impulse response (response to an intravenous bolus of amount A0):")
         print("A=A0*a*exp(-alpha*t)+A0*b*exp(-beta*t)")
