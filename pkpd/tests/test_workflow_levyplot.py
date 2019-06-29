@@ -151,6 +151,28 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protDeconvWN.outputExperiment.fnPKPD, "There was a problem with the deconvolution Wagner")
         self.validateFiles('ProtPKPDDeconvolutionWagnerNelson', ProtPKPDDeconvolutionWagnerNelson)
 
+        # Fit bicompartment
+        print "Fitting EV1-twocompartments model ..."
+        protModelInVivo2 = self.newProtocol(ProtPKPDTwoCompartments,
+                                       objLabel='pkpd - fit two compartments',
+                                       bounds="(0.0, 8.0); (0.0, 0.2); (0.0, 10.0); (0.1, 50.0);  (0.0, 10.0); (0.1, 50.0)"
+                                       )
+        protModelInVivo2.inputExperiment.set(protImportInVivo.outputExperiment)
+        self.launchProtocol(protModelInVivo2)
+        self.assertIsNotNone(protModelInVivo2.outputExperiment.fnPKPD, "There was a problem with the PK model")
+        self.assertIsNotNone(protModelInVivo2.outputFitting.fnFitting, "There was a problem with the PK model")
+        self.validateFiles('ProtPKPDTwoCompartments', ProtPKPDTwoCompartments)
+
+        # Deconvolve the in vivo
+        print "Deconvolving in vivo Loo Riegelman ..."
+        protDeconvLR = self.newProtocol(ProtPKPDDeconvolutionLooRiegelman,
+                                        objLabel='pkpd - deconvolution Loo Riegelman'
+                                       )
+        protDeconvLR.inputExperiment.set(protModelInVivo.outputExperiment)
+        self.launchProtocol(protDeconvLR)
+        self.assertIsNotNone(protDeconvLR.outputExperiment.fnPKPD, "There was a problem with the deconvolution Loo")
+        self.validateFiles('ProtPKPDDeconvolutionLooRiegelman', ProtPKPDDeconvolutionLooRiegelman)
+
         # Levy plot
         print "Levy plot ..."
         protLevy = self.newProtocol(ProtPKPDDissolutionLevyPlot,
