@@ -49,7 +49,9 @@ class ProtPKPDDeconvolutionLooRiegelman(ProtPKPD):
         In this implementation it is assumed that AUC0inf is the last AUC0t observed,
         meaning that Cp(t) has almost vanished in the last samples.
 
-        This protocol is much more accurate when the input Cp(t) is reinterpolated to a small time step like 0.5 minutes"""
+        This protocol is much more accurate when the input Cp(t) is reinterpolated to a small time step like 0.5 minutes.
+
+        Reference: Leon Shargel, Susanna Wu-Pong, Andrew B.C. Yu. Applied Biopharmaceutics & Pharmacokinetics, 6e. McGraw Hill, 1999. Chap. 7"""
 
     _label = 'deconvolution Loo-Riegelman'
 
