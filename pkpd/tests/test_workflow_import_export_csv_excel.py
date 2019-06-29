@@ -38,6 +38,7 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
         cls.dataset = PKPDDataSet.getDataSet('Dissolution')
         cls.exptFn = cls.dataset.getFile('excel')
         cls.fnExcelInvivo = cls.dataset.getFile('excelinvivo')
+        cls.fnExcelInvivoLong = cls.dataset.getFile('excelinvivoLong')
 
     def testDissolutionWorkflow(self):
         print "Import Excel"
@@ -96,11 +97,28 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
 
         print "Import from Excel"
         protImport = self.newProtocol(ProtPKPDImportFromExcel,
-                                       objLabel='pkpd - import from excel',
+                                       objLabel='pkpd - import from excel wide',
                                        variables='t;h;numeric;time; ;; Cp;ug/L;numeric;measurement; Plasma concentration',
                                        vias='Oral; spline2',
                                        doses='Bolus;via=Oral;bolus;t=0 h; d=40000 ug',
                                        inputFile=self.fnExcelInvivo)
+        self.launchProtocol(protImport)
+        self.assertIsNotNone(protImport.outputExperiment.fnPKPD, "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(protImport.outputExperiment.fnPKPD)
+        self.assertTrue(len(experiment.samples) == 2)
+
+
+        print "Import from Excel"
+        protImport = self.newProtocol(ProtPKPDImportFromExcel,
+                                      objLabel='pkpd - import from excel long',
+                                      format=1,
+                                      skipLines=2,
+                                      header='SKIP, ID, SKIP, SKIP, SKIP, t, SKIP, Cp',
+                                      variables='t;h;numeric;time; ;; Cp;ug/L;numeric;measurement; Plasma concentration',
+                                      vias='Oral; spline2',
+                                      doses='Bolus;via=Oral;bolus;t=0 h; d=40000 ug',
+                                      inputFile=self.fnExcelInvivoLong)
         self.launchProtocol(protImport)
         self.assertIsNotNone(protImport.outputExperiment.fnPKPD, "There was a problem with the import")
         experiment = PKPDExperiment()

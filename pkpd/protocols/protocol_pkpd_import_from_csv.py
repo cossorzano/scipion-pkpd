@@ -33,6 +33,8 @@ from pkpd.objects import (PKPDExperiment, PKPDVariable, PKPDDose, PKPDVia,
                           PKPDSample)
 from pyworkflow.utils import copyFile
 
+WIDEFORMAT=0
+LONGFORMAT=1
 
 class ProtPKPDImportFromText(ProtPKPD):
     #--------------------------- DEFINE param functions --------------------------------------------
@@ -50,6 +52,16 @@ class ProtPKPDImportFromText(ProtPKPD):
             inputFileHelp += "A column by each individual."
         form.addParam('inputFile', params.PathParam,
                       label="File path", allowsNull=False, help=inputFileHelp)
+        if type=="ExcelTable":
+            form.addParam('skipLines',params.IntParam, default=0, label='Skip lines',
+                          help='Skip this amount of lines to reach the header line, the line with the variable names.')
+            form.addParam('format',params.EnumParam, choices=["Wide format", "Long format"], default=0,
+                          label='Excel format',
+                          help='Wide format: 1st column is time, all other columns are the measurements\n'\
+                               'Long format: 1st column is the individualID, then all columns are as described by the variables')
+            form.addParam('header',params.StringParam, label='Header format', default='ID, t, Cp',
+                          condition='format==1',
+                          help='The ID column is compulsory, but it does not need to be the first one. You can skip columns with the keyword SKIP.')
         form.addParam('title', params.StringParam, label="Title", default="My experiment")
         form.addParam('comment', params.StringParam, label="Comment", default="")
         form.addParam('variables', params.TextParam, height=8, width=80, label="Variables", default="",
@@ -257,45 +269,90 @@ class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
         allT = []
         allSamples = []
         sheet = wb.get_sheet_by_name(wb.get_sheet_names()[0]) # First sheet only
-        for i in range(sheet.max_row):
-            print(i)
-            if i > 0:
-                allMeasurements = []
-            for j in range(sheet.max_column):
-                cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
-                if cellValue == "":
-                    continue
-                if i == 0 and j >= 1:
-                    sampleName = cellValue
-                    if sampleName[0] in "0123456789":
-                        sampleName="d"+sampleName
-                    sampleNames.append(sampleName)
-                elif i > 0:
-                    if j == 0:
-                        allT.append(cellValue)
-                    else:
-                        allMeasurements.append(cellValue)
-            if i > 0:
-                allSamples.append(allMeasurements)
+        i0=self.skipLines.get()
+        if self.format.get()==WIDEFORMAT:
+            for i in range(i0,sheet.max_row):
+                if i-i0 > 0:
+                    allMeasurements = []
+                for j in range(sheet.max_column):
+                    cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
+                    if cellValue == "":
+                        continue
+                    if i-i0 == 0 and j >= 1:
+                        sampleName = cellValue
+                        if sampleName[0] in "0123456789":
+                            sampleName="d"+sampleName
+                        sampleNames.append(sampleName)
+                    elif i-i0 > 0:
+                        if j == 0:
+                            allT.append(cellValue)
+                        else:
+                            allMeasurements.append(cellValue)
+                if i-i0 > 0:
+                    allSamples.append(allMeasurements)
 
-        tvarName = None
-        xvarName = None
-        for varName in self.experiment.variables:
-            if self.experiment.variables[varName].role == PKPDVariable.ROLE_TIME:
-                tvarName = varName
-            elif self.experiment.variables[varName].role == PKPDVariable.ROLE_MEASUREMENT:
-                xvarName = varName
+            tvarName = None
+            xvarName = None
+            for varName in self.experiment.variables:
+                if self.experiment.variables[varName].role == PKPDVariable.ROLE_TIME:
+                    tvarName = varName
+                elif self.experiment.variables[varName].role == PKPDVariable.ROLE_MEASUREMENT:
+                    xvarName = varName
 
-        for sampleName in sampleNames:
-            self.addSample(sampleName,[sampleName])
-            samplePtr=self.experiment.samples[sampleName]
-            samplePtr.addMeasurementPattern([sampleName, tvarName, xvarName])
-            exec ("samplePtr.measurement_%s=%s" % (tvarName, allT))
+            for sampleName in sampleNames:
+                self.addSample(sampleName,[sampleName])
+                samplePtr=self.experiment.samples[sampleName]
+                samplePtr.addMeasurementPattern([sampleName, tvarName, xvarName])
+                exec ("samplePtr.measurement_%s=%s" % (tvarName, allT))
 
-        for i in range(len(allT)):
-            for j in range(len(sampleNames)):
-                samplePtr=self.experiment.samples[sampleNames[j]]
-                exec ('samplePtr.measurement_%s.append("%s")' % (xvarName, allSamples[i][j]))
+            for i in range(len(allT)):
+                for j in range(len(sampleNames)):
+                    samplePtr=self.experiment.samples[sampleNames[j]]
+                    exec ('samplePtr.measurement_%s.append("%s")' % (xvarName, allSamples[i][j]))
+
+        elif self.format.get()==LONGFORMAT:
+            headerFormat=[token.strip() for token in self.header.get().split(',')]
+            if len(headerFormat)!=sheet.max_column:
+                raise Exception("You have specified %d columns in the header format, but there are %d columns"\
+                                %(len(headerFormat),sheet.max_column))
+            if not "ID" in headerFormat:
+                raise Exception("Cannot find ID in the header format")
+            idCol = headerFormat.index("ID")
+
+            keepCols=[]
+            col=0
+            measurementPattern=[]
+            for colName in headerFormat:
+                if colName != "SKIP" and colName !="ID":
+                    keepCols.append(col)
+                    measurementPattern.append(colName)
+                col+=1
+            print(keepCols)
+
+            allSamples={}
+            for i in range(i0+1,sheet.max_row):
+                line=[]
+                for j in range(sheet.max_column):
+                    cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
+                    line.append(cellValue)
+                sampleName = line[idCol]
+                if sampleName[0] in "0123456789":
+                    sampleName="d"+sampleName
+                if not sampleName in allSamples:
+                    allSamples[sampleName]=[]
+                    for j in range(len(keepCols)):
+                        allSamples[sampleName].append([])
+                jidx=0
+                for j in keepCols:
+                    allSamples[sampleName][jidx].append(line[j])
+                    jidx+=1
+
+            for sampleName in allSamples:
+                self.addSample(sampleName,[sampleName])
+                samplePtr=self.experiment.samples[sampleName]
+                samplePtr.addMeasurementPattern([sampleName]+measurementPattern)
+                for jidx in range(len(keepCols)):
+                    exec ("samplePtr.measurement_%s=%s" % (measurementPattern[jidx], allSamples[sampleName][jidx]))
 
 
 def getSampleNamesFromCSVfile(fnCSV):

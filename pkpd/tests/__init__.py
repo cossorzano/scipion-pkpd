@@ -180,6 +180,7 @@ PKPDDataSet(name='Dissolution', folder='Dissolution',
                'invivo12': 'invivo12.pkpd',
                'excel': 'experiment.xlsx',
                'excelinvivo': 'invivo.xlsx',
+               'excelinvivoLong': 'invivoLong.xlsx',
                })
 
 PKPDDataSet(name='model',  folder='model',
