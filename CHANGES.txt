@@ -31,4 +31,6 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Produce average sample added
  	- Fourier deconvolution added
  	- Bias corrected and accelerated Bootstrapping for F1 and F2
+ 	- Loo Riegelman deconvolution added
+ 	- Importing from long Excel formats added
  	
