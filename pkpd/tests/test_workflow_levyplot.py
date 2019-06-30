@@ -168,7 +168,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protDeconvLR = self.newProtocol(ProtPKPDDeconvolutionLooRiegelman,
                                         objLabel='pkpd - deconvolution Loo Riegelman'
                                        )
-        protDeconvLR.inputExperiment.set(protModelInVivo.outputExperiment)
+        protDeconvLR.inputExperiment.set(protModelInVivo2.outputExperiment)
         self.launchProtocol(protDeconvLR)
         self.assertIsNotNone(protDeconvLR.outputExperiment.fnPKPD, "There was a problem with the deconvolution Loo")
         self.validateFiles('ProtPKPDDeconvolutionLooRiegelman', ProtPKPDDeconvolutionLooRiegelman)
