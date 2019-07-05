@@ -190,6 +190,15 @@ class ProtPKPDImportFromText(ProtPKPD):
     def _summary(self):
         return ["Input file: %s"%self.inputFile.get()]
 
+    def _validate(self):
+        retval=[]
+        if self.inputFile.get()=="" or self.inputFile.get is None:
+            retval.append("There is no input file")
+        else:
+            if not os.path.exists(self.inputFile.get()):
+                retval.append("The file %s does not exist"%self.inputFile.get())
+        return retval
+
 
 class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
     """ Import experiment from CSV.\n
