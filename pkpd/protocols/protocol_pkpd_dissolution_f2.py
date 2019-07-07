@@ -115,14 +115,25 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             idx.append(idxp85[0])
         return sorted(idx)
 
-    def calculateF(self,pRef,pTest):
-        idx=self.randomIdx(pRef,pTest)
+    def calculateF(self,pRef,pTest, randomizeIdx):
+        if randomizeIdx:
+            idx=self.randomIdx(pRef,pTest)
+        else:
+            idx=np.arange(0,len(pRef))
         counter=0
         while len(idx)<3 or len(set(idx))<2:
+            if randomizeIdx:
+                idx = self.randomIdx(pRef, pTest)
+            else:
+                idx = np.arange(0, len(pRef))
             idx=self.randomIdx(pRef,pTest)
             counter+=1
             if counter>20:
                 return np.nan,np.nan
+        if randomizeIdx:
+            print("randomize",idx)
+        else:
+            print("all", idx)
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
@@ -174,7 +185,9 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             for profileTest in profilesTest:
                 print("Full test profile: %s" % np.array2string(profileTest, max_line_width=10000))
                 print(" ")
-                f1, f2 = self.calculateF(profileRef, profileTest)
+                print("calculateAllF pRef",profileRef)
+                print("calculateAllF pTest",profileTest)
+                f1, f2 = self.calculateF(profileRef, profileTest, False)
                 allF10.append(f1)
                 allF20.append(f2)
         f10=np.mean([f for f in allF10 if not np.isnan(f)])
@@ -191,7 +204,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 print(" ")
                 for i in range(profileRef.size):
                     idx=[j for j in range(profileRef.size) if j != i]
-                    f1, f2 = self.calculateF(profileRef[idx], profileTest[idx])
+                    f1, f2 = self.calculateF(profileRef[idx], profileTest[idx], False)
                     allF1J.append(f1)
                     allF2J.append(f2)
         f1J=np.mean([f for f in allF1J if not np.isnan(f)])
@@ -212,10 +225,14 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 for profileTest in profilesTest:
                     for n in range(self.Nbootstrap.get()):
                         idxB = sorted(np.random.choice(idx,Nidx))
+                        while len(set(idxB))<3:
+                            idxB = sorted(np.random.choice(idx, Nidx))
                         profileRefB = np.asarray([profileRef[i] for i in idxB])
                         profileTestB = np.asarray([profileTest[i] for i in idxB])
                         print("Bootstrap sample %d" % self.b)
-                        f1, f2 = self.calculateF(profileRefB, profileTestB)
+                        print("calculateAllF pRef", profileRefB)
+                        print("calculateAllF pTest", profileTestB)
+                        f1, f2 = self.calculateF(profileRefB, profileTestB, True)
                         allF1b.append(f1)
                         allF2b.append(f2)
                         self.b = self.b + 1
@@ -223,8 +240,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePoint(profilesRef)
                 profileTestB = self.bootstrapByTimePoint(profilesTest)
-                print("Bootstrap sample %d" % self.b)
-                f1, f2 = self.calculateF(profileRefB, profileTestB)
+                f1, f2 = self.calculateF(profileRefB, profileTestB, True)
                 allF1b.append(f1)
                 allF2b.append(f2)
                 self.b = self.b + 1
