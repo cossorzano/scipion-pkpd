@@ -38,6 +38,7 @@ class TestDissolutionF2Shah1998Workflow(TestWorkflow):
         tests.setupTestProject(cls)
         cls.dataset = PKPDDataSet.getDataSet('Dissolution')
         cls.expFn = cls.dataset.getFile('excelShah1998')
+        cls.expAvgFn = cls.dataset.getFile('excelShah1998avg')
 
     def testDissolutionWorkflow(self):
         print "Import Experiment"
@@ -84,6 +85,57 @@ class TestDissolutionF2Shah1998Workflow(TestWorkflow):
         print "F2 Test5"
         prot = self.newProtocol(ProtPKPDDissolutionF2,
                                 objLabel='pkpd - dissol f1 & f2 Test5')
+        prot.inputRef.set(protImport.outputExperiment_Reference)
+        prot.inputTest.set(protImport.outputExperiment_Test5)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+
+
+        print "Import Experiment"
+        protImport = self.newProtocol(ProtPKPDImportFromTable,
+                                      objLabel='pkpd - import experiments avg',
+                                      inputFile=self.expAvgFn)
+        self.launchProtocol(protImport)
+        self.assertTrue(os.path.exists(protImport.outputExperiment_Reference.fnPKPD.get()),
+                        "There was a problem with the import")
+        self.assertTrue(os.path.exists(protImport.outputExperiment_Test5.fnPKPD.get()), "There was a problem with the import")
+        self.validateFiles('protImportTest', protImport)
+
+        print "F2 Test1"
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 avg Test1')
+        prot.inputRef.set(protImport.outputExperiment_Reference)
+        prot.inputTest.set(protImport.outputExperiment_Test1)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+
+        print "F2 Test2"
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 avg Test2')
+        prot.inputRef.set(protImport.outputExperiment_Reference)
+        prot.inputTest.set(protImport.outputExperiment_Test2)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+
+        print "F2 Test3"
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 avg Test3')
+        prot.inputRef.set(protImport.outputExperiment_Reference)
+        prot.inputTest.set(protImport.outputExperiment_Test3)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+
+        print "F2 Test4"
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 avg Test4')
+        prot.inputRef.set(protImport.outputExperiment_Reference)
+        prot.inputTest.set(protImport.outputExperiment_Test4)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("summary.txt")), "There was a problem with the import")
+
+        print "F2 Test5"
+        prot = self.newProtocol(ProtPKPDDissolutionF2,
+                                objLabel='pkpd - dissol f1 & f2 avg Test5')
         prot.inputRef.set(protImport.outputExperiment_Reference)
         prot.inputTest.set(protImport.outputExperiment_Test5)
         self.launchProtocol(prot)
