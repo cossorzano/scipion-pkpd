@@ -55,6 +55,9 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                       help='Which variable contains the time points. It must be the same in both experiments.')
         form.addParam('dissolutionVar', params.StringParam, label="Dissolution variable", default="C",
                       help='Which variable contains the profile. It must be the same in both experiments.')
+        form.addParam('f2mode', params.EnumParam, label="F2 mode", choices=['EMA','FDA'], default=0,
+                      help='The EMA allows only 1 sample when any of the reference or test goes above 85%%, '
+                      'but the FDA allows 1 sample when both of them go above 85%%')
         form.addParam('Nbootstrap', params.IntParam, label="Number of bootstrap samples", default=200,
                       help='Per pair of profiles, set to 0 for no bootstrapping')
         form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point'], default=0,
@@ -98,20 +101,24 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         return allY
 
     def randomIdx(self,pRef,pTest):
-        idxm85=np.argwhere(np.logical_and(pRef<=85,pTest<=85)).tolist()
+        if self.f2mode.get()==0: # EMA, only 1 sample if any of the two is above 85 %
+            idxm85=np.argwhere(np.logical_and(pRef<=85,pTest<=85)).tolist()
+            idxp85=np.argwhere(np.logical_or(pRef>85,pTest>85)).tolist()
+        else: #FDA, only 1 sample if both of them are above 85%
+            idxp85=np.argwhere(np.logical_and(pRef>85,pTest>85)).tolist()
+            idxm85=np.argwhere(np.logical_or(pRef<=85,pTest<=85)).tolist()
         idxm85 = [item for sublist in idxm85 for item in sublist]
-        idxp85=np.argwhere(np.logical_or(pRef>85,pTest>85)).tolist()
         idxp85 = [item for sublist in idxp85 for item in sublist]
-        idx=idxm85
-        if len(idxp85)>0:
-            idxp85=np.random.choice(idxp85,1)
+        idx = idxm85
+        if len(idxp85) > 0:
+            idxp85 = np.random.choice(idxp85, 1)
             idx.append(idxp85[0])
         return sorted(idx)
 
     def calculateF(self,pRef,pTest):
         idx=self.randomIdx(pRef,pTest)
         counter=0
-        while len(idx)<3:
+        while len(idx)<3 or len(set(idx))<2:
             idx=self.randomIdx(pRef,pTest)
             counter+=1
             if counter>20:
@@ -189,6 +196,8 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                     allF2J.append(f2)
         f1J=np.mean([f for f in allF1J if not np.isnan(f)])
         f2J=np.mean([f for f in allF2J if not np.isnan(f)])
+        allF1J=[f1 for f1 in allF1J if not np.isnan(f1)]
+        allF2J=[f2 for f2 in allF2J if not np.isnan(f2)]
 
         # Bootstrapping ------------------
         self.printSection("Bootstrapping")
@@ -219,6 +228,10 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 allF1b.append(f1)
                 allF2b.append(f2)
                 self.b = self.b + 1
+        allF1b=[f1 for f1 in allF1b if not np.isnan(f1)]
+        allF2b=[f2 for f2 in allF2b if not np.isnan(f2)]
+        np.savetxt(self._getExtraPath("f1.txt"),allF1b)
+        np.savetxt(self._getExtraPath("f2.txt"),allF2b)
 
         # Bias corrected and accelerated --------------------
         z0f1=norm.ppf(float(np.sum(allF1b<f10))/self.b)
@@ -233,8 +246,6 @@ class ProtPKPDDissolutionF2(ProtPKPD):
 
         strF1=self.printStats(allF1b,"F1","sum(|pRef-pTest|)/sum(pRef)*100",alphaLf1,alphaUf1)
         strF2=self.printStats(allF2b,"F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))",alphaLf2,alphaUf2)
-        np.savetxt(self._getExtraPath("f1.txt"),allF1b)
-        np.savetxt(self._getExtraPath("f2.txt"),allF2b)
 
         self.printSection("Results")
         fhSummary = open(self._getPath("summary.txt"),"w")
