@@ -118,7 +118,7 @@ class ProtPKPDFilterMeasurements(ProtPKPD):
                 for i in range(0,Nvar):
                     exec("aux=sample.measurement_%s[%d]"%(sample.measurementPattern[i],n))
                     if filterType=="rmNA":
-                        if aux=="NA":
+                        if aux=="NA" or aux=="None":
                             okToAddTimePoint = False
                         else:
                             toAdd.append(aux)

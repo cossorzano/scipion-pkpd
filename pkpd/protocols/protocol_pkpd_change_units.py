@@ -126,7 +126,7 @@ class ProtPKPDChangeUnits(ProtPKPD):
                 elif variable.role == PKPDVariable.ROLE_MEASUREMENT:
                     newValues = []
                     for x in sample.getValues(variable.varName):
-                        if x=="NA" or x=="LLOQ" or x=="ULOQ":
+                        if x=="NA" or x=="LLOQ" or x=="ULOQ" or x=="None":
                             newValues.append(x)
                         else:
                             newValues.append(str(K*float(x)))
