@@ -43,6 +43,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
 
     BYVECTOR = 0
     BYPOINT = 1
+    BYPOINTAVG = 2
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
@@ -60,8 +61,13 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                       'but the FDA allows 1 sample when both of them go above 85%%')
         form.addParam('Nbootstrap', params.IntParam, label="Number of bootstrap samples", default=200,
                       help='Per pair of profiles, set to 0 for no bootstrapping')
-        form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point'], default=0,
+        form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point','Time point and average'], default=0,
                       help='Bootstrapping per vessel will take all the samples from the same vessel (some time points may be repeated). '
+                           'Bootstrapping per time point will mix the vessels to form a time profile with as many samples as the input ones. '
+                           'These two techniques (bootstrapping per vessel or time point) calculates F1 and F2 at the level of single dissolution profile. '
+                           'Opposed to this, bootstrapping by time point and average produces a whole experiment with as many vessels as the input, where '
+                           'the profiles have been shuffled at the level of time. Then, the average profile of both bootstrap experiments is performed and '
+                           'the F1 and F2 of the two averages are calculated. '
                            'The total number of samples is Nref*Ntest*Nbootstrap where Nref is the number of reference vessels, Ntest the number of test vessels, '
                            'and Nbootstrap the number of bootstrap samples.')
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
@@ -130,20 +136,20 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             counter+=1
             if counter>20:
                 return np.nan,np.nan
-        if randomizeIdx:
-            print("randomize",idx)
-        else:
-            print("all", idx)
+        # if randomizeIdx:
+        #     print("randomize",idx)
+        # else:
+        #     print("all", idx)
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
         f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
 
-        print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
-        print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
-        print("f1=%f f2=%f"%(f1,f2))
-        print(" ")
+        # print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
+        # print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
+        # print("f1=%f f2=%f"%(f1,f2))
+        # print(" ")
 
         return f1, f2
 
@@ -171,6 +177,16 @@ class ProtPKPDDissolutionF2(ProtPKPD):
             i=np.random.randint(0,Nsamples)
             bootstrapSample[j]=profilesList[i][j]
         return bootstrapSample
+
+    def bootstrapByTimePointAvg(self,profilesList):
+        Nsamples = len(profilesList)
+        Ntimepoints = profilesList[0].size
+        randomExperiment = np.zeros((Nsamples,Ntimepoints))
+        for i in range(Nsamples):
+            for j in range(Ntimepoints):
+                iFrom=np.random.randint(0,Nsamples)
+                randomExperiment[i,j]=profilesList[iFrom][j]
+        return np.mean(randomExperiment,axis=0)
 
     def calculateAllF(self, objId1, objId2):
         profilesRef=self.getProfiles(self.inputRef.get(), self.timeVar.get(), self.dissolutionVar.get())
@@ -236,6 +252,14 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                         allF1b.append(f1)
                         allF2b.append(f2)
                         self.b = self.b + 1
+        elif self.bootstrapBy.get() == ProtPKPDDissolutionF2.BYVECTOR:
+            for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
+                profileRefB = self.bootstrapByTimePointAvg(profilesRef)
+                profileTestB = self.bootstrapByTimePointAvg(profilesTest)
+                f1, f2 = self.calculateF(profileRefB, profileTestB, True)
+                allF1b.append(f1)
+                allF2b.append(f2)
+                self.b = self.b + 1
         else:
             for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePoint(profilesRef)
