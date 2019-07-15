@@ -53,6 +53,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                       pointerClass='ProtPKPDDissolutionFit', help='Select an experiment with dissolution profiles')
         form.addParam('inputInVivo', params.PointerParam, label="Dissolution profiles in vivo",
                       pointerClass='ProtPKPDDeconvolve,ProtPKPDDeconvolutionWagnerNelson', help='Select an experiment with dissolution profiles')
+        form.addParam('removeInVitroTlag',params.BooleanParam, label="Remove in vitro tlag", default=True,
+                      help="If there is an in vitro tlag, set it to 0")
         form.addParam('timeScale', params.EnumParam, label="Time scaling",
                       choices=["None (Fabs(t)=Adissol(t))",
                                "t0 (Fabs(t)=Adissol(t-t0)",
@@ -153,6 +155,12 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
 
     def produceAdissol(self,parameterInVitro,tmax):
         tvitro = np.arange(0,tmax+1,1)
+        if self.removeInVitroTlag:
+            i=0
+            for prmName in self.protFit.model.getParameterNames():
+                if "tlag" in prmName:
+                    parameterInVitro[i]=0.0
+                i+=1
         self.protFit.model.x = tvitro
         Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
         return (tvitro, Avitro)
@@ -217,10 +225,10 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
                 self.tvitroMin=np.min(self.tvitroUnique)
                 self.tvitroMax=np.max(self.tvitroUnique)
-                # for i in range(len(self.tvivoUnique)):
-                #    print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
-                # for i in range(len(self.tvitroUnique)):
-                #    print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
+                #for i in range(len(self.tvivoUnique)):
+                #   print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
+                #for i in range(len(self.tvitroUnique)):
+                #   print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
                 self.B = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
 
                 self.bestError = 1e38
