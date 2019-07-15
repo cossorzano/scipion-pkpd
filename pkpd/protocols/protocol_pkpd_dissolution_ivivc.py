@@ -60,20 +60,24 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                       choices=["None (Fabs(t)=Adissol(t))",
                                "t0 (Fabs(t)=Adissol(t-t0)",
                                "Linear scale (Fabs(t)=Adissol(k*t))",
-                               "Affine transformation (Fabs(t)=Adissol(k*(t-t0))"], default=0,
+                               "Affine transformation (Fabs(t)=Adissol(k*(t-t0))",
+                               "Power scale (Fabs(t)=Adissol(k*t^alpha)"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
         form.addParam('t0Bounds',params.StringParam,label='Bounds t0',default='[-100,100]',
                       condition='timeScale==1 or timeScale==3',
                       help='Make sure it is in the same time units as the inputs')
         form.addParam('kBounds',params.StringParam,label='Bounds k',default='[0.1,10]',
-                      condition='timeScale==2 or timeScale==3')
+                      condition='timeScale==2 or timeScale==3 or timeScale==4')
+        form.addParam('alphaBounds',params.StringParam,label='Bounds alpha',default='[0.1,10]',
+                      condition='timeScale==4')
         form.addParam('responseScale', params.EnumParam, label="Response scaling",
-                      choices=["Linear scale (Fabs(t)=A*Adissol(t))",
+                      choices=["None",
+                               "Linear scale (Fabs(t)=A*Adissol(t))",
                                "Affine transformation (Fabs(t)=A*Adissol(t)+B"], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
-        form.addParam('ABounds',params.StringParam,label='Bounds A',default='[0.1,10]')
+        form.addParam('ABounds',params.StringParam,label='Bounds A',default='[0.8,1.2]', condition='responseScale>=1')
         form.addParam('BBounds',params.StringParam,label='Bounds B',default='[-50,50]',
-                      condition='responseScale==1')
+                      condition='responseScale==2')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -96,13 +100,16 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             timeScaleMsg = "tvitro=k*tvivo"
         elif self.timeScale.get()==3:
             timeScaleMsg = "tvitro=k*(tvivo-t0)"
-        if self.responseScale.get()==0:
+        elif self.timeScale.get()==4:
+            timeScaleMsg = "tvitro=k*tvivo^alpha"
+        if self.responseScale.get()==1:
             responseMsg="Fabs(t)=A*Adissol(t)"
-        elif self.responseScale.get()==1:
+        elif self.responseScale.get()==2:
             responseMsg="Fabs(t)=A*Adissol(t)+B"
 
         t0=None
         k=None
+        alpha=None
         A=None
         B=None
         i=0
@@ -115,6 +122,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.outputExperiment.addParameterToSample(sampleName, "t0", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, t0)
         if not k is None:
             self.outputExperiment.addParameterToSample(sampleName, "k", PKPDUnit.UNIT_NONE, timeScaleMsg, k)
+        if not alpha is None:
+            self.outputExperiment.addParameterToSample(sampleName, "alpha", PKPDUnit.UNIT_NONE, timeScaleMsg, alpha)
         if not A is None:
             self.outputExperiment.addParameterToSample(sampleName, "A", PKPDUnit.UNIT_NONE, responseMsg, A)
         if not B is None:
@@ -129,6 +138,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
     def goalFunction(self,x):
         t0=0.0
         k=1.0
+        alpha=1.0
         A=1.0
         B=0.0
         i=0
@@ -136,16 +146,37 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             for prm in self.parameters:
                 exec ("%s=%f" % (prm, x[i]))
                 i+=1
-            tvitroUnique=np.clip(k*(self.tvivoUnique-t0),self.tvitroMin,self.tvitroMax)
-            self.AdissolReinterpolatedUnique = np.clip(A*self.B(tvitroUnique)+B,0.0,None)
-            self.residuals = self.AdissolReinterpolatedUnique-self.FabsUnique
-            error=np.sqrt(np.mean(self.residuals**2))
+
+            tvitroUnique=np.clip(k*np.power(self.tvivoUnique-t0,alpha),self.tvitroMin,self.tvitroMax)
+            self.AdissolReinterpolatedUnique = np.clip(A*self.BAdissol(tvitroUnique)+B,0.0,None)
+            self.residualsForward = self.AdissolReinterpolatedUnique-self.FabsUnique
+
+            tvivoUnique=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)-t0,self.tvivoMin,self.tvivoMax)
+            self.FabsReinterpolatedUnique = np.clip(self.BFabs(tvivoUnique)/A-B,0.0,None)
+            self.residualsBackward = self.AdissolUnique-self.FabsReinterpolatedUnique
+
+            errorForward  = np.sum(self.residualsForward**2)
+            errorBackward = np.sum(self.residualsBackward**2)
+            if errorForward>errorBackward:
+                self.residuals = self.residualsForward
+                error = errorForward
+            else:
+                self.residuals = self.residualsBackward
+                error = errorBackward
+            # error=np.sqrt(np.mean(self.residuals**2))
+            # error=np.sqrt(np.sum(self.residuals**2))
             if error<self.bestError:
                 print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
                 self.bestError=error
             if self.verbose:
+                print("Forward error")
                 for i in range(len(self.AdissolReinterpolatedUnique)):
                     print("i=",i,"tvitro[i]=",tvitroUnique[i],"tvivo[i]=",self.tvivoUnique[i],"AdissolReinterpolated[i]=",self.AdissolReinterpolatedUnique[i],"Fabs[i]",self.FabsUnique[i])
+                print("Backward error")
+                for i in range(len(self.FabsReinterpolatedUnique)):
+                    print("i=", i, "tvitro[i]=", self.tvitroUnique[i], "tvivo[i]=", tvivoUnique[i], "Adissol[i]=", self.AdissolUnique[i], "FabsReinterpolated[i]", self.FabsReinterpolatedUnique[i])
+                print("Error forward",np.sqrt(np.mean(self.residualsForward**2)),np.sum(self.residualsForward**2))
+                print("Error backward",np.sqrt(np.mean(self.residualsBackward**2)),np.sum(self.residualsBackward**2))
         except:
             return 1e38
         return error
@@ -193,6 +224,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         i=1
         allt0=[]
         allk=[]
+        allalpha=[]
         allA=[]
         allB=[]
         allR=[]
@@ -209,9 +241,15 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.parameters.append('t0')
             self.bounds.append(self.parseBounds(self.kBounds.get()))
             self.bounds.append(self.parseBounds(self.t0Bounds.get()))
-        self.parameters.append('A')
-        self.bounds.append(self.parseBounds(self.ABounds.get()))
-        if self.responseScale.get() == 1:  # Affine
+        elif self.timeScale.get() == 4:  # tvitro=k*tvivo^alpha
+            self.parameters.append('k')
+            self.parameters.append('alpha')
+            self.bounds.append(self.parseBounds(self.kBounds.get()))
+            self.bounds.append(self.parseBounds(self.alphaBounds.get()))
+        if self.responseScale.get() >= 1: # Linear
+            self.parameters.append('A')
+            self.bounds.append(self.parseBounds(self.ABounds.get()))
+        if self.responseScale.get() == 2: # Affine
             self.parameters.append('B')
             self.bounds.append(self.parseBounds(self.BBounds.get()))
 
@@ -224,13 +262,16 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
                 self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
                 self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
+                self.tvivoMin=np.min(self.tvivoUnique)
+                self.tvivoMax=np.max(self.tvivoUnique)
                 self.tvitroMin=np.min(self.tvitroUnique)
                 self.tvitroMax=np.max(self.tvitroUnique)
                 #for i in range(len(self.tvivoUnique)):
                 #   print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
                 #for i in range(len(self.tvitroUnique)):
                 #   print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
-                self.B = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
+                self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
+                self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
 
                 self.bestError = 1e38
                 optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
@@ -252,7 +293,10 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 R=sqrt(R2)
                 allR.append(R)
 
-                self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],self.AdissolReinterpolatedUnique,self.FabsUnique,optimum.x,R)
+                if np.max(self.AdissolReinterpolatedUnique)>np.max(self.FabsReinterpolatedUnique):
+                    self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],self.AdissolReinterpolatedUnique,self.FabsUnique,optimum.x,R)
+                else:
+                    self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx],self.AdissolUnique, self.FabsReinterpolatedUnique, optimum.x, R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
@@ -260,6 +304,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         fh=open(self._getPath("summary.txt"),"w")
         self.summarize(fh,allt0,"t0")
         self.summarize(fh,allk,"k")
+        self.summarize(fh,allalpha,"alpha")
         self.summarize(fh,allA,"A")
         self.summarize(fh,allB,"B")
         self.doublePrint(fh," ")
@@ -274,9 +319,13 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             timeStr = "k*t"
         elif self.timeScale.get() == 3:
             timeStr = "k*(t-t0)"
+        elif self.timeScale.get() == 4:
+            timeStr = "k*t^alpha"
         if self.responseScale.get() == 0:
-            eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
+            eqStr = "Fabs(%s)=Adissol(t)" % timeStr
         elif self.responseScale.get() == 1:
+            eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
+        elif self.responseScale.get() == 2:
             eqStr = "Fabs(%s)=A*Adissol(t)+B" % timeStr
         self.doublePrint(fh,"IVIVC equation: %s"%eqStr)
         fh.close()
@@ -296,6 +345,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             retval.append("Time scaling: linear transformation (tvivo=k*tvitro)")
         elif self.timeScale.get()==3:
             retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-t0))")
+        elif self.timeScale.get()==4:
+            retval.append("Time scaling: power transformation (tvivo=k*tvitro^alpha)")
         if self.responseScale.get()==0:
             retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
         elif self.responseScale.get()==1:
