@@ -83,6 +83,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
         klass = globals()[self.invitroClsName]
         self.dissolutionModel = klass()
+        if "tlag" in self.fittingInVitro.modelParameters:
+            self.dissolutionModel.allowTlag=True
         self.dissolutionPopulation = cls!=""
 
     def getIVIVProfiles(self):
@@ -279,6 +281,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             # In vitro-in vivo correlation
             nfit = int(random.uniform(0, len(self.allIVIV[sampleFitVivo.sampleName])))
             Adissol, Fabs = self.allIVIV[sampleFitVivo.sampleName][nfit]
+
             AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
             B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
             A=np.asarray(B(A)[0],dtype=np.float64)
