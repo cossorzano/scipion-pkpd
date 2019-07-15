@@ -91,8 +91,13 @@ def uniqueFloatValues(x,y):
     xp=np.asarray(x,dtype=np.float64)
     yp=np.asarray(y,dtype=np.float64)
     TOL = np.max(xp.flat) / 1e5
-    idx = np.argsort(xp.flat)
-    d = np.append(True, np.diff(xp.flat[idx]))
+    A = np.zeros((xp.size,), dtype=[('x','f8'),('y','f8')])
+    A['x']=xp.flat
+    A['y']=yp.flat
+    idx = np.argsort(A,order=('x','y')) # A is constructed for solving ties
+    d = np.append(1, np.diff(xp.flat[idx]))
+    #for i in range(0,d.size):
+    #    print("i=",i,"xp[i]=",xp[i],"d[i]=",d[i],"yp[i]=",yp[i],"idx[i]",idx[i])
     xunique = xp.flat[idx[d > TOL]]
     yunique = yp.flat[idx[d > TOL]]
     return xunique,yunique
