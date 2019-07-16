@@ -143,10 +143,16 @@ class ProtPKPDFitBase(ProtPKPD):
     def setupFromFormParameters(self):
         pass
 
+    def prepareForAnalysis(self):
+        pass
+
     def prepareForSampleAnalysis(self, sampleName):
         pass
 
     def postSampleAnalysis(self, sampleName):
+        pass
+
+    def postAnalysis(self):
         pass
 
     def runFit(self, objId, otherDependencies):
@@ -188,6 +194,7 @@ class ProtPKPDFitBase(ProtPKPD):
         AICList=[]
         AICcList=[]
         BICList=[]
+        self.prepareForAnalysis()
         for sampleName, sample in self.experiment.samples.iteritems():
             self.printSection("Fitting "+sampleName)
             x, y = sample.getXYValues(self.varNameX,self.varNameY)
@@ -259,6 +266,8 @@ class ProtPKPDFitBase(ProtPKPD):
         fh.write("AICc  (Mean+-Std): (%f)+-(%f) Recommended\n"%(np.mean(AICcList),np.std(AICcList)))
         fh.write("BIC   (Mean+-Std): (%f)+-(%f)\n"%(np.mean(BICList),np.std(BICList)))
         fh.close()
+
+        self.postAnalysis()
 
     def createOutputStep(self):
         self._defineOutputs(outputFitting=self.fitting)
