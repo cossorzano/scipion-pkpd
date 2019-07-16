@@ -25,6 +25,8 @@
 # **************************************************************************
 
 import numpy as np
+from itertools import izip
+
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
@@ -106,7 +108,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
             # print("tvitro=%f Avitro=%f Avivo=%f tvivoeqv=%f"%(tvitro[i],Avitro[i],Avivo[i],B(Avitro[i])))
         return (tvitro,np.asarray(tvivo,dtype=np.float64),Avitro)
 
-    def addSample(self, sampleName, tvitro, tvivo):
+    def addSample(self, sampleName, tvitro, tvivo, individualFrom, vesselFrom):
         newSample = PKPDSample()
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
@@ -115,10 +117,11 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         newSample.addMeasurementColumn("tvitro", tvitro)
         newSample.addMeasurementColumn("tvivo",tvivo)
         self.outputExperiment.samples[sampleName] = newSample
+        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def calculateAllLevy(self, objId1, objId2):
-        parametersInVitro, _ =self.getInVitroModels()
-        profilesInVivo, _ =self.getInVivoProfiles()
+        parametersInVitro, vesselNames =self.getInVitroModels()
+        profilesInVivo, sampleNames =self.getInVivoProfiles()
 
         self.outputExperiment = PKPDExperiment()
         tvitrovar = PKPDVariable()
@@ -139,10 +142,11 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
 
         i=1
-        for parameterInVitro in parametersInVitro:
-            for t,profileInVivo in profilesInVivo:
+        for parameterInVitro, vesselFrom in izip(parametersInVitro,vesselNames):
+            for aux, sampleFrom in izip(profilesInVivo,sampleNames):
+                t, profileInVivo = aux
                 tvitro, tvivo, _ = self.produceLevyPlot(t,parameterInVitro,profileInVivo)
-                self.addSample("levy_%04d"%i,tvitro,tvivo)
+                self.addSample("levy_%04d"%i,tvitro,tvivo, sampleFrom, vesselFrom)
                 i+=1
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
