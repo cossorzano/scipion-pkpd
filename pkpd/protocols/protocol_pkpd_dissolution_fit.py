@@ -28,6 +28,8 @@ import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_fit_base import ProtPKPDFitBase
 from pkpd.models.dissolution_models import *
+from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.pkpd_units import createUnit, strUnit
 
 # Tested by test_workflow_dissolution
 # Tested by test_workflow_levyplot
@@ -79,6 +81,16 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'SplinesN: [tlag]; Ymax; tmax; c1; c2; ...; cN\n')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
+        form.addParam('resampleT',params.FloatParam, label='Simulation model time step=', default=-1,
+                      help='If this value is greater than 0, then the fitted models will be sampled at this sampling period '
+                           'and the created profiles will be collected in a new output experiment. '
+                           'The time unit of the simulation is the same as the one of the predictor variable.')
+        form.addParam('resampleT0',params.FloatParam, label='Initial time for simulation', default=0,
+                      condition='resampleT>0',
+                      help='The time unit of the simulation is the same as the one of the predictor variable.')
+        form.addParam('resampleTF',params.FloatParam, label='Final time for simulation', default=0,
+                      condition='resampleT>0', help='If set to 0, then the maximum time of the sample will be taken. '
+                      'The time unit of the simulation is the same as the one of the predictor variable.')
 
     def getListOfFormDependencies(self):
         return [self.allowTlag.get(), self.modelType.get(), self.bounds.get(), self.confidenceInterval.get()]
@@ -124,3 +136,42 @@ are independent, which are not. Use Bootstrap estimates instead.\n
 
     def setupFromFormParameters(self):
         self.model.allowTlag = self.allowTlag.get()
+
+    def prepareForAnalysis(self):
+        if self.resampleT.get()>0:
+            self.experimentSimulated = PKPDExperiment()
+            self.experimentSimulated.variables[self.fitting.predicted.varName]=self.fitting.predicted
+            self.experimentSimulated.variables[self.fitting.predictor.varName]=self.fitting.predictor
+            self.experimentSimulated.general["title"]="Simulated response from dissolution profiles"
+            self.experimentSimulated.general["comment"]="Simulated response from dissolution profiles"
+
+    def postSampleAnalysis(self, sampleName):
+        if self.resampleT.get()>0:
+            newSample = PKPDSample()
+            newSample.sampleName = sampleName+"_simulated"
+            newSample.variableDictPtr = self.experimentSimulated.variables
+            newSample.doseDictPtr = self.experimentSimulated.doses
+            newSample.descriptors = {}
+            newSample.addMeasurementPattern([self.fitting.predicted.varName])
+
+            t0=self.resampleT0.get()
+            tF=self.resampleTF.get()
+            deltaT=self.resampleT.get()
+            if tF==0:
+                tF=np.max(self.model.x)
+            t=np.arange(t0,tF+deltaT,deltaT)
+            y=self.model.forwardModel(self.model.parameters,t)
+            newSample.addMeasurementColumn(self.fitting.predictor.varName,t)
+            newSample.addMeasurementColumn(self.fitting.predicted.varName,y[0])
+
+            self.experimentSimulated.samples[sampleName] = newSample
+
+    def postAnalysis(self):
+        if self.resampleT.get()>0:
+            self.experimentSimulated.write(self._getPath("experimentSimulated.pkpd"))
+
+    def createOutputStep(self):
+        ProtPKPDFitBase.createOutputStep(self)
+        if self.resampleT.get()>0:
+            self._defineOutputs(outputExperimentSimulated=self.experimentSimulated)
+            self._defineSourceRelation(self.getInputExperiment(), self.experimentSimulated)
