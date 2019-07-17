@@ -53,14 +53,19 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                       pointerClass='PKPDFitting', help='Select a fitting with dissolution profiles')
         form.addParam('inputPK', params.PointerParam, label="Pharmacokinetic model",
                       pointerClass='PKPDFitting', help='Select the PK model to be simulated with this input')
-        form.addParam('inputIvIvC', params.PointerParam, label="In vitro-In vivo correlation",
+        form.addParam('conversionType', params.EnumParam, label='Time scaling', choices=['IVIVC','Levy plot'], default=0,
+                      help='To convert the dissolution profile into an absorption profile you may use an IVIVC or a Levy plot. '
+                      'The Levy plot can better represent what is happening in reality with patients.')
+        form.addParam('inputIvIvC', params.PointerParam, label="In vitro-In vivo correlation", condition='conversionType==0',
                       pointerClass='PKPDExperiment', help='Select the output of an in vitro-in vivo correlation')
+        form.addParam('inputLevy', params.PointerParam, label="Levy plot", condition='conversionType==1',
+                      pointerClass='PKPDExperiment', help='Select the output of a Levy plot protocol')
         form.addParam('inputDose', params.FloatParam, label="Dose", default=1,
                       help='Make sure that it is in the same units as the ones at which the PK was estimated. '\
                            'This dose will be given simpy once (single dose).')
-        form.addParam('includeTlag', params.BooleanParam, label="Include tlag", default=True,
-                      help='If you include the tlag (if available), the simulations will be done with the same tlag as '
-                           'the input population. If not, tlag will be set to 0.')
+        form.addParam('includeTlag', params.BooleanParam, label="Include PK tlag", default=True,
+                      help='If you include the tlag (if available), the simulations will be done with the same PK tlag as '
+                           'the input PK population. If not, tlag will be set to 0.')
         form.addParam('inputN', params.IntParam, label="Number of simulations", default=100, expertLevel=LEVEL_ADVANCED)
         form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
         form.addParam('tF', params.FloatParam, label="Final time (h)", default=48)
@@ -87,17 +92,24 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             self.dissolutionModel.allowTlag=True
         self.dissolutionPopulation = cls!=""
 
-    def getIVIVProfiles(self):
-        experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
-        self.allIVIV = {}
+    def getTimeScaling(self):
+        self.allTimeScalings = {}
+        if self.conversionType.get()==0:
+            experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
+        else:
+            experiment = self.readExperiment(self.inputLevy.get().fnPKPD, show=False)
         for sampleName, sample in experiment.samples.iteritems():
-            Fabs=sample.getValues("Fabs")
-            Adissol=sample.getValues("Adissol")
+            if self.conversionType.get() == 0:
+                vivo = sample.getValues("Fabs")
+                vitro = sample.getValues("Adissol")
+            else:
+                vivo = sample.getValues("tvivo")
+                vitro = sample.getValues("tvitro")
             fromSample=sample.getDescriptorValue("from")
             fromIndividual,_=fromSample.split("---")
-            if not fromIndividual in self.allIVIV.keys():
-                self.allIVIV[fromIndividual]=[]
-            self.allIVIV[fromIndividual].append((np.asarray(Adissol,dtype=np.float64),np.asarray(Fabs,dtype=np.float64)))
+            if not fromIndividual in self.allTimeScalings.keys():
+                self.allTimeScalings[fromIndividual]=[]
+            self.allTimeScalings[fromIndividual].append((np.asarray(vitro,dtype=np.float64),np.asarray(vivo,dtype=np.float64)))
 
     def getPKModels(self):
         fnFitting = self.inputPK.get().fnFitting
@@ -182,7 +194,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
     def simulate(self, objId1, objId2, objId3, inputDose, inputN):
         self.getInVitroModels()
-        self.getIVIVProfiles()
+        self.getTimeScaling()
         self.getPKModels()
 
         self.outputExperiment = PKPDExperiment()
@@ -276,18 +288,29 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             else:
                 dissolutionPrm = sampleFitVitro.parameters
             print("Dissolution parameters: ", np.array2string(np.asarray(dissolutionPrm,dtype=np.float64),max_line_width=1000))
-            A=self.dissolutionModel.forwardModel(dissolutionPrm,t-tlag)
 
-            # In vitro-in vivo correlation
-            nfit = int(random.uniform(0, len(self.allIVIV[sampleFitVivo.sampleName])))
-            Adissol, Fabs = self.allIVIV[sampleFitVivo.sampleName][nfit]
+            nfit = int(random.uniform(0, len(self.allTimeScalings[sampleFitVivo.sampleName])))
+            A = self.dissolutionModel.forwardModel(dissolutionPrm, t)[0]
+            if self.conversionType.get()==0:
+                # In vitro-in vivo correlation
+                Adissol, Fabs = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
+                AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
+                B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
+                A=np.asarray(B(A),dtype=np.float64)
+            else:
+                # Levy plot
+                tvitroUnique, AdissolUnique = uniqueFloatValues(t, A)
+                Bdissol=InterpolatedUnivariateSpline(tvitroUnique, AdissolUnique,k=1)
 
-            AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
-            B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
-            A=np.asarray(B(A)[0],dtype=np.float64)
+                tvitroLevy, tvivoLevy = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
+                tvivoLevyUnique, tvitroLevyUnique = uniqueFloatValues(tvivoLevy, tvitroLevy)
+                BLevy=InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique,k=1)
+
+                tvitro=np.asarray(BLevy(t),dtype=np.float64)
+                A=np.asarray(Bdissol(tvitro),dtype=np.float64)
 
             # Set the dissolution profile
-            self.pkModel.drugSource.getVia().viaProfile.setXYValues(t,A)
+            self.pkModel.drugSource.getVia().viaProfile.setXYValues(t-tlag,A)
             C=self.pkModel.forwardModel(pkPrm,[t])[0] # forwardModel returns a list of arrays
 
             self.NCA(t,C)
