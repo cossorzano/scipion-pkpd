@@ -145,6 +145,8 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         D2 = (np.square(diff)).mean(axis=None)
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
         f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
+        f2=np.random.normal(60,5)
+        f1=np.random.normal(10,2)
 
         # print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
         # print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
@@ -206,8 +208,9 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 f1, f2 = self.calculateF(profileRef, profileTest, False)
                 allF10.append(f1)
                 allF20.append(f2)
-        f10=np.mean([f for f in allF10 if not np.isnan(f)])
-        f20=np.mean([f for f in allF20 if not np.isnan(f)])
+        f10,f20 = self.calculateF(np.mean(np.asarray(profilesRef),axis=0),np.mean(np.asarray(profilesTest),axis=0), False)
+#        f10=np.mean([f for f in allF10 if not np.isnan(f)])
+#        f20=np.mean([f for f in allF20 if not np.isnan(f)])
 
         # Jack knife ----------------
         self.printSection("Jackknife")
@@ -274,14 +277,22 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         np.savetxt(self._getExtraPath("f2.txt"),allF2b)
 
         # Bias corrected and accelerated --------------------
-        z0f1=norm.ppf(float(np.sum(allF1b<f10))/self.b)
-        z0f2=norm.ppf(float(np.sum(allF2b<f20))/self.b)
+        z0f1=norm.ppf(float((np.asarray(allF1b)<f10).sum())/self.b)
+        z0f2=norm.ppf(float((np.asarray(allF2b)<f20).sum())/self.b)
+        print("f10",f10)
+        print("f20",f20)
+        print("self.b",self.b)
+        print("float(np.sum(allF2b<f20))",np.sum(allF2b<f20),(np.asarray(allF2b)<f20).sum(),float(np.sum(allF2b<f20)))
+        print("z0f1",z0f1)
+        print("z0f2",z0f2)
         af1=np.sum(np.power(allF1J-f1J,3.0))/(6*np.power(np.sum(np.power(allF1J-f1J,2.0)),1.5))
         af2=np.sum(np.power(allF2J-f2J,3.0))/(6*np.power(np.sum(np.power(allF2J-f2J,2.0)),1.5))
+        print("af1",af1)
+        print("af2",af2)
         alpha = 1-self.confidence.get()/100
         alphaLf1 = norm.cdf(z0f1+(z0f1+norm.ppf(alpha/2))/(1-af1*(z0f1+norm.ppf(alpha/2))))
-        alphaUf1 = norm.cdf(z0f1+(z0f1+norm.ppf(1-alpha/2))/(1-af1*(z0f1+norm.ppf(1-alpha/2))))
         alphaLf2 = norm.cdf(z0f2+(z0f2+norm.ppf(alpha/2))/(1-af2*(z0f2+norm.ppf(alpha/2))))
+        alphaUf1 = norm.cdf(z0f1+(z0f1+norm.ppf(1-alpha/2))/(1-af1*(z0f1+norm.ppf(1-alpha/2))))
         alphaUf2 = norm.cdf(z0f2+(z0f2+norm.ppf(1-alpha/2))/(1-af2*(z0f2+norm.ppf(1-alpha/2))))
 
         strF1=self.printStats(allF1b,"F1","sum(|pRef-pTest|)/sum(pRef)*100",alphaLf1,alphaUf1)
