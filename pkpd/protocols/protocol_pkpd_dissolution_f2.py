@@ -270,11 +270,12 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         np.savetxt(self._getExtraPath("f2.txt"),allF2b)
 
         # Bias corrected and accelerated --------------------
-        z0f1=norm.ppf(float((np.asarray(allF1b)<f10).sum())/self.b)
-        z0f2=norm.ppf(float((np.asarray(allF2b)<f20).sum())/self.b)
+        z0f1=np.clip(norm.ppf(float((np.asarray(allF1b)<f10).sum())/self.b),-10,10)
+        z0f2=np.clip(norm.ppf(float((np.asarray(allF2b)<f20).sum())/self.b),-10,10)
         # print("f10",f10)
         # print("f20",f20)
         # print("self.b",self.b)
+        # print("float(np.sum(allF1b<f10))",np.sum(allF1b<f10),(np.asarray(allF1b)<f10).sum(),float(np.sum(allF1b<f10)))
         # print("float(np.sum(allF2b<f20))",np.sum(allF2b<f20),(np.asarray(allF2b)<f20).sum(),float(np.sum(allF2b<f20)))
         # print("z0f1",z0f1)
         # print("z0f2",z0f2)
