@@ -61,7 +61,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                       'but the FDA allows 1 sample when both of them go above 85%%')
         form.addParam('Nbootstrap', params.IntParam, label="Number of bootstrap samples", default=200,
                       help='Per pair of profiles, set to 0 for no bootstrapping')
-        form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point','Time point and average'], default=0,
+        form.addParam('bootstrapBy', params.EnumParam, label="Bootrstap by", choices=['Vessel','Time point','Time point and average'], default=2,
                       help='Bootstrapping per vessel will take all the samples from the same vessel (some time points may be repeated). '
                            'Bootstrapping per time point will mix the vessels to form a time profile with as many samples as the input ones. '
                            'These two techniques (bootstrapping per vessel or time point) calculates F1 and F2 at the level of single dissolution profile. '
@@ -132,21 +132,14 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 idx = self.randomIdx(pRef, pTest)
             else:
                 idx = np.arange(0, len(pRef))
-            idx=self.randomIdx(pRef,pTest)
             counter+=1
             if counter>20:
                 return np.nan,np.nan
-        # if randomizeIdx:
-        #     print("randomize",idx)
-        # else:
-        #     print("all", idx)
 
         diff = pRef[idx]-pTest[idx]
         D2 = (np.square(diff)).mean(axis=None)
         f2=50*math.log(100.0/math.sqrt(1+D2),10.0)
         f1= np.sum(np.abs(diff))/np.sum(pRef[idx])*100
-        f2=np.random.normal(60,5)
-        f1=np.random.normal(10,2)
 
         # print("Reference measures: %s"%np.array2string(pRef[idx],max_line_width=10000))
         # print("Test measures: %s"%np.array2string(pTest[idx],max_line_width=10000))
@@ -208,9 +201,9 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 f1, f2 = self.calculateF(profileRef, profileTest, False)
                 allF10.append(f1)
                 allF20.append(f2)
-        f10,f20 = self.calculateF(np.mean(np.asarray(profilesRef),axis=0),np.mean(np.asarray(profilesTest),axis=0), False)
-#        f10=np.mean([f for f in allF10 if not np.isnan(f)])
-#        f20=np.mean([f for f in allF20 if not np.isnan(f)])
+#        f10,f20 = self.calculateF(np.mean(np.asarray(profilesRef),axis=0),np.mean(np.asarray(profilesTest),axis=0), False)
+        f10=np.mean([f for f in allF10 if not np.isnan(f)])
+        f20=np.mean([f for f in allF20 if not np.isnan(f)])
 
         # Jack knife ----------------
         self.printSection("Jackknife")
@@ -279,24 +272,27 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         # Bias corrected and accelerated --------------------
         z0f1=norm.ppf(float((np.asarray(allF1b)<f10).sum())/self.b)
         z0f2=norm.ppf(float((np.asarray(allF2b)<f20).sum())/self.b)
-        print("f10",f10)
-        print("f20",f20)
-        print("self.b",self.b)
-        print("float(np.sum(allF2b<f20))",np.sum(allF2b<f20),(np.asarray(allF2b)<f20).sum(),float(np.sum(allF2b<f20)))
-        print("z0f1",z0f1)
-        print("z0f2",z0f2)
+        # print("f10",f10)
+        # print("f20",f20)
+        # print("self.b",self.b)
+        # print("float(np.sum(allF2b<f20))",np.sum(allF2b<f20),(np.asarray(allF2b)<f20).sum(),float(np.sum(allF2b<f20)))
+        # print("z0f1",z0f1)
+        # print("z0f2",z0f2)
         af1=np.sum(np.power(allF1J-f1J,3.0))/(6*np.power(np.sum(np.power(allF1J-f1J,2.0)),1.5))
         af2=np.sum(np.power(allF2J-f2J,3.0))/(6*np.power(np.sum(np.power(allF2J-f2J,2.0)),1.5))
-        print("af1",af1)
-        print("af2",af2)
+        # print("af1",af1)
+        # print("af2",af2)
         alpha = 1-self.confidence.get()/100
         alphaLf1 = norm.cdf(z0f1+(z0f1+norm.ppf(alpha/2))/(1-af1*(z0f1+norm.ppf(alpha/2))))
         alphaLf2 = norm.cdf(z0f2+(z0f2+norm.ppf(alpha/2))/(1-af2*(z0f2+norm.ppf(alpha/2))))
         alphaUf1 = norm.cdf(z0f1+(z0f1+norm.ppf(1-alpha/2))/(1-af1*(z0f1+norm.ppf(1-alpha/2))))
         alphaUf2 = norm.cdf(z0f2+(z0f2+norm.ppf(1-alpha/2))/(1-af2*(z0f2+norm.ppf(1-alpha/2))))
 
-        strF1=self.printStats(allF1b,"F1","sum(|pRef-pTest|)/sum(pRef)*100",alphaLf1,alphaUf1)
-        strF2=self.printStats(allF2b,"F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))",alphaLf2,alphaUf2)
+        strF1Basic=self.printStats(allF1b,"Basic F1","sum(|pRef-pTest|)/sum(pRef)*100",alpha/2,1-alpha/2)
+        strF2Basic=self.printStats(allF2b,"Basic F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))",alpha/2,1-alpha/2)
+
+        strF1BCa=self.printStats(allF1b,"BCa F1","sum(|pRef-pTest|)/sum(pRef)*100",alphaLf1,alphaUf1)
+        strF2BCa=self.printStats(allF2b,"Bca F2","50*log10(100/sqrt(1+mean(|pRef-pTest|^2)))",alphaLf2,alphaUf2)
 
         self.printSection("Results")
         fhSummary = open(self._getPath("summary.txt"),"w")
@@ -319,9 +315,11 @@ class ProtPKPDDissolutionF2(ProtPKPD):
         print("Bias correction alphaU F2=%f"%alphaUf2)
         print(" ")
 
-        self.doublePrint(fhSummary,strF2)
+        self.doublePrint(fhSummary,strF2Basic)
+        self.doublePrint(fhSummary,strF2BCa)
         self.doublePrint(fhSummary,"---------------------------")
-        self.doublePrint(fhSummary,strF1)
+        self.doublePrint(fhSummary,strF1Basic)
+        self.doublePrint(fhSummary,strF1BCa)
         fhSummary.close()
 
     def createOutputStep(self):
