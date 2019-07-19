@@ -61,15 +61,17 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                                "t0 (Fabs(t)=Adissol(t-t0)",
                                "Linear scale (Fabs(t)=Adissol(k*t))",
                                "Affine transformation (Fabs(t)=Adissol(k*(t-t0))",
-                               "Power scale (Fabs(t)=Adissol(k*t^alpha)"], default=0,
+                               "Power scale (Fabs(t)=Adissol(k*t^alpha)",
+                               "Delayed power scale (Fabs(t)=Adissol(k*(t-t0)^alpha)"
+                               ], default=0,
                       help='Fabs is the fraction absorbed in vivo, while Adissol is the amount dissolved in vitro.')
         form.addParam('t0Bounds',params.StringParam,label='Bounds t0',default='[-100,100]',
-                      condition='timeScale==1 or timeScale==3',
+                      condition='timeScale==1 or timeScale==3 or timeScale==5',
                       help='Make sure it is in the same time units as the inputs')
         form.addParam('kBounds',params.StringParam,label='Bounds k',default='[0.1,10]',
-                      condition='timeScale==2 or timeScale==3 or timeScale==4')
+                      condition='timeScale==2 or timeScale==3 or timeScale==4 or timeScale==5')
         form.addParam('alphaBounds',params.StringParam,label='Bounds alpha',default='[0.1,10]',
-                      condition='timeScale==4')
+                      condition='timeScale==4 or timeScale==5')
         form.addParam('responseScale', params.EnumParam, label="Response scaling",
                       choices=["None",
                                "Linear scale (Fabs(t)=A*Adissol(t))",
@@ -102,6 +104,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             timeScaleMsg = "tvitro=k*(tvivo-t0)"
         elif self.timeScale.get()==4:
             timeScaleMsg = "tvitro=k*tvivo^alpha"
+        elif self.timeScale.get()==5:
+            timeScaleMsg = "tvitro=k*(tvivo-t0)^alpha"
         if self.responseScale.get()==1:
             responseMsg="Fabs(t)=A*Adissol(t)"
         elif self.responseScale.get()==2:
@@ -147,7 +151,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 exec ("%s=%f" % (prm, x[i]))
                 i+=1
 
-            tvitroUnique=np.clip(k*np.power(self.tvivoUnique-t0,alpha),self.tvitroMin,self.tvitroMax)
+            tvitroUnique=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
             self.AdissolReinterpolatedUnique = np.clip(A*self.BAdissol(tvitroUnique)+B,0.0,None)
             self.residualsForward = self.AdissolReinterpolatedUnique-self.FabsUnique
 
@@ -246,6 +250,13 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.parameters.append('alpha')
             self.bounds.append(self.parseBounds(self.kBounds.get()))
             self.bounds.append(self.parseBounds(self.alphaBounds.get()))
+        elif self.timeScale.get() == 5:  # tvitro=k*(tvivo-t0)^alpha
+            self.parameters.append('k')
+            self.parameters.append('alpha')
+            self.parameters.append('t0')
+            self.bounds.append(self.parseBounds(self.kBounds.get()))
+            self.bounds.append(self.parseBounds(self.alphaBounds.get()))
+            self.bounds.append(self.parseBounds(self.t0Bounds.get()))
         if self.responseScale.get() >= 1: # Linear
             self.parameters.append('A')
             self.bounds.append(self.parseBounds(self.ABounds.get()))
@@ -270,6 +281,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 #   print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
                 #for i in range(len(self.tvitroUnique)):
                 #   print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
+
+                # Make sure they are sorted in x
+                self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
+                self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
+
                 self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
                 self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
 
@@ -321,6 +337,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             timeStr = "k*(t-t0)"
         elif self.timeScale.get() == 4:
             timeStr = "k*t^alpha"
+        elif self.timeScale.get() == 5:
+            timeStr = "k*(t-t0)^alpha"
         if self.responseScale.get() == 0:
             eqStr = "Fabs(%s)=Adissol(t)" % timeStr
         elif self.responseScale.get() == 1:
@@ -347,6 +365,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-t0))")
         elif self.timeScale.get()==4:
             retval.append("Time scaling: power transformation (tvivo=k*tvitro^alpha)")
+        elif self.timeScale.get()==5:
+            retval.append("Time scaling: delayed power transformation (tvivo=k*(tvitro-t0)^alpha)")
         if self.responseScale.get()==0:
             retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
         elif self.responseScale.get()==1:
