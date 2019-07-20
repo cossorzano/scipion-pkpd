@@ -92,10 +92,10 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
             if sampleName in simAUC:
                 if tAUC>0:
                     for sAUC in simAUC[sampleName]:
-                        errorAUC.append((tAUC-sAUC)/tAUC)
+                        errorAUC.append((tAUC-sAUC)/tAUC*100)
                 if tCmax>0:
                     for sCmax in simCmax[sampleName]:
-                        errorCmax.append((tCmax-sCmax)/tCmax)
+                        errorCmax.append((tCmax-sCmax)/tCmax*100)
 
         np.savetxt(self._getExtraPath("errorAUC.txt"),errorAUC)
         np.savetxt(self._getExtraPath("errorCmax.txt"),errorCmax)
@@ -103,9 +103,9 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
         alpha_2 = (100-95)/2
         limits = np.percentile(errorAUC,[alpha_2,100-alpha_2])
         fhSummary=open(self._getPath("summary.txt"),"w")
-        self.doublePrint(fhSummary,"error AUC (normalized to 1, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorAUC)))
+        self.doublePrint(fhSummary,"error AUC (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorAUC)))
         limits = np.percentile(errorCmax,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"error Cmax (normalized to 1, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorCmax)))
+        self.doublePrint(fhSummary,"error Cmax (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorCmax)))
         fhSummary.close()
 
     #--------------------------- INFO functions --------------------------------------------
