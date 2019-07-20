@@ -37,7 +37,7 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  July 2019.
  	- F2 can now be computed according to EMA or FDA rules
  	- F1 and F2 now supports creating bootstrap experiments and calculating F1 and F2 on the dissolution profile average
- 	- IVIVC can now perform power time transformations
+ 	- IVIVC can now perform power and delayed power time transformations
  	- The dissolution fit can now generate simulated profiles
  	- IVIVC Simulations can now make use of the Levy plot
- 	
+ 	- IVIVC internal validity now shows a plot with the true in-vivo and the simulated summaries
