@@ -40,6 +40,7 @@ from pkpd.models.pk_models import PK_Twocompartments
 # TESTED in test_workflow_gabrielsson_pk16.py
 # TESTED in test_workflow_gabrielsson_pk19.py
 # TESTED in test_workflow_gabrielsson_pk39.py
+# TESTED in test_workflow_deconvolution2.py
 
 
 class ProtPKPDTwoCompartments(ProtPKPDODEBase):

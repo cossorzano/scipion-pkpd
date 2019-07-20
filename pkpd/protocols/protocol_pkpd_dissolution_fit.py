@@ -33,6 +33,7 @@ from pkpd.pkpd_units import createUnit, strUnit
 
 # Tested by test_workflow_dissolution
 # Tested by test_workflow_levyplot
+# Tested by test_workflow_deconvolution2
 
 
 class ProtPKPDDissolutionFit(ProtPKPDFitBase):

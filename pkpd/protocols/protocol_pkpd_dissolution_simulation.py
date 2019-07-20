@@ -39,6 +39,7 @@ from pkpd.biopharmaceutics import DrugSource, createDeltaDose, createVia
 from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 
 # tested in test_workflow_levyplot
+# tested in test_workflow_deconvolution2
 
 class ProtPKPDDissolutionPKSimulation(ProtPKPD):
     """ This protocol simulates the pharmacokinetic response of an ODE model when it is given a single dose of
@@ -75,7 +76,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
         self._insertFunctionStep('simulate',self.inputInVitro.get().getObjId(),self.inputPK.get().getObjId(),
-                                 self.inputIvIvC.get().getObjId(),self.inputDose.get(),self.inputN.get())
+                                 self.inputDose.get(),self.inputN.get())
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
@@ -192,7 +193,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
         print("   MRT=%f [min]"%self.MRT)
 
-    def simulate(self, objId1, objId2, objId3, inputDose, inputN):
+    def simulate(self, objId1, objId2, inputDose, inputN):
         self.getInVitroModels()
         self.getTimeScaling()
         self.getPKModels()
@@ -346,7 +347,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             self._defineOutputs(outputExperiment=self.outputExperiment)
             self._defineSourceRelation(self.inputInVitro.get(), self.outputExperiment)
             self._defineSourceRelation(self.inputPK.get(), self.outputExperiment)
-            self._defineSourceRelation(self.inputIvIvC.get(), self.outputExperiment)
+            if self.conversionType.get()==0:
+                self._defineSourceRelation(self.inputIvIvC.get(), self.outputExperiment)
+            else:
+                self._defineSourceRelation(self.inputLevy.get(), self.outputExperiment)
 
     def _validate(self):
         return []

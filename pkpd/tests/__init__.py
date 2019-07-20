@@ -181,8 +181,10 @@ PKPDDataSet(name='Dissolution', folder='Dissolution',
                'excel': 'experiment.xlsx',
                'excelShah1998': 'experimentShah1998.xlsx',
                'excelShah1998avg': 'experimentShah1998Avg.xlsx',
+               'exceldissolutionMean': 'dissolutionMeanProfile.xlsx',
                'excelinvivo': 'invivo.xlsx',
                'excelinvivoLong': 'invivoLong.xlsx',
+               'excelinvivoMean': 'invivoMean.xlsx',
                })
 
 PKPDDataSet(name='model',  folder='model',

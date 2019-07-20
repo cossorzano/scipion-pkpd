@@ -33,6 +33,7 @@ import math
 
 # Tested in test_workflow_deconvolution.py
 # Tested in test_workflow_levyplot.py
+# Tested in test_workflow_deconvolution2.py
 
 class ProtPKPDNCANumeric(ProtPKPD):
     """ Non-compartmental analysis just based on the samples. The results are valid only up to T.\n

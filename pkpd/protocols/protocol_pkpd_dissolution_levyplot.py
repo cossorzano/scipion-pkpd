@@ -37,6 +37,7 @@ from .protocol_pkpd import ProtPKPD
 
 
 # tested in test_workflow_levyplot
+# tested in test_workflow_deconvolution2
 
 class ProtPKPDDissolutionLevyPlot(ProtPKPD):
     """ Calculate the Levy plot between two dissolution experiments. Each experiment may have
