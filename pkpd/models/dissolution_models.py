@@ -701,6 +701,7 @@ class DissolutionSplinesGeneric(DissolutionModel):
         if x is None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        xToUse = np.copy(xToUse) # Just in case it is modified
         self.yPredicted = np.zeros(xToUse.shape[0])
 
         if self.allowTlag:
@@ -741,7 +742,7 @@ class DissolutionSplinesGeneric(DissolutionModel):
 
             self.bounds = []
             if self.allowTlag:
-                self.bounds.append((0.0,np.max(xToUse)))
+                self.bounds.append((0.0,np.max(xToUse)/2))
             self.bounds.append((0.1*Vmax,10*Vmax))
             self.bounds.append((0.0, np.max(xToUse)))
             for i in range(self.nknots):
