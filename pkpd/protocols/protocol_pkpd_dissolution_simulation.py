@@ -89,8 +89,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
         klass = globals()[self.invitroClsName]
         self.dissolutionModel = klass()
-        if "tlag" in self.fittingInVitro.modelParameters:
-            self.dissolutionModel.allowTlag=True
+        self.dissolutionModel.allowTlag = "tlag" in self.fittingInVitro.modelParameters
         self.dissolutionPopulation = cls!=""
 
     def getTimeScaling(self):
