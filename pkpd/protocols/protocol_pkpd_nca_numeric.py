@@ -48,6 +48,11 @@ class ProtPKPDNCANumeric(ProtPKPD):
                       pointerClass='PKPDExperiment',
                       help='Select the experiment with the measurements you want to analyze')
         form.addParam('xVar', params.StringParam, label="Variable to analyze", default="Cp")
+        form.addParam('t0', params.StringParam, label="t0", default="", help="The analysis is performed between t0 and tF. "
+                      "Make sure these values are in the same units as in the input experiment. Leave empty for analyzing from 0 to max(t).")
+        form.addParam('tF', params.StringParam, label="tF", default="", help="The analysis is performed between t0 and tF. "
+                      "Make sure these values are in the same units as in the input experiment. Leave empty for analyzing from 0 to max(t).")
+
 
     #--------------------------- STEPS functions --------------------------------------------
     def _insertAllSteps(self):
@@ -64,26 +69,32 @@ class ProtPKPDNCANumeric(ProtPKPD):
         self.AUMC0t = 0
         t0 = t[0]
         tperiod0=0 # Time at which the dose was given
+        T0=0
+        TF=np.max(t)
+        if self.t0.get()!="" and self.tF.get()!="":
+            T0=float(self.t0.get())
+            TF=float(self.tF.get())
         for idx in range(0,t.shape[0]-1):
-            dt = (t[idx+1]-t[idx])
-            if C[idx+1]>=C[idx]: # Trapezoidal in the raise
-                self.AUC0t  += 0.5*dt*(C[idx]+C[idx+1])
-                self.AUMC0t += 0.5*dt*(C[idx]*t[idx]+C[idx+1]*t[idx+1])
-            else: # Log-trapezoidal in the decay
-                if C[idx+1]>0 and C[idx]>0:
-                    decrement = C[idx]/C[idx+1]
-                    K = math.log(decrement)
-                    B = K/dt
-                    self.AUC0t  += dt*(C[idx]-C[idx+1])/K
-                    self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
+            if t[idx]>=T0 and t[idx]<=TF:
+                dt = (t[idx+1]-t[idx])
+                if C[idx+1]>=C[idx]: # Trapezoidal in the raise
+                    self.AUC0t  += 0.5*dt*(C[idx]+C[idx+1])
+                    self.AUMC0t += 0.5*dt*(C[idx]*t[idx]+C[idx+1]*t[idx+1])
+                else: # Log-trapezoidal in the decay
+                    if C[idx+1]>0 and C[idx]>0:
+                        decrement = C[idx]/C[idx+1]
+                        K = math.log(decrement)
+                        B = K/dt
+                        self.AUC0t  += dt*(C[idx]-C[idx+1])/K
+                        self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
 
-            if idx==0:
-                self.Cmax=C[idx]
-                self.Tmax=t[idx]-t0
-            else:
-                if C[idx]>self.Cmax:
+                if idx==0:
                     self.Cmax=C[idx]
                     self.Tmax=t[idx]-t0
+                else:
+                    if C[idx]>self.Cmax:
+                        self.Cmax=C[idx]
+                        self.Tmax=t[idx]-t0
 
         self.MRT = self.AUMC0t/self.AUC0t
 
