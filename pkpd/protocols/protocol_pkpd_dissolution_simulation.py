@@ -72,6 +72,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         form.addParam('tF', params.FloatParam, label="Final time (h)", default=48)
         form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=True, expertLevel=LEVEL_ADVANCED,
                       help="Individual simulations are added to the output")
+        form.addParam('NCAt0', params.StringParam, label="NCA Initial time (h)", default="",
+                      help="The non-compartimental analysis is performed within NCA t0 and NCA tF. Leave empty for the whole period")
+        form.addParam('NCAtF', params.StringParam, label="NCA Final time (h)", default="",
+                      help="The non-compartimental analysis is performed within NCA t0 and NCA tF. Leave empty for the whole period")
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -164,25 +168,32 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.AUMC0t = 0
         t0 = t[0]
         tperiod0=0 # Time at which the dose was given
-        for idx in range(0,t.shape[0]-1):
-            dt = (t[idx+1]-t[idx])
-            if C[idx+1]>=C[idx]: # Trapezoidal in the raise
-                self.AUC0t  += 0.5*dt*(C[idx]+C[idx+1])
-                self.AUMC0t += 0.5*dt*(C[idx]*t[idx]+C[idx+1]*t[idx+1])
-            else: # Log-trapezoidal in the decay
-                decrement = C[idx]/C[idx+1]
-                K = math.log(decrement)
-                B = K/dt
-                self.AUC0t  += dt*(C[idx]-C[idx+1])/K
-                self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
+        T0=0;
+        TF=np.max(t)
+        if self.NCAt0.get()!="" and self.NCAtF.get()!="":
+            T0=float(self.NCAt0.get())*60
+            TF=float(self.NCAtF.get())*60
 
-            if idx==0:
-                self.Cmax=C[idx]
-                self.Tmax=t[idx]-t0
-            else:
-                if C[idx]>self.Cmax:
+        for idx in range(0,t.shape[0]-1):
+            if t[idx]>=T0 and t[idx]<=TF:
+                dt = (t[idx+1]-t[idx])
+                if C[idx+1]>=C[idx]: # Trapezoidal in the raise
+                    self.AUC0t  += 0.5*dt*(C[idx]+C[idx+1])
+                    self.AUMC0t += 0.5*dt*(C[idx]*t[idx]+C[idx+1]*t[idx+1])
+                else: # Log-trapezoidal in the decay
+                    decrement = C[idx]/C[idx+1]
+                    K = math.log(decrement)
+                    B = K/dt
+                    self.AUC0t  += dt*(C[idx]-C[idx+1])/K
+                    self.AUMC0t += (C[idx]*(t[idx]-tperiod0)-C[idx+1]*(t[idx+1]-tperiod0))/B-(C[idx+1]-C[idx])/(B*B)
+
+                if idx==0:
                     self.Cmax=C[idx]
                     self.Tmax=t[idx]-t0
+                else:
+                    if C[idx]>self.Cmax:
+                        self.Cmax=C[idx]
+                        self.Tmax=t[idx]-t0
 
         self.MRT = self.AUMC0t/self.AUC0t
 

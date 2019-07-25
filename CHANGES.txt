@@ -41,3 +41,5 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- The dissolution fit can now generate simulated profiles
  	- IVIVC Simulations can now make use of the Levy plot
  	- IVIVC internal validity now shows a plot with the true in-vivo and the simulated summaries
+ 	- NCA numeric now accepts a period to measure
+ 	- IVIVC Simulations now accepts a period to measure NCA
