@@ -196,8 +196,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         self.Tmin = float(Tminlist[-1])
         self.Tmax = float(Tmaxlist[-1])
         self.Cavg = float(Cavglist[-1])
-        self.fluctuation = self.Cmax/self.Cmin
-        self.percentageAccumulation = Cavglist[-1]/Cavglist[0]
+        self.fluctuation = self.Cmax/self.Cmin if self.Cmin>0 else np.nan
+        self.percentageAccumulation = Cavglist[-1]/Cavglist[0] if Cavglist[0]>0 else np.nan
 
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
@@ -436,10 +436,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TminArray)))
         limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TmaxArray)))
-        limits = np.percentile(fluctuationArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(fluctuationArray)*100))
-        limits = np.percentile(percentageAccumulationArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Accum(1) %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(percentageAccumulationArray)*100))
+        aux = fluctuationArray[~np.isnan(fluctuationArray)]
+        limits = np.percentile(aux,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(aux)*100))
+        aux = percentageAccumulationArray[~np.isnan(percentageAccumulationArray)]
+        limits = np.percentile(aux,[alpha_2,100-alpha_2])
+        self.doublePrint(fhSummary,"Accum(1) %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(aux)*100))
         fhSummary.close()
 
         # Calculate statistics
