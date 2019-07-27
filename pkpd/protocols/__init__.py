@@ -34,6 +34,7 @@ from .protocol_pkpd_average_sample import ProtPKPDAverageSample
 from .protocol_pkpd_bootstrap_simulate import ProtPKPDODESimulate
 from .protocol_pkpd_change_units import ProtPKPDChangeUnits
 from .protocol_pkpd_change_via import ProtPKPDChangeVia
+from .protocol_pkpd_compare_experiments import ProtPKPDCompareExperiments
 from .protocol_pkpd_create_label import ProtPKPDCreateLabel
 from .protocol_pkpd_create_label_2exps import ProtPKPDCreateLabel2Exps
 from .protocol_pkpd_cumulated_dose import ProtPKPDCumulatedDose

@@ -29,6 +29,7 @@ from .viewer import (PKPDExperimentViewer, PKPDFittingViewer, PKPDCSVViewer,
                      PKPDAnalysisViewer, PKPDStatisticsLabelViewer,
                      PKPDRegressionLabelsViewer, PKPDPopulationViewer,
                      PKPDAllometricScalingViewer)
+from .viewer_pkpd_compare_experiments import PKPDCompareExperimentsViewer
 from .viewer_pkpd_dissolution_f2 import PKPDDissolutionF2Viewer
 from .viewer_pkpd_dissolution_ivivc_internal_validity import PKPDDissolutionIVIVCInternalValidityViewer
 from .viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
