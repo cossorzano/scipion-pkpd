@@ -882,7 +882,8 @@ class PKPDModelBase2(PKPDModelBase):
         if boundsString!="" and boundsString!=None:
             tokens=boundsString.split(';')
             if len(tokens)!=self.getNumberOfParameters():
-                raise Exception("The number of bound intervals does not match the number of exponential terms")
+                raise Exception("The number of bound intervals (%d) does not match the number of parameters (%d)"%\
+                                (len(tokens),self.getNumberOfParameters()))
             self.bounds=[]
             for token in tokens:
                 values = token.strip().split(',')
