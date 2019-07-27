@@ -186,8 +186,18 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         if boundsString!="" and boundsString!=None:
             tokens = boundsString.split(';')
             if len(tokens)!=self.getNumberOfParameters():
-                raise Exception("The number of bound intervals (%d) does not match the number of parameters (%d)"\
-                                %(len(tokens),self.getNumberOfParameters()))
+                raise Exception("The number of bound intervals (%d) does not match the number of parameters (%d)"%\
+                                (len(tokens),self.getNumberOfParameters()))
+
+            for token in tokens:
+                values = token.strip().split(',')
+                self.boundsList.append((float(values[0][1:]),float(values[1][:-1])))
+
+    def setBounds(self, sample):
+        self.parseBounds(self.bounds.get())
+        self.setBoundsFromBoundsList()
+
+    def setBoundsFromBoundsList(self):
         Nbounds = len(self.boundsList)
         Nsource = self.drugSource.getNumberOfParameters()
         Nmodel = self.model.getNumberOfParameters()
