@@ -460,7 +460,7 @@ class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
         if t>=self.tmax or self.tmax<=0:
             return 0.0
         if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,self.parameters):
-            self.knots = np.append(np.insert(self.parameters[1::2],0,0),1)
+            self.knots = np.append(np.insert(self.parameters[1::2],0,0),1)*self.tmax
             self.knotsY = np.append(np.insert(self.parameters[2::2],0,0),1)
             self.knots=np.sort(self.knots)
             self.knotsY=np.sort(self.knotsY)

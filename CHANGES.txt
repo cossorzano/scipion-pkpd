@@ -43,3 +43,5 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- IVIVC internal validity now shows a plot with the true in-vivo and the simulated summaries
  	- NCA numeric now accepts a period to measure
  	- IVIVC Simulations now accepts a period to measure NCA
+ 	- Two experiments can now be compared visually
+ 	- SplinesXY added as a source for PK analysis
