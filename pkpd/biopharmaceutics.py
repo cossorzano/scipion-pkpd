@@ -330,7 +330,7 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
 
     def getModelEquation(self):
         # https://en.wikipedia.org/wiki/De_Boor%27s_algorithm
-        return "D(t)=interpolating BSpline2 with %d knots distributed until tmax"%self.nknots
+        return "D(t)=interpolating BSpline1 with %d knots distributed until tmax"%self.nknots
 
     def getDescription(self):
         return "BSplines with %d knots (%s)"%(self.nknots,self.__class__.__name__)
@@ -432,6 +432,113 @@ class BiopharmaceuticsModelSpline20(BiopharmaceuticsModelSplineGeneric):
     def __init__(self):
         BiopharmaceuticsModelSplineGeneric.__init__(self)
         self.nknots = 20
+
+class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
+    def __init__(self):
+        self.nknots=0
+        self.parametersPrepared=None
+
+    def getDescription(self):
+        return ['B-splineXY model with %d knots'%self.nknots]
+
+    def getParameterNames(self):
+        retval = ['tmax']
+        for i in range(self.nknots):
+            retval += ['spline%d_X%d' % (self.nknots, i)]
+            retval += ['spline%d_A%d' % (self.nknots, i)]
+        return retval
+
+    def calculateParameterUnits(self,sample):
+        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
+        self.parameterUnits += [PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]*(self.nknots)
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return self.Amax
+        self.tmax=self.parameters[0]
+        if t>=self.tmax or self.tmax<=0:
+            return 0.0
+        if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,self.parameters):
+            self.knots = np.append(np.insert(self.parameters[1::2],0,0),1)
+            self.knotsY = np.append(np.insert(self.parameters[2::2],0,0),1)
+            self.knots=np.sort(self.knots)
+            self.knotsY=np.sort(self.knotsY)
+            knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
+            try:
+                self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            except:
+                print("self.tmax",self.tmax)
+                print("self.nknots",self.nknots)
+                print("self.parameters[1:]",self.parameters[1:])
+                print("Error en splineXY",self.knots, self.knotsY, knotsUnique, knotsYUnique)
+                raise Exception("Bug in spline")
+            self.parametersPrepared=copy.copy(self.parameters)
+        fraction=self.B(t)
+        fraction=np.clip(fraction,0.0,1.0)
+        #print("getAg t= %f B(t)= %f fraction= %f Ag= %f"%(t,self.B(t),fraction,self.Amax*(1-fraction)))
+        return self.Amax*(1-fraction)
+
+    def getEquation(self):
+        self.knotsY=np.sort(self.knotsY)
+        retval="D(t) interpolating spline at x=%s and y=%s"%(np.array2string(self.knots,max_line_width=10000),np.array2string(self.knotsY*self.Amax,max_line_width=10000))
+        return retval
+
+    def getModelEquation(self):
+        # https://en.wikipedia.org/wiki/De_Boor%27s_algorithm
+        return "D(t)=interpolating BSpline1 with %d knots distributed until tmax"%self.nknots
+
+    def getDescription(self):
+        return "BSplinesXY with %d knots (%s)"%(self.nknots,self.__class__.__name__)
+
+    def areParametersValid(self, p):
+        return np.sum(p<0)==0 and np.sum(p[1:]>1)==0
+
+class BiopharmaceuticsModelSplineXY2(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 2
+
+class BiopharmaceuticsModelSplineXY3(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 3
+
+class BiopharmaceuticsModelSplineXY4(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 4
+
+class BiopharmaceuticsModelSplineXY5(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 5
+
+class BiopharmaceuticsModelSplineXY6(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 6
+
+class BiopharmaceuticsModelSplineXY7(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 7
+
+class BiopharmaceuticsModelSplineXY8(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 8
+
+class BiopharmaceuticsModelSplineXY9(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 9
+
+class BiopharmaceuticsModelSplineXY10(BiopharmaceuticsModelSplineXYGeneric):
+    def __init__(self):
+        BiopharmaceuticsModelSplineXYGeneric.__init__(self)
+        self.nknots = 10
+
 
 class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
     def setXYValues(self,t,A):
@@ -594,6 +701,24 @@ class PKPDVia:
                     self.viaProfile = BiopharmaceuticsModelSpline19()
                 elif self.via == "spline20":
                     self.viaProfile = BiopharmaceuticsModelSpline20()
+                elif self.via == "splineXY2":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY2()
+                elif self.via == "splineXY3":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY3()
+                elif self.via == "splineXY4":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY4()
+                elif self.via == "splineXY5":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY5()
+                elif self.via == "splineXY6":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY6()
+                elif self.via == "splineXY7":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY7()
+                elif self.via == "splineXY8":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY8()
+                elif self.via == "splineXY9":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY9()
+                elif self.via == "splineXY10":
+                    self.viaProfile = BiopharmaceuticsModelSplineXY10()
                 elif self.via=="numerical":
                     self.viaProfile=BiopharmaceuticsModelNumerical()
 
