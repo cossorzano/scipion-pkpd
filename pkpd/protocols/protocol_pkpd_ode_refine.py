@@ -43,6 +43,10 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDMonoCompartmentUrine, ProtPKPDTwoCompartments', help='Select a run of an ODE model')
         form.addParam('deltaT', params.FloatParam, default=0.5, label='Step (min)', expertLevel=LEVEL_ADVANCED)
+        form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative","Same as previous protocol"], label="Fit mode", default=3,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
+                           "Relative: sum ((Cobserved-Cpredicted)/Cobserved)^2")
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -100,11 +104,12 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
         self.fitting.modelParameterUnits = None
 
         # Actual fitting
-        if self.protODE.fitType.get()==0:
+        fitTypeN = self.protODE.fitType.get() if self.fitType.get()==3 else self.fitType.get()
+        if fitTypeN==0:
             fitType = "linear"
-        elif self.protODE.fitType.get()==1:
+        elif fitTypeN==1:
             fitType = "log"
-        elif self.protODE.fitType.get()==2:
+        elif fitTypeN==2:
             fitType = "relative"
 
         parameterNames = None
