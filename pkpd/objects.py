@@ -1286,12 +1286,13 @@ class PKPDDEOptimizer(PKPDOptimizer):
 
 
 class PKPDLSOptimizer(PKPDOptimizer):
-    def optimize(self):
+    def optimize(self, ftol=1.49012e-8, xtol=1.49012e-8): # Same values as in minpack.py
         from scipy.optimize import leastsq
         if self.verbose>0:
             print("Optimizing with Least Squares (LS), a local optimizer")
             print("Initial parameters: "+str(self.model.parameters))
-        self.optimum, J, self.info, mesg, _ = leastsq(self.getResiduals, self.model.parameters, full_output=True)
+        self.optimum, J, self.info, mesg, _ = leastsq(self.getResiduals, self.model.parameters, full_output=True,
+                                                      ftol=ftol, xtol=xtol)
             # J is the jacobian C=MSE*inv(J'*J)
         if self.verbose>0:
             print("Best LS function value: "+str(self.goalFunction(self.optimum)))
