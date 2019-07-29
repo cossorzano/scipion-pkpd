@@ -41,7 +41,11 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
-                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDMonoCompartmentUrine, ProtPKPDTwoCompartments', help='Select a run of an ODE model')
+                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDMonoCompartmentUrine, ProtPKPDTwoCompartments, '\
+                                   'ProtPKPDTwoCompartmentsAutoinduction, ProtPKPDTwoCompartmentsClint, '\
+                                   'ProtPKPDTwoCompartmentsClintMetabolite, ProtPKPDTwoCompartmentsUrine, '\
+                                   'ProtPKPDODERefine',
+                      help='Select a run of an ODE model')
         form.addParam('deltaT', params.FloatParam, default=0.5, label='Step (min)', expertLevel=LEVEL_ADVANCED)
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative","Same as previous protocol"], label="Fit mode", default=3,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\

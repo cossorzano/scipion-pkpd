@@ -51,7 +51,8 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
-                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments', help='Select a run of an ODE model')
+                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDODERefine',
+                      help='Select a run of an ODE model')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
