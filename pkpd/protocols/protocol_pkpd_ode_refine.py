@@ -86,6 +86,31 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
     def getBounds(self):
         return self.boundsList
 
+    def createModel(self):
+        return self.inputODE.get().createModel()
+
+    def setTimeRange(self, sample):
+        self.inputODE.get().setTimeRange(sample)
+
+    def setVarNames(self,varNameX,varNameY):
+        ProtPKPDODEBase.setVarNames(self,varNameX,varNameY)
+        self.inputODE.get().setVarNames(varNameX,varNameY)
+
+    def setModel(self,model):
+        ProtPKPDODEBase.setModel(self,model)
+        self.inputODE.get().setModel(model)
+
+    def setupModel(self):
+        ProtPKPDODEBase.setupModel(self)
+        self.inputODE.get().setModel(self.model)
+
+    def clearGroupParameters(self):
+        ProtPKPDODEBase.clearGroupParameters(self)
+        self.inputODE.get().clearGroupParameters()
+
+    def getConfidenceInterval(self):
+        return self.inputODE.get().getConfidenceInterval()
+
     def runFit(self, objId, deltaT):
         self.protODE = self.inputODE.get()
         self.experiment = self.readExperiment(self.protODE.outputExperiment.fnPKPD)
@@ -98,8 +123,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
         else:
             self.varNameY = self.fitting.predicted.varName
         self.protODE.experiment = self.experiment
-        self.protODE.varNameX = self.varNameX
-        self.protODE.varNameY = self.varNameY
+        self.protODE.setVarNames(self.varNameX, self.varNameY)
 
         # Create output object
         self.fitting = PKPDFitting()
@@ -181,7 +205,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
 
             optimizer2 = PKPDLSOptimizer(self,fitType)
             optimizer2.optimize()
-            optimizer2.setConfidenceInterval(self.protODE.confidenceInterval.get())
+            optimizer2.setConfidenceInterval(self.protODE.getConfidenceInterval())
             self.setParameters(optimizer2.optimum)
 
             n=0

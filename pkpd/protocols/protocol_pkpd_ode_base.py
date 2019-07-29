@@ -98,6 +98,9 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         else:
             return None
 
+    def getConfidenceInterval(self):
+        return self.confidenceInterval.get()
+
     def getXYvars(self):
         if hasattr(self,"predictor"):
             self.varNameX=self.predictor.get()
@@ -166,6 +169,13 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
 
         if hasattr(self,"deltaT"):
             self.model.deltaT = self.deltaT.get()
+
+    def setVarNames(self,varNameX,varNameY):
+        self.varNameX = varNameX
+        self.varNameY = varNameY
+
+    def setModel(self,model):
+        self.model = model
 
     # As model --------------------------------------------
     def clearGroupParameters(self):
@@ -417,7 +427,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
                 msg+="\nErrors in the local optimizer may be caused by starting from a bad initial guess\n"
                 msg+="Try performing a global search first or changing the bounding box"
                 raise Exception("Error in the local optimizer\n"+msg)
-            optimizer2.setConfidenceInterval(self.confidenceInterval.get())
+            optimizer2.setConfidenceInterval(self.getConfidenceInterval())
             self.setParameters(optimizer2.optimum)
             optimizer2.evaluateQuality()
             self.model.printOtherParameterization()
