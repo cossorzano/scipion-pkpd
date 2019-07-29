@@ -46,6 +46,8 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative","Same as previous protocol"], label="Fit mode", default=3,
                       help='Linear: sum (Cobserved-Cpredicted)^2\nLogarithmic: sum(log10(Cobserved)-log10(Cpredicted))^2\n'\
                            "Relative: sum ((Cobserved-Cpredicted)/Cobserved)^2")
+        form.addParam('bounds', params.StringParam, label="Parameter bounds", default="",
+                      help="If empty, same bounds as for the previous protocol")
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -64,7 +66,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
                 self.boundsList.append((float(values[0][1:]),float(values[1][:-1])))
 
     def setBounds(self,sample):
-        self.parseBounds(self.protODE.bounds.get())
+        self.parseBounds(self.protODE.bounds.get() if self.bounds.get()=="" else self.bounds.get())
         self.setBoundsFromBoundsList()
 
     def setBoundsFromBoundsList(self):
