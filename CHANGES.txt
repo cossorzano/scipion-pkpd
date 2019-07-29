@@ -45,3 +45,4 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- IVIVC Simulations now accepts a period to measure NCA
  	- Two experiments can now be compared visually
  	- SplinesXY added as a source for PK analysis
+ 	- ODE Refinement is much better and can be the input of deconvolution protocols
