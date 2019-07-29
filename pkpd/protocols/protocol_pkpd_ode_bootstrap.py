@@ -156,9 +156,8 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
                 firstY=y[0] # From [array(...)] to array(...)
 
                 # Interpret the dose
-                self.protODE.varNameX = self.varNameX
-                self.protODE.varNameY = self.varNameY
-                self.protODE.model = self.model
+                self.protODE.setVarNames(self.varNameX,self.varNameY)
+                self.protODE.setModel(self.model)
                 self.protODE.setTimeRange(sample)
                 sample.interpretDose()
 
@@ -214,7 +213,7 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
                         optimizer2 = PKPDLSOptimizer(self,fitType)
                         optimizer2.verbose = 0
                         try:
-                            optimizer2.optimize()
+                            optimizer2.optimize(ftol=1e-5, xtol=1e-5)
                             ok=True
                         except Exception as e:
                             print(e)
