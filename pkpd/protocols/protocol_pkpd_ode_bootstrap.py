@@ -213,7 +213,7 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
                         optimizer2 = PKPDLSOptimizer(self,fitType)
                         optimizer2.verbose = 0
                         try:
-                            optimizer2.optimize(ftol=1e-5, xtol=1e-5)
+                            optimizer2.optimize(ftol=1e-4, xtol=1e-4)
                             ok=True
                         except Exception as e:
                             print(e)
