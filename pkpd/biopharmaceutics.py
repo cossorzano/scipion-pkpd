@@ -145,6 +145,45 @@ class BiopharmaceuticsModelOrder01(BiopharmaceuticsModel):
     def getDescription(self):
         return "Zero-First Mixed order absorption (%s)"%self.__class__.__name__
 
+class BiopharmaceuticsModelOrder01Tlag1(BiopharmaceuticsModel):
+    def getDescription(self):
+        return ['Fraction absorbed at order 0','Constant absorption rate','Constant absorption time','Absorption rate']
+
+    def getParameterNames(self):
+        return ['F0','Rin','tlag1','Ka']
+
+    def calculateParameterUnits(self,sample):
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN, PKPDUnit.UNIT_TIME_MIN,
+                               PKPDUnit.UNIT_INVTIME_MIN]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0:
+            return 0.0
+        F0 = self.parameters[0]
+        Rin = self.parameters[1]
+        if Rin<0.0:
+            return 0.0
+        tlag1 = self.parameters[2]
+        Ka = self.parameters[3]
+        A=self.Amax
+        A-=min(self.Amax*F0,Rin*t)
+        if t>tlag1:
+            A-=self.Amax*(1-F0)*(1-math.exp(-Ka*(t-tlag1)))
+        return A
+
+    def getEquation(self):
+        F0 = self.parameters[0]
+        Rin = self.parameters[1]
+        tlag1 = self.parameters[2]
+        Ka = self.parameters[3]
+        return "D(t)=(%f)*t if 0<t<%f and (%f)*(%f)*(1-exp(-(%f)*(t-(%f))) if t>%f"%(Rin, F0*self.Amax/Rin, self.Amax, 1-F0, Ka, tlag1, tlag1)
+
+    def getModelEquation(self):
+        return "D(t)=Rin*t if t<Amax*F0/Rin and Amax*(1-F0)*(1-exp(-Ka*(t-tlag1)) if t>tlag1"
+
+    def getDescription(self):
+        return "Zero-First Mixed order absorption (%s)"%self.__class__.__name__
 
 class BiopharmaceuticsModelOrder1(BiopharmaceuticsModel):
     def getDescription(self):
@@ -660,6 +699,8 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelOrder0()
                 elif self.via=="ev01":
                     self.viaProfile=BiopharmaceuticsModelOrder01()
+                elif self.via == "ev0tlag1":
+                    self.viaProfile = BiopharmaceuticsModelOrder01Tlag1()
                 elif self.via=="ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1()
                 elif self.via=="evFractional":
