@@ -46,3 +46,7 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Two experiments can now be compared visually
  	- SplinesXY added as a source for PK analysis
  	- ODE Refinement is much better and can be the input of deconvolution protocols
+
+ August 2019.
+ 	- New via added: A fraction at order 0, and the rest at order 1
+ 	
