@@ -836,8 +836,11 @@ class PKPDModelBase(object):
     def calculateParameterUnits(self,sample):
         pass
 
+    def rearrange(self,parameters):
+        return parameters
+
     def setParameters(self, parameters):
-        self.parameters = parameters
+        self.parameters = self.rearrange(parameters)
 
 
 class PKPDModelBase2(PKPDModelBase):
@@ -1321,7 +1324,7 @@ class PKPDLSOptimizer(PKPDOptimizer):
         if self.cov_x is not None:
             from scipy.stats import norm
             nstd = norm.ppf(1-(1-confidenceInterval/100)/2)
-            perr = np.sqrt(np.diag(self.cov_x))
+            perr = np.sqrt(np.clip(np.diag(self.cov_x),0.0,None))
             self.lowerBound = self.optimum-nstd*perr
             self.upperBound = self.optimum+nstd*perr
 

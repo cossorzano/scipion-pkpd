@@ -33,7 +33,7 @@ import numpy as np
 from pkpd.objects import PKPDModel
 from pkpd.pkpd_units import inverseUnits, divideUnits, PKPDUnit
 from pkpd.utils import uniqueFloatValues
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
 
 # Tested by test_workflow_dissolution
 
@@ -697,6 +697,14 @@ class DissolutionSplinesGeneric(DissolutionModel):
         self.nknots=0
         self.parametersPrepared=None
 
+    def rearrange(self,parameters):
+        retval = parameters
+        if self.allowTlag:
+            retval[3:]=np.sort(retval[3:])
+        else:
+            retval[2:]=np.sort(retval[2:])
+        return retval
+
     def forwardModel(self, parameters, x=None):
         if x is None:
             x=self.x
@@ -722,7 +730,8 @@ class DissolutionSplinesGeneric(DissolutionModel):
             self.knotsY = np.append(np.insert(coefs,0,0),1)
             self.knotsY=np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
-            self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            # self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+            self.B=PchipInterpolator(knotsUnique, knotsYUnique)
             self.parametersPrepared=copy.copy(parameters)
 
         fraction=self.B(xToUse)

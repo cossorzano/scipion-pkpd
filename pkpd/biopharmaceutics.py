@@ -31,7 +31,7 @@ import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight
 from pkpd.utils import uniqueFloatValues
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -337,6 +337,11 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
         self.parameterUnits += [PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
+    def rearrange(self,parameters):
+        retval = parameters
+        retval[1:]=np.sort(retval[1:])
+        return retval
+
     def getAg(self,t):
         if t<=0:
             return self.Amax
@@ -350,7 +355,8 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             self.knotsY=np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
             try:
-                self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+                self.B=PchipInterpolator(knotsUnique, knotsYUnique)
+                # self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
             except:
                 print("self.tmax",self.tmax)
                 print("self.nknots",self.nknots)
@@ -493,6 +499,12 @@ class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
         self.parameterUnits += [PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
+    def rearrange(self,parameters):
+        retval = parameters
+        retval[1::2]=np.sort(retval[1::2])
+        retval[2::2]=np.sort(retval[2::2])
+        return retval
+
     def getAg(self,t):
         if t<=0:
             return self.Amax
@@ -508,7 +520,8 @@ class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
             self.knotsY=np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
             try:
-                self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
+                self.B=PchipInterpolator(knotsUnique, knotsYUnique)
+                # self.B=InterpolatedUnivariateSpline(knotsUnique, knotsYUnique, k=1)
             except:
                 print("self.tmax",self.tmax)
                 print("self.nknots",self.nknots)
@@ -586,7 +599,8 @@ class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
     def setXYValues(self,t,A):
         # A is the accumulated fraction released
         tUnique, Aunique = uniqueFloatValues(t,np.asarray(A,dtype=np.float64)/100.0)
-        self.B = InterpolatedUnivariateSpline(tUnique, Aunique,k=1)
+        # self.B = InterpolatedUnivariateSpline(tUnique, Aunique,k=1)
+        self.B = PchipInterpolator(tUnique, Aunique)
         self.tmin=np.min(t)
         self.tmax=np.max(t)
 
