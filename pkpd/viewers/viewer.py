@@ -171,7 +171,7 @@ class PKPDRegressionLabelsViewer(Viewer):
             xValues = np.arange(minX, maxX+step, step)
             yValues = self.protocol.evalFunction(xValues)
 
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             varNameX = self.protocol.labelX.get()
             varNameY = self.protocol.labelY.get()
             ax = plotter.createSubPlot("Regression Plot",
@@ -217,7 +217,7 @@ class PKPDAllometricScalingViewer(Viewer):
         x = np.log10(np.asarray(model.X))
         xlabel = "%s [%s]" % (model.predictor, model.predictorUnits)
         for varName, varUnits in model.scaled_vars:
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             y = np.log10(np.asarray(model.Y[varName]))
             ylabel = "%s [%s]" % (varName, varUnits)
             ax = plotter.createSubPlot(varName, xlabel, ylabel)
@@ -229,7 +229,7 @@ class PKPDAllometricScalingViewer(Viewer):
             plotter.show()
 
         for varName, varUnits in model.averaged_vars:
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             y = np.asarray(model.Y[varName])
             ylabel = "%s [%s]" % (varName, varUnits)
             ax = plotter.createSubPlot("Scatter Plot", xlabel, ylabel)

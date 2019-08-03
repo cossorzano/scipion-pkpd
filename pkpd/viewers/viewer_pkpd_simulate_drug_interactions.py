@@ -126,7 +126,7 @@ class PKPDSimulateDrugInteractionsViewer(Viewer):
             if plotter is None or Rtypei!=previousType:
                 if previousType!="":
                     self.addLimits(plotter,previousType,minX,maxX)
-                plotter = EmPlotter()
+                plotter = EmPlotter(style='seaborn-whitegrid')
                 doShow = True
                 if Rtypei=="ReversibleLiver" or Rtypei=="TimeDependentLiver" or Rtypei=="InductionLiver" or Rtypei=="StaticLiver" or Rtypei=="TransporterLiver":
                     Ilabel="[Ih] [uM]"

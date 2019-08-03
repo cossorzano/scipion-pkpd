@@ -41,7 +41,7 @@ class PKPDStatsMahalanobisViewer(Viewer):
         fn = prot._getExtraPath('D11.txt')
         if os.path.exists(fn):
             D11 = genfromtxt(fn)
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             plotter.createSubPlot("Histogram of D11", "D11", "Count")
             plotter.plotHist(D11[~isnan(D11)], 50)
             plotter.show()
@@ -49,7 +49,7 @@ class PKPDStatsMahalanobisViewer(Viewer):
         fn = prot._getExtraPath('D12.txt')
         if os.path.exists(fn):
             D12 = genfromtxt(fn)
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             plotter.createSubPlot("Histogram of D12", "D12", "Count")
             plotter.plotHist(D12[~isnan(D12)], 50)
             plotter.show()

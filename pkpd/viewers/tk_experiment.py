@@ -520,7 +520,7 @@ class ExperimentWindow(gui.Window):
 
         if sampleKeys:
             if self.plotter is None or self.plotter.isClosed():
-                self.plotter = EmPlotter()
+                self.plotter = EmPlotter(style='seaborn-whitegrid')
                 doShow = True
                 ax = self.plotter.createSubPlot("Plot", self.getTimeLabel(),
                                                 self.getMeasureLabel())
@@ -586,7 +586,7 @@ class ExperimentWindow(gui.Window):
             for i, t in enumerate(sortedTime):
                 Y[i,:] = np.percentile(dataDict[t], percentileList)
 
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             ax = plotter.createSubPlot("Summary Plot", self.getTimeLabel(),
                                        self.getMeasureLabel())
             ax.plot(sortedTime, Y[:, 0], 'r--', label="Minimum")
@@ -644,7 +644,7 @@ class ExperimentWindow(gui.Window):
                 return [_value(float(x), useLog) for x in values]
 
             def _plot(varLabelX, varLabelY, x, y, yp):
-                plotter = EmPlotter()
+                plotter = EmPlotter(style='seaborn-whitegrid')
                 ax = plotter.createSubPlot("Plot", varLabelX, varLabelY)
                 xValues = _values(x, useLog=self.useTimeLog())
                 ax.plot(xValues, _values(y), 'x', label="Observations")

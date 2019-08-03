@@ -324,7 +324,7 @@ class PKPDResponsiveDialog(dialog.Dialog):
 
     def plotResults(self):
         if self.plotter is None or self.plotter.isClosed():
-            self.plotter = EmPlotter()
+            self.plotter = EmPlotter(style='seaborn-whitegrid')
             doShow = True
         else:
             doShow = False

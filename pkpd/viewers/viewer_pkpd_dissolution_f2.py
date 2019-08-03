@@ -40,12 +40,12 @@ class PKPDDissolutionF2Viewer(Viewer):
         f1 = genfromtxt(prot._getExtraPath('f1.txt'))
         f2 = genfromtxt(prot._getExtraPath('f2.txt'))
 
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         plotter.createSubPlot("Histogram of f1", "f1", "Count")
         plotter.plotHist(f1[~isnan(f1)], 50)
         plotter.show()
 
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         plotter.createSubPlot("Histogram of f2", "f2", "Count")
         plotter.plotHist(f2[~isnan(f2)], 50)
         plotter.show()

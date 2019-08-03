@@ -87,7 +87,7 @@ class PKPDCompareExperimentsViewer(Viewer):
         sortedX1, Y1 = self.getSummary(prot.inputExperiment1.get().fnPKPD, prot.X1.get(), prot.Y1.get())
         sortedX2, Y2 = self.getSummary(prot.inputExperiment2.get().fnPKPD, X2, Y2)
 
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         ax = plotter.createSubPlot("Summary Plot", self.timeVarName, self.CVarName)
         ax.plot(sortedX1, Y1[:, 0], 'r--', label="Minimum Exp1", linewidth=2)
         ax.plot(sortedX1, Y1[:, 1], 'b--', label="25% Exp1", linewidth=2)

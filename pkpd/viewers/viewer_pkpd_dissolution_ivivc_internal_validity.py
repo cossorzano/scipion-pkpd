@@ -84,19 +84,19 @@ class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
         auc = np.genfromtxt(prot._getExtraPath('errorAUC.txt'))
         cmax = np.genfromtxt(prot._getExtraPath('errorCmax.txt'))
 
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         plotter.createSubPlot("Histogram of error AUC0t", "Error AUC0t", "Count")
         plotter.plotHist(auc[~np.isnan(auc)], 50)
         plotter.show()
 
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         plotter.createSubPlot("Histogram of error Cmax", "Error Cmax", "Count")
         plotter.plotHist(cmax[~np.isnan(cmax)], 50)
         plotter.show()
 
         sortedTimeTrue, Ytrue = self.getSummary(prot.inputExperiment.get().fnPKPD)
         sortedTimeSimulated, Ysimulated = self.getSummary(prot.inputSimulated.get().fnPKPD)
-        plotter = EmPlotter()
+        plotter = EmPlotter(style='seaborn-whitegrid')
         ax = plotter.createSubPlot("Summary Plot", self.timeVarName, self.CVarName)
         ax.plot(sortedTimeTrue, Ytrue[:, 0], 'r--', label="Minimum In-vivo", linewidth=2)
         ax.plot(sortedTimeTrue, Ytrue[:, 1], 'b--', label="25%  In-vivo", linewidth=2)

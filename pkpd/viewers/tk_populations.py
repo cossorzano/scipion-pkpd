@@ -147,7 +147,7 @@ class PopulationWindow(gui.Window):
         if n < 1 or n > 2:
             self.showError("Select one or two variables to plot.")
         else:
-            plotter = EmPlotter()
+            plotter = EmPlotter(style='seaborn-whitegrid')
             varX = self._variables[selection[0]]
             xValues = self.observations[:, varX.index]
 

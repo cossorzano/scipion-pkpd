@@ -51,7 +51,7 @@ class PKPDSimulateLiverFlowViewer(Viewer):
             elif state==1:
                 tokens=line.strip().split()
                 if len(tokens)==0:
-                    plotter = EmPlotter()
+                    plotter = EmPlotter(style='seaborn-whitegrid')
                     ax = plotter.createSubPlot("Simulation", "t [h]", "[I] [mg/mL]")
                     t = np.asarray(I3[0],dtype=np.float64)/60
                     for n in range(1,len(I3)):
