@@ -43,11 +43,11 @@ class PKPDCompareExperimentsViewer(Viewer):
         xValues, yValues = sample.getXYValues(self.timeVarName, self.CVarName)
         return xValues[0], yValues[0] # From [array(...)] to array(...)
 
-    def getSummary(self,fnPKPD,X,Y):
+    def getData(self,fnPKPD,XvarName,YvarName):
         experiment = PKPDExperiment()
         experiment.load(fnPKPD)
-        self.timeVarName = X
-        self.CVarName = Y
+        self.timeVarName = XvarName
+        self.CVarName = YvarName
 
         xmin = 1e38
         xmax = -1e38
@@ -70,37 +70,65 @@ class PKPDCompareExperimentsViewer(Viewer):
                     dataDict[x] = [y]
 
         sortedTime = sorted(dataDict.keys())
-        # We will store five values (min, 25%, 50%, 75%, max)
-        # for each of the time entries computed
-        percentileList = [0, 25, 50, 75, 100]
-        Y = np.zeros((len(sortedTime), 5))
-        for i, t in enumerate(sortedTime):
-            Y[i, :] = np.percentile(dataDict[t], percentileList)
+        if self.prot.showSummary.get():
+            # We will store five values (min, 25%, 50%, 75%, max)
+            # for each of the time entries computed
+            percentileList = [0, 25, 50, 75, 100]
+            Y = np.zeros((len(sortedTime), 5))
+            for i, t in enumerate(sortedTime):
+                Y[i, :] = np.percentile(dataDict[t], percentileList)
+        else:
+            Y=np.zeros((len(sortedTime),len(experiment.samples)))
+            for i, t in enumerate(sortedTime):
+                for j, C in enumerate(dataDict[t]):
+                    Y[i, j] = C
+
         return sortedTime, Y
 
 
     def visualize(self, obj, **kwargs):
-        prot = obj
-        X2=prot.X1.get() if prot.X2.get()=="" else prot.X2.get()
-        Y2=prot.Y1.get() if prot.Y2.get()=="" else prot.Y2.get()
-
-        sortedX1, Y1 = self.getSummary(prot.inputExperiment1.get().fnPKPD, prot.X1.get(), prot.Y1.get())
-        sortedX2, Y2 = self.getSummary(prot.inputExperiment2.get().fnPKPD, X2, Y2)
+        self.prot = obj
 
         plotter = EmPlotter(style='seaborn-whitegrid')
-        ax = plotter.createSubPlot("Summary Plot", self.timeVarName, self.CVarName)
-        ax.plot(sortedX1, Y1[:, 0], 'r--', label="Minimum Exp1", linewidth=2)
-        ax.plot(sortedX1, Y1[:, 1], 'b--', label="25% Exp1", linewidth=2)
-        ax.plot(sortedX1, Y1[:, 2], 'g', label="50% (Median) Exp1", linewidth=2)
-        ax.plot(sortedX1, Y1[:, 3], 'b--', label="75% Exp1", linewidth=2)
-        ax.plot(sortedX1, Y1[:, 4], 'r--', label="Maximum Exp1", linewidth=2)
+        title = "Summary plot" if self.prot.showSummary else "Individual plots"
+        ax = plotter.createSubPlot("Summary Plot", self.prot.X1.get(), self.prot.Y1.get())
+        if self.prot.twoExperiments.get()==0:
+            X2 = self.prot.X1.get() if self.prot.X2.get() == "" else self.prot.X2.get()
+            Y2 = self.prot.Y1.get() if self.prot.Y2.get() == "" else self.prot.Y2.get()
 
-        ax.plot(sortedX2, Y2[:, 0], 'r--', label="Minimum Exp2")
-        ax.plot(sortedX2, Y2[:, 1], 'b--', label="25% Exp2")
-        ax.plot(sortedX2, Y2[:, 2], 'g', label="50% (Median) Exp2")
-        ax.plot(sortedX2, Y2[:, 3], 'b--', label="75% Exp2")
-        ax.plot(sortedX2, Y2[:, 4], 'r--', label="Maximum Exp2")
+            sortedX1, Y1 = self.getData(self.prot.inputExperiment1.get().fnPKPD, self.prot.X1.get(), self.prot.Y1.get())
+            sortedX2, Y2 = self.getData(self.prot.inputExperiment2.get().fnPKPD, X2, Y2)
 
-        ax.grid(True)
+            if self.prot.showSummary:
+                ax.plot(sortedX1, Y1[:, 0], 'r--', label="Minimum Exp1", linewidth=2)
+                ax.plot(sortedX1, Y1[:, 1], 'b--', label="25% Exp1", linewidth=2)
+                ax.plot(sortedX1, Y1[:, 2], 'g', label="50% (Median) Exp1", linewidth=2)
+                ax.plot(sortedX1, Y1[:, 3], 'b--', label="75% Exp1", linewidth=2)
+                ax.plot(sortedX1, Y1[:, 4], 'r--', label="Maximum Exp1", linewidth=2)
+
+                ax.plot(sortedX2, Y2[:, 0], 'r--', label="Minimum Exp2")
+                ax.plot(sortedX2, Y2[:, 1], 'b--', label="25% Exp2")
+                ax.plot(sortedX2, Y2[:, 2], 'g', label="50% (Median) Exp2")
+                ax.plot(sortedX2, Y2[:, 3], 'b--', label="75% Exp2")
+                ax.plot(sortedX2, Y2[:, 4], 'r--', label="Maximum Exp2")
+            else:
+                ax.plot(sortedX1, Y1, linewidth=2, label="Exp1")
+                ax.plot(sortedX2, Y2, label="Exp2")
+
+        else:
+            listColors = ['b','g','r','k','c','m','y']
+            for idx,experimentPtr in enumerate(self.prot.inputExperiments):
+                sortedX, Y = self.getData(experimentPtr.get().fnPKPD, self.prot.X1.get(), self.prot.Y1.get())
+                if self.prot.showSummary:
+                    ax.plot(sortedX, Y[:, 0], linestyle='--', color=listColors[idx], label="Minimum Exp%d"%idx)
+                    ax.plot(sortedX, Y[:, 1], linestyle='--', color=listColors[idx], label="25%% Exp%d"%idx)
+                    ax.plot(sortedX, Y[:, 2], color=listColors[idx], label="50%% (Median) Exp%d"%idx)
+                    ax.plot(sortedX, Y[:, 3], linestyle='--', color=listColors[idx], label="75%% Exp%d"%idx)
+                    ax.plot(sortedX, Y[:, 4], linestyle='--', color=listColors[idx], label="Maximum Exp%d"%idx)
+                else:
+                    ax.plot(sortedX, Y[:,0], color=listColors[idx],label="Exp%d"%idx)
+                    ax.plot(sortedX, Y[:,1:], color=listColors[idx])
+
         ax.legend()
+        ax.grid(True)
         plotter.show()

@@ -51,3 +51,6 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- New via added: A fraction at order 0, and the rest at order 1
  	- Plots now have a white background
  	- IVIVC Internal validity has now a plot with just the median
+ 	- Spline parameters are printed in a sorted way
+ 	- Spline interpolation substituted by monotonic cubic interpolation (pchip)
+ 	- Compare experiments can now compare more than 2 experiments

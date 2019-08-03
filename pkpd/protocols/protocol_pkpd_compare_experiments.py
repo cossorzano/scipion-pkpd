@@ -37,16 +37,28 @@ class ProtPKPDCompareExperiments(ProtPKPD):
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
+        form.addParam('twoExperiments', params.EnumParam, label='How many experiments to compare',
+                      choices=["Two","More"], default=0)
         form.addParam('inputExperiment1', params.PointerParam, label="Experiment 1",
-                      pointerClass='PKPDExperiment',
+                      pointerClass='PKPDExperiment', condition="twoExperiments==0",
                       help='Select the experiment with the measurements you want to analyze.')
-        form.addParam('X1', params.StringParam, label='X1', default='t', help='X for the plot in the 1st experiment.')
-        form.addParam('Y1', params.StringParam, label='Y1', default='Cp', help='Y for the plot in the 1st experiment.')
+        form.addParam("inputExperiments", params.MultiPointerParam, label="Experiments",
+                      pointerClass="PKPDExperiment",  condition="twoExperiments==1",
+                      help="Select the experiments with the measurements you want to analyze. All of them "
+                           "must have the X and Y variables you want to show")
+        form.addParam('X1', params.StringParam, label='X1', default='t',
+                      help='X for the plot in the 1st/all experiment.')
+        form.addParam('Y1', params.StringParam, label='Y1', default='Cp',
+                      help='Y for the plot in the 1st/all experiment.')
         form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2",
-                      pointerClass='PKPDExperiment',
+                      pointerClass='PKPDExperiment',  condition="twoExperiments==0",
                       help='Select the experiment with the measurements you want to analyze.')
-        form.addParam('X2', params.StringParam, label='X2', default='', help='X for the plot in the 2nd experiment. If empty, the same as X1.')
-        form.addParam('Y2', params.StringParam, label='Y2', default='', help='Y for the plot in the 2nd experiment. If empty, the same as Y1.')
+        form.addParam('X2', params.StringParam, label='X2', default='',  condition="twoExperiments==0",
+                      help='X for the plot in the 2nd experiment. If empty, the same as X1.')
+        form.addParam('Y2', params.StringParam, label='Y2', default='',  condition="twoExperiments==0",
+                      help='Y for the plot in the 2nd experiment. If empty, the same as Y1.')
+        form.addParam('showSummary', params.BooleanParam, label="Show summary", default=True,
+                      help="Show summary or individual profiles")
 
     #--------------------------- STEPS functions --------------------------------------------
     def _insertAllSteps(self):
@@ -55,19 +67,29 @@ class ProtPKPDCompareExperiments(ProtPKPD):
     #--------------------------- INFO functions --------------------------------------------
     def _validate(self):
         retval=[]
-        experiment1 = PKPDExperiment()
-        experiment1.load(self.inputExperiment1.get().fnPKPD,fullRead=False)
-        if not self.X1.get() in experiment1.variables:
-            retval.append("Cannot find %s in Experiment1"%self.X1.get())
-        if not self.Y1.get() in experiment1.variables:
-            retval.append("Cannot find %s in Experiment1"%self.Y1.get())
+        if self.twoExperiments.get()==0:
+            experiment1 = PKPDExperiment()
+            experiment1.load(self.inputExperiment1.get().fnPKPD,fullRead=False)
+            if not self.X1.get() in experiment1.variables:
+                retval.append("Cannot find %s in Experiment1"%self.X1.get())
+            if not self.Y1.get() in experiment1.variables:
+                retval.append("Cannot find %s in Experiment1"%self.Y1.get())
 
-        X2=self.X1.get() if self.X2.get()=="" else self.X2.get()
-        Y2=self.Y1.get() if self.Y2.get()=="" else self.Y2.get()
-        experiment2 = PKPDExperiment()
-        experiment2.load(self.inputExperiment2.get().fnPKPD,fullRead=False)
-        if not X2 in experiment2.variables:
-            retval.append("Cannot find %s in Experiment2"%X2)
-        if not Y2 in experiment2.variables:
-            retval.append("Cannot find %s in Experiment2"%Y2)
+            X2=self.X1.get() if self.X2.get()=="" else self.X2.get()
+            Y2=self.Y1.get() if self.Y2.get()=="" else self.Y2.get()
+            experiment2 = PKPDExperiment()
+            experiment2.load(self.inputExperiment2.get().fnPKPD,fullRead=False)
+            if not X2 in experiment2.variables:
+                retval.append("Cannot find %s in Experiment2"%X2)
+            if not Y2 in experiment2.variables:
+                retval.append("Cannot find %s in Experiment2"%Y2)
+        else:
+            for idx,experimentPtr in enumerate(self.inputExperiments):
+                experiment = PKPDExperiment()
+                experiment.load(experimentPtr.get().fnPKPD, fullRead=False)
+                if not self.X1.get() in experiment.variables:
+                    retval.append("Cannot find %s in Experiment whose file is %s" % (self.X1.get(),experimentPtr.fnPKPD))
+                if not self.Y1.get() in experiment.variables:
+                    retval.append("Cannot find %s in Experiment whose file is %s" % (self.Y1.get(),experimentPtr.fnPKPD))
+
         return retval
