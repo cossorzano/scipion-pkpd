@@ -96,6 +96,7 @@ class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
 
         sortedTimeTrue, Ytrue = self.getSummary(prot.inputExperiment.get().fnPKPD)
         sortedTimeSimulated, Ysimulated = self.getSummary(prot.inputSimulated.get().fnPKPD)
+
         plotter = EmPlotter(style='seaborn-whitegrid')
         ax = plotter.createSubPlot("Summary Plot", self.timeVarName, self.CVarName)
         ax.plot(sortedTimeTrue, Ytrue[:, 0], 'r--', label="Minimum In-vivo", linewidth=2)
@@ -103,13 +104,19 @@ class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
         ax.plot(sortedTimeTrue, Ytrue[:, 2], 'g', label="50% (Median)  In-vivo", linewidth=2)
         ax.plot(sortedTimeTrue, Ytrue[:, 3], 'b--', label="75%  In-vivo", linewidth=2)
         ax.plot(sortedTimeTrue, Ytrue[:, 4], 'r--', label="Maximum  In-vivo", linewidth=2)
-
         ax.plot(sortedTimeSimulated, Ysimulated[:, 0], 'r--', label="Minimum Simulated")
         ax.plot(sortedTimeSimulated, Ysimulated[:, 1], 'b--', label="25% Simulated")
         ax.plot(sortedTimeSimulated, Ysimulated[:, 2], 'g', label="50% (Median) Simulated")
         ax.plot(sortedTimeSimulated, Ysimulated[:, 3], 'b--', label="75% Simulated")
         ax.plot(sortedTimeSimulated, Ysimulated[:, 4], 'r--', label="Maximum Simulated")
+        ax.grid(True)
+        ax.legend()
+        plotter.show()
 
+        plotter = EmPlotter(style='seaborn-whitegrid')
+        ax = plotter.createSubPlot("Mean Plot", self.timeVarName, self.CVarName)
+        ax.plot(sortedTimeTrue, Ytrue[:, 2], 'g', label="50% (Median)  In-vivo", linewidth=2)
+        ax.plot(sortedTimeSimulated, Ysimulated[:, 2], 'g', label="50% (Median) Simulated")
         ax.grid(True)
         ax.legend()
         plotter.show()
