@@ -54,3 +54,4 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Spline parameters are printed in a sorted way
  	- Spline interpolation substituted by monotonic cubic interpolation (pchip)
  	- Compare experiments can now compare more than 2 experiments
+ 	- Mono and two compartments models can now be estimated by convolution (faster for long experiments)

@@ -296,6 +296,21 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         self.yPredicted = self.mergeLists(yPredictedList)
         return copy.copy(self.yPredicted)
 
+    def forwardModelByConvolution(self, parameters, x=None):
+        self.setParameters(parameters)
+        tFImpulse = None
+        if hasattr(self,"tFImpulse"):
+            if self.tFImpulse.get()!="":
+                tFImpulse = float(self.tFImpulse.get())
+
+        yPredictedList = []
+        for n in range(len(self.modelList)):
+            self.modelList[n].tFImpulse = tFImpulse
+            self.modelList[n].forwardModelByConvolution(self.parametersPK,x)
+            yPredictedList.append(self.modelList[n].yPredicted)
+        self.yPredicted = self.mergeLists(yPredictedList)
+        return copy.copy(self.yPredicted)
+
     def imposeConstraints(self,yt):
         self.model.imposeConstraints(yt)
 

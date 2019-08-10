@@ -24,23 +24,16 @@
 # *
 # **************************************************************************
 
-import sys
-import os
 import copy
-import json
 import math
-from os.path import join, relpath
-import numpy as np
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
-from pyworkflow.object import *
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.em.data import *
 from pyworkflow.install.funcs import *
 from .utils import writeMD5, verifyMD5
-from .biopharmaceutics import PKPDDose, PKPDVia
-
+from .biopharmaceutics import PKPDDose, PKPDVia, DrugSource, createDeltaDose, createVia
 
 class PKPDVariable:
     TYPE_NUMERIC = 1000
@@ -941,6 +934,8 @@ class PKPDODEModel(PKPDModelBase2):
         self.tF = None # (min)
         self.deltaT = 0.25 # (min)
         self.drugSource = None
+        self.drugSourceImpulse = None
+        self.tFImpulse = None
         # self.show = False
 
     def setXYValues(self, x, y):
@@ -983,8 +978,10 @@ class PKPDODEModel(PKPDModelBase2):
     def getStateDimension(self):
         return None
 
-    def forwardModel(self, parameters, x=None):
+    def forwardModel(self, parameters, x=None, drugSource=None):
         self.parameters = parameters
+        if drugSource is None:
+            drugSource=self.drugSource
 
         # Simulate the system response
         t = self.t0
@@ -1005,7 +1002,7 @@ class PKPDODEModel(PKPDModelBase2):
             # Internal evolution
             # Runge Kutta's 4th order (http://lpsa.swarthmore.edu/NumInt/NumIntFourth.html)
             k1 = self.F(t,yt)
-            dD1 = self.drugSource.getAmountReleasedAt(t,delta_2)
+            dD1 = drugSource.getAmountReleasedAt(t,delta_2)
             dyD1 = self.G(t, dD1)
             y1 = yt+k1*delta_2+dyD1
             # print("t=",t," y0=",yt," k1=",k1," dD1=",dD1," dyD1=",dyD1," y1=",y1)
@@ -1015,7 +1012,7 @@ class PKPDODEModel(PKPDModelBase2):
             y2 = yt+k2*delta_2+dyD1
             # print("k2=",k2," y2=",y2)
 
-            dD = self.drugSource.getAmountReleasedAt(t,self.deltaT)
+            dD = drugSource.getAmountReleasedAt(t,self.deltaT)
             dyD = self.G(t, dD)
             k3 = self.F(t_delta_2,y2)
             y3 = yt+k3*self.deltaT+dyD
@@ -1055,6 +1052,45 @@ class PKPDODEModel(PKPDModelBase2):
                 self.yPredicted.append(np.interp(x[j],Xt,Yt))
             else:
                 self.yPredicted.append(np.interp(x[j],Xt,Yt[:,j]))
+        return self.yPredicted
+
+    def getImpulseResponse(self, parameters, tImpulse):
+        if self.tFImpulse is None:
+            self.tFImpulse = self.tF
+
+        # Create unit dose
+        if self.drugSourceImpulse is None:
+            self.drugSourceImpulse = DrugSource()
+            dose = createDeltaDose(1.0, via=createVia("Intravenous; iv"), dunits=self.drugSource.getDoseUnits())
+            self.drugSourceImpulse.setDoses([dose], 0.0, self.tFImpulse)
+        y=self.forwardModel(parameters, [tImpulse], self.drugSourceImpulse)
+        return y[0]
+
+    def forwardModelByConvolution(self, parameters, x=None):
+        self.parameters = parameters
+
+        # Simulate the system response
+        Nsamples = int(math.ceil(self.tF/self.deltaT))+1
+        Xt = np.zeros(Nsamples)
+
+        # Get the drug input
+        D = copy.copy(Xt)
+        for i in range(0,Nsamples):
+            t = i*self.deltaT # More accurate than t+= self.deltaT
+            Xt[i]=t
+            D[i]=self.drugSource.getAmountReleasedAt(t,self.deltaT)
+
+        # Get the model impulse response
+        h = self.getImpulseResponse(parameters, Xt)
+        Yt = np.convolve(D,h,'full')[0:len(D)]
+
+        # Get the values at x
+        if x is None:
+            x = self.x
+
+        self.yPredicted = []
+        for j in range(0,self.getResponseDimension()):
+            self.yPredicted.append(np.interp(x[j],Xt,Yt))
         return self.yPredicted
 
     def printOtherParameterization(self):
@@ -1181,7 +1217,11 @@ class PKPDOptimizer:
             self.R2adj = 1-self.R2*(n-1)/(n-p)*(1-self.R2)
         else:
             self.R2adj = -1
-        logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(np.nansum(np.multiply(diff,diff)))))
+        d2=np.nansum(np.multiply(diff,diff))
+        if d2>0:
+            logL = 0.5*(-n*(math.log(2*math.pi)+1-math.log(n)+math.log(d2)))
+        else:
+            logL=np.nan
         self.AIC = 2*p-2*logL
         if n-p-1>0:
             self.AICc = self.AIC+2*p*(p+1)/(n-p-1)
