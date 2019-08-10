@@ -1124,6 +1124,12 @@ class DrugSource:
                 self.parameterNames += viaParameterNames
                 self.vias.append((dose.via,len(viaParameterNames)))
 
+    def getDoseUnits(self):
+        if len(self.parsedDoseList)==0:
+            return PKPDUnit.UNIT_NONE
+        else:
+            return self.parsedDoseList[0].getDoseUnits()
+
     def getAmountReleasedAt(self,t0,dt=0.5):
         doseAmount = 0.0
         for dose in self.parsedDoseList:
@@ -1198,3 +1204,12 @@ class DrugSource:
 
     def getVia(self):
         return self.vias[0][0] # Only the first one is accessible through this function
+
+    def getDprofile(self,t):
+        D = np.zeros(t.shape)
+        Nsamples = D.shape
+        if type(Nsamples)==tuple:
+            Nsamples=Nsamples[0]
+        for i in range(0,Nsamples-1):
+            D[i]=self.getAmountReleasedAt(t[i],t[i+1]-t[i])
+        return D
