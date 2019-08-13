@@ -936,6 +936,7 @@ class PKPDODEModel(PKPDModelBase2):
         self.drugSource = None
         self.drugSourceImpulse = None
         self.tFImpulse = None
+        self.thImpulse = None
         # self.show = False
 
     def setXYValues(self, x, y):
@@ -1081,7 +1082,12 @@ class PKPDODEModel(PKPDModelBase2):
             D[i]=self.drugSource.getAmountReleasedAt(t,self.deltaT)
 
         # Get the model impulse response
-        h = self.getImpulseResponse(parameters, Xt)
+        if self.thImpulse is None:
+            Nsamples = int(math.ceil(self.tFImpulse/self.deltaT))+1
+            self.thImpulse = np.zeros(Nsamples)
+            for i in range(0,Nsamples):
+                self.thImpulse[i] = i*self.deltaT # More accurate than t+= self.deltaT
+        h = self.getImpulseResponse(parameters, self.thImpulse)
         Yt = np.convolve(D,h,'full')[0:len(D)]
 
         # Get the values at x
