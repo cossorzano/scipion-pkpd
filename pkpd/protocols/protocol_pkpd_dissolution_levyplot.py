@@ -51,7 +51,8 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         form.addParam('inputInVitro', params.PointerParam, label="Dissolution profiles in vitro",
                       pointerClass='ProtPKPDDissolutionFit', help='Select an experiment with dissolution profiles')
         form.addParam('inputInVivo', params.PointerParam, label="Dissolution profiles in vivo",
-                      pointerClass='ProtPKPDDeconvolve', help='Select an experiment with dissolution profiles')
+                      pointerClass='ProtPKPDDeconvolve, ProtPKPDDeconvolutionWagnerNelson, ProtPKPDDeconvolutionLooRiegelman, ProtPKPDDeconvolveFourier',
+                      help='Select an experiment with dissolution profiles')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
