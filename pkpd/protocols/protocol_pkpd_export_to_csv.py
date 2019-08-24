@@ -155,10 +155,10 @@ class ProtPKPDExportToCSV(ProtPKPD):
     def _validate(self):
         retval=[]
         experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
-        if not self.tVar.get() in experiment.variables.keys():
-            retval.append("Cannot find %s among the experiment variables",self.tVar.get())
-        if not self.xVar.get() in experiment.variables.keys():
-            retval.append("Cannot find %s among the experiment variables",self.xVar.get())
+        if format==1 and not self.tVar.get() in experiment.variables.keys():
+            retval.append("Cannot find %s among the experiment variables"%self.tVar.get())
+        if format==1 and not self.xVar.get() in experiment.variables.keys():
+            retval.append("Cannot find %s among the experiment variables"%self.xVar.get())
         return retval
 
     def _summary(self):
