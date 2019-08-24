@@ -41,65 +41,124 @@ class PDGenericModel(PDModel):
     pass
 
 
-class PDLinear(PDGenericModel):
+class PDPolynomial(PDGenericModel):
+    def __init__(self):
+        self.N = 0
+
     def forwardModel(self, parameters, x=None):
         if x==None:
             x=self.x
         xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
         self.yPredicted = np.zeros(xToUse.shape[0])
-        e0 = parameters[0]
-        s = parameters[1]
-        self.yPredicted = e0+s*xToUse
+        self.yPredicted = np.polyval(parameters,xToUse)
         self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
         return self.yPredicted
 
     def getDescription(self):
-        return "Linear (%s)"%self.__class__.__name__
+        return "Polynomial of degree %d (%s)"%(self.N, self.__class__.__name__)
 
     def prepare(self):
         if self.bounds == None:
             xToUse=self.x[0] # From [array(...)] to array(...)
             yToUse=self.y[0] # From [array(...)] to array(...)
-            p = np.polyfit(xToUse,yToUse,1)
-            print("First estimate of linear term: ")
-            print("Y=%f+%f*X"%(p[1],p[0]))
+            p = np.polyfit(xToUse,yToUse,self.N)
+            print("First estimate of polynomial: ")
+            print(self.getEquation(p))
 
             self.bounds = []
-            self.bounds.append((0.1*p[1],10*p[1]))
-            self.bounds.append((0.1*p[0],10*p[0]))
+            for i in range(self.N+1):
+                self.bounds.append((-10*np.abs(p[i]),10*np.abs(p[i])))
 
     def printSetup(self):
         print("Model: %s"%self.getModelEquation())
-        print("Bounds: "+str(self.bounds))
+        print("Bounds: "+str(getattr(self,"bounds",[])))
 
     def getModelEquation(self):
-        return "Y=e0+s*X"
+        toPrint=""
+        for i in range(0,self.N+1):
+            if i>0:
+                toPrint+="+"
+            toPrint+="e%d*X^%d"%(self.N-i,self.N-i)
+        return toPrint
 
-    def getEquation(self):
-        toPrint="Y=(%f)+(%f)*X"%(self.parameters[0],self.parameters[1])
+    def getEquation(self, p=None):
+        if p is None:
+            p=self.parameters
+        toPrint=""
+        for i in range(0,self.N+1):
+            if i>0:
+                toPrint+="+"
+            toPrint+="(%f)*X^%d"%(p[i],self.N-i)
         return toPrint
 
     def getParameterNames(self):
-        return ['e0','s']
+        retval = []
+        for i in range(0,self.N+1):
+            retval+=['e%d'%(self.N-i)]
+        return retval
 
     def getParameterDescriptions(self):
-        return ['Automatically fitted model of the form Y=e0+s*X']*self.getNumberOfParameters()
+        return ['Automatically fitted model of the form Y=%s'%self.getModelEquation()]*self.getNumberOfParameters()
 
     def calculateParameterUnits(self,sample):
         yunits = self.experiment.getVarUnits(self.yName)
         xunits = self.experiment.getVarUnits(self.xName)
         sunits = divideUnits(yunits,xunits)
-        self.parameterUnits=[yunits, sunits]
+        self.parameterUnits=[]
+        for i in range(0,self.N+1):
+            deg=self.N-i
+            if deg==0:
+                self.parameterUnits.append(yunits)
+            elif deg==1:
+                self.parameterUnits.append(sunits)
+            else:
+                self.parameterUnits.append(PKPDUnit.UNIT_NONE)
         return self.parameterUnits
 
     def areParametersSignificant(self, lowerBound, upperBound):
         retval=[]
-        retval.append(lowerBound[0]>0 or upperBound[0]<0)
-        retval.append(lowerBound[1]>1 or upperBound[1]<1)
+        for i in range(0,self.N+1):
+            retval.append(lowerBound[i]>0 or upperBound[i]<0)
         return retval
 
     def areParametersValid(self, p):
         return True
+
+class PDPolynomial1(PDPolynomial):
+    def __init__(self):
+        self.N=1
+
+class PDPolynomial2(PDPolynomial):
+    def __init__(self):
+        self.N=2
+
+class PDPolynomial3(PDPolynomial):
+    def __init__(self):
+        self.N=3
+
+class PDPolynomial4(PDPolynomial):
+    def __init__(self):
+        self.N=4
+
+class PDPolynomial5(PDPolynomial):
+    def __init__(self):
+        self.N=5
+
+class PDPolynomial6(PDPolynomial):
+    def __init__(self):
+        self.N=6
+
+class PDPolynomial7(PDPolynomial):
+    def __init__(self):
+        self.N=7
+
+class PDPolynomial8(PDPolynomial):
+    def __init__(self):
+        self.N=8
+
+class PDPolynomial9(PDPolynomial):
+    def __init__(self):
+        self.N=9
 
 
 class PDLogLinear(PDGenericModel):

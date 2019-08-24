@@ -55,20 +55,21 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
                       help='Valid units are none, g, h, ...')
         form.addParam('predictedComment', params.StringParam, label="Comment for Y", default="Simulated pharmacodynamic feature",
                       help='This comment will appear in the output experiment')
-        form.addParam('modelType', params.EnumParam, choices=["Linear","Log-linear","Saturated","Sigmoid","Gompertz",
+        form.addParam('modelType', params.EnumParam, choices=["Linear (Polynomial 1)","Log-linear","Saturated","Sigmoid","Gompertz",
                                                               "Logistic1 ","Logistic 2","Logistic 3","Logistic 4",
                                                               "Richards","Morgan-Mercer-Flodin","Weibull"],
                       label="Generic model", default=0,
-                      help='Linear: Y=e0+s*X\nLog-linear: Y=m*log(X-X0)\n'\
+                      help='Linear: Y=e1*X+e0\nLog-linear: Y=m*log(X-X0)\n'\
                            'Saturated: Y=emin+emax*X/(ec50+X)\nSigmoid: Y=e0+(emax*(X**h)/((eC50**h)+(X**h)))\n'\
                            'Gompertz: Y=e0+a*exp(-exp(b-g*X))\nLogistic 1: Y=e0+(a/(1+exp(b-g*X)))\n'\
                            'Logistic 2: Y=e0+(1/(a+exp(b-g*X)))\nLogistic 3: Y=e0+(a/(1+b*exp(-g*X)))\n'\
                            'Logistic 4: Y=e0+(1/(a+b*exp(-g*X)))\nRichards: Y=e0+(a/((1+exp(b-g*X))^(1/d)))\n'\
-                           'Morgan-Mercer-Flodin: Y=e0+((b*g+a*(X^d))/(g+(X^d)))\nWeibull: Y=a-b*exp(-g*(X^d))')
+                           'Morgan-Mercer-Flodin: Y=e0+((b*g+a*(X^d))/(g+(X^d)))\nWeibull: Y=a-b*exp(-g*(X^d))\n'\
+                           'Polynomial n: en*X^n+...+e1*X+e0')
 
         form.addParam('paramValues', params.StringParam, label="Parameter values", default="",
                       help='Parameter values for the simulation.\nExample: 3.5;-1 is 3.5 for the first parameter, -1 for the second parameter\n'
-                           'Linear: e0;s\n'\
+                           'Linear: e1;e0\n'\
                            'Log-linear: m;X0\n'\
                            'Saturated: e0;emax;eC50\n'\
                            'Sigmoid: e0;emax;eC50;h\n'\
@@ -79,7 +80,8 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
                            'Logistic 4: e0;a;b;g\n'\
                            'Richards: e0;a;b;g;d\n'\
                            'Morgan-Mercer-Flodin: e0;b;g;a;d\n'\
-                           'Weibull: a;b;g;d\n')
+                           'Weibull: a;b;g;d\n'\
+                           'Polynomial n: en; ...; e1; e0\n')
         form.addParam('reportX', params.StringParam, label="Evaluate at X=", default="", expertLevel=LEVEL_ADVANCED,
                       help='Evaluate the model at these X values\nExample 1: [0,5,10,20,40,100]\nExample 2: 0:2:10, from 0 to 10 in steps of 2')
         form.addParam('noiseType', params.EnumParam, label="Type of noise to add", choices=["None","Additive","Multiplicative"],
@@ -112,7 +114,7 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
         # Setup model
         self.printSection("Model setup")
         if self.modelType.get()==0:
-            model = PDLinear()
+            model = PDPolynomial1()
         elif self.modelType.get()==1:
             model = PDLogLinear()
         elif self.modelType.get()==2:
@@ -135,6 +137,22 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
             model = PDMorgan()
         elif self.modelType.get()==11:
             model = PDWeibull()
+        elif self.modelType.get()==12:
+            model = PDPolynomial2()
+        elif self.modelType.get()==13:
+            model = PDPolynomial3()
+        elif self.modelType.get()==14:
+            model = PDPolynomial4()
+        elif self.modelType.get()==15:
+            model = PDPolynomial5()
+        elif self.modelType.get()==16:
+            model = PDPolynomial6()
+        elif self.modelType.get()==17:
+            model = PDPolynomial7()
+        elif self.modelType.get()==18:
+            model = PDPolynomial8()
+        elif self.modelType.get()==19:
+            model = PDPolynomial9()
 
         model.setExperiment(self.experiment)
         model.setXVar(self.predictor.get())
@@ -220,6 +238,22 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
             modelTypeStr == "Morgan-Mercer-Flodin"
         elif self.modelType.get() == 11:
             modelTypeStr == "Weibull"
+        elif self.modelType.get() == 12:
+            modelTypeStr == "Polynomial 2"
+        elif self.modelType.get() == 13:
+            modelTypeStr == "Polynomial 3"
+        elif self.modelType.get() == 14:
+            modelTypeStr == "Polynomial 4"
+        elif self.modelType.get() == 15:
+            modelTypeStr == "Polynomial 5"
+        elif self.modelType.get() == 16:
+            modelTypeStr == "Polynomial 6"
+        elif self.modelType.get() == 17:
+            modelTypeStr == "Polynomial 7"
+        elif self.modelType.get() == 18:
+            modelTypeStr == "Polynomial 8"
+        elif self.modelType.get() == 19:
+            modelTypeStr == "Polynomial 9"
 
         msg.append("Variable %s added to experiment by simulation of a %s model"%(self.predicted.get(),modelTypeStr))
         msg.append("Parameter values: %s"%self.paramValues)
