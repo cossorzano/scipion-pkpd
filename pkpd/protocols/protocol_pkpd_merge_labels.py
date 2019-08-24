@@ -32,6 +32,7 @@ from pkpd.pkpd_units import PKPDUnit
 
 class ProtPKPDMergeLabels(ProtPKPD):
     """ Merge the labels of Experiment 2 into the samples of Experiment 1.\n
+        If a label is in Experiment 1 and in Experiment 2, it remains the value from Experiment 1.
         Protocol created by http://www.kinestatpharma.com\n """
     _label = 'merge labels'
 
@@ -39,10 +40,10 @@ class ProtPKPDMergeLabels(ProtPKPD):
 
     def _defineParams(self, form):
         form.addSection('Input')
-        form.addParam('inputExperiment1', params.PointerParam, label="Experiment 1", important=True,
+        form.addParam('inputExperiment1', params.PointerParam, label="Experiment 1",
                       pointerClass='PKPDExperiment',
                       help='Labels from Experiment 2 will be merged into Experiment 1. If a label already exists in Experiment 1, this has preference.')
-        form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2", important=True,
+        form.addParam('inputExperiment2', params.PointerParam, label="Experiment 2",
                       pointerClass='PKPDExperiment',
                       help='Labels from Experiment 2 will be merged into Experiment 1. If a label already exists in Experiment 1, this has preference.')
 
@@ -63,14 +64,14 @@ class ProtPKPDMergeLabels(ProtPKPD):
             if variable.role == PKPDVariable.ROLE_LABEL:
                 if not varName in self.experiment.variables:
                     labelsToAdd.append(variable)
-                    self.experiment.variables[varName] = variable
 
         for sampleName, sample in self.experiment.samples.iteritems():
             if sampleName in self.experiment2.samples:
                 sample2 = self.experiment2.samples[sampleName]
                 for variable in labelsToAdd:
                     varValue = sample2.descriptors[variable.varName]
-                    self.experiment.addParameterToSample(sampleName, variable.varName, variable.units, variable.comment, varValue)
+                    self.experiment.addParameterToSample(sampleName, variable.varName, variable.units.unit, variable.comment,
+                                                         varValue)
 
         self.writeExperiment(self.experiment,self._getPath("experiment.pkpd"))
 
