@@ -51,7 +51,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         form.addParam('inputInVitro', params.PointerParam, label="Dissolution profiles in vitro",
                       pointerClass='ProtPKPDDissolutionFit', help='Select an experiment with dissolution profiles')
         form.addParam('inputInVivo', params.PointerParam, label="Dissolution profiles in vivo",
-                      pointerClass='ProtPKPDDeconvolve, ProtPKPDDeconvolutionWagnerNelson, ProtPKPDDeconvolutionLooRiegelman, ProtPKPDDeconvolveFourier',
+                      pointerClass='ProtPKPDDeconvolve, ProtPKPDDeconvolutionWagnerNelson, ProtPKPDDeconvolutionLooRiegelman, ProtPKPDDeconvolveFourier, PKPDExperiment',
                       help='Select an experiment with dissolution profiles')
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -61,7 +61,13 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
 
     #--------------------------- STEPS functions --------------------------------------------
     def getInVivoProfiles(self):
-        experiment = self.readExperiment(self.inputInVivo.get().outputExperiment.fnPKPD)
+        if hasattr(self.inputInVivo.get(),"outputExperiment"):
+            fnPKPD = self.inputInVivo.get().outputExperiment.fnPKPD
+        elif hasattr(self.inputInVivo.get(),"fnPKPD"):
+            fnPKPD = self.inputInVivo.get().fnPKPD
+        else:
+            raise Exception("Cannot find a suitable filename for reading the experiment")
+        experiment = self.readExperiment(fnPKPD)
         allY = []
         sampleNames = []
         for sampleName, sample in experiment.samples.iteritems():

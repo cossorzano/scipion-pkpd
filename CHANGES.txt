@@ -58,3 +58,5 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Polynomials added as pharmacodynamic models
  	- PK and PD labels can now be merged with merge_labels
  	- Data can be imported from Web Plot Digitizer CSVs
+ 	- IVIVC can now take any experiment for in vivo, in this way, experiments can be merged or some animals removed
+ 
