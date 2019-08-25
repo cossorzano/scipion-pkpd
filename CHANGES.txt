@@ -57,3 +57,4 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Mono and two compartments models can now be estimated by convolution (faster for long experiments)
  	- Polynomials added as pharmacodynamic models
  	- PK and PD labels can now be merged with merge_labels
+ 	- Data can be imported from Web Plot Digitizer CSVs

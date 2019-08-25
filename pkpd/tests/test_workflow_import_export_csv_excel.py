@@ -39,6 +39,7 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
         cls.exptFn = cls.dataset.getFile('excel')
         cls.fnExcelInvivo = cls.dataset.getFile('excelinvivo')
         cls.fnExcelInvivoLong = cls.dataset.getFile('excelinvivoLong')
+        cls.fnWebPlot = cls.dataset.getFile('webplot')
 
     def testDissolutionWorkflow(self):
         print "Import Excel"
@@ -93,6 +94,22 @@ class TestImportExportCSVExcelWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(protImport2.outputExperiment.fnPKPD)
         self.assertTrue(len(experiment.samples) == 12)
+
+
+        print "Import from WebPlotDigitizer"
+        protImport = self.newProtocol(ProtPKPDImportFromCSV,
+                                       objLabel='pkpd - import from web plot digitizer',
+                                       variables='t;h;numeric;time; ;; Cp;ug/L;numeric;measurement; Plasma concentration',
+                                       vias='Oral; spline2',
+                                       doses='Bolus;via=Oral;bolus;t=0 h; d=40000 ug',
+                                       noHeader=True,
+                                       delimiter=',',
+                                       inputFile=self.fnWebPlot)
+        self.launchProtocol(protImport)
+        self.assertIsNotNone(protImport.outputExperiment.fnPKPD, "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(protImport.outputExperiment.fnPKPD)
+        self.assertTrue(len(experiment.samples) == 1)
 
 
         print "Import from Excel"

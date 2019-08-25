@@ -185,6 +185,7 @@ PKPDDataSet(name='Dissolution', folder='Dissolution',
                'excelinvivo': 'invivo.xlsx',
                'excelinvivoLong': 'invivoLong.xlsx',
                'excelinvivoMean': 'invivoMean.xlsx',
+               'webplot': 'dataFromWebPlotDigitizer.csv',
                })
 
 PKPDDataSet(name='model',  folder='model',

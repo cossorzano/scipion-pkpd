@@ -203,6 +203,7 @@ class ProtPKPDImportFromText(ProtPKPD):
 
 class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
     """ Import experiment from CSV.\n
+        You may use WebPlotDigitizer (https://apps.automeris.io/wpd) to generate this CSV, or Excel.
         Protocol created by http://www.kinestatpharma.com\n"""
     _label = 'import from csv'
 
@@ -210,34 +211,56 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
 
     def _defineParams(self, form):
         ProtPKPDImportFromText._defineParams(self,form,"CSV")
+        form.addParam('noHeader', params.BooleanParam, default=False, label="No header",
+                      help="There is no header in the CSV (e.g., this is the case of data taken from "
+                      "WebPlotDigitizer, https://apps.automeris.io/wpd). If this is the case, "
+                      "it is assumed that the columns of the CSV are in the same order as the variables are defined.")
+        form.addParam('delimiter', params.StringParam, label='CSV Delimiter', default=";", help="Delimiter between fields in the CSV")
+        form.addParam('sampleNameForm', params.StringParam, default="Individual", condition="noHeader",
+                      label="Sample name")
 
     def readTextFile(self):
         fh=open(self.inputFile.get())
         lineNo = 1
         for line in fh.readlines():
-            tokens = line.split(';')
+            tokens = line.split(self.delimiter.get())
             if len(tokens)==0:
                 continue
             if lineNo==1:
                 listOfVariables=[]
                 listOfSkips=[]
-                iSampleName=-1
-                varNo=0
-                for token in tokens:
-                    varName=token.strip()
-                    if varName=="SampleName":
-                        iSampleName=varNo
-                    listOfVariables.append(varName)
-                    listOfSkips.append(not (varName in self.experiment.variables))
-                    varNo+=1
-                if iSampleName==-1:
-                    raise Exception("Cannot find the SampleName in: %s\n"%line)
+                if not self.noHeader:
+                    iSampleName=-1
+                    varNo=0
+                    for token in tokens:
+                        varName=token.strip()
+                        if varName=="SampleName":
+                            iSampleName=varNo
+                        listOfVariables.append(varName)
+                        listOfSkips.append(not (varName in self.experiment.variables))
+                        varNo+=1
+                    if iSampleName==-1:
+                        raise Exception("Cannot find the SampleName in: %s\n"%line)
+                else:
+                    sampleName = self.sampleNameForm.get()
+                    for line in self.variables.get().replace('\n', ';;').split(';;'):
+                        tokens = line.split(';')
+                        if len(tokens) != 5:
+                            print("Skipping variable: ", line)
+                            ok = False
+                            continue
+                        varname = tokens[0].strip()
+                        listOfVariables.append(varname)
+                        listOfSkips.append(False)
+                    print("listOfVariables",listOfVariables)
+
             else:
                 if len(tokens)!=len(listOfSkips):
                     print("Skipping line: %s"%line)
                     print("   It does not have the same number of values as the header")
                 varNo = 0
-                sampleName = tokens[iSampleName].strip()
+                if not self.noHeader:
+                    sampleName = tokens[iSampleName].strip()
                 if not sampleName in self.experiment.samples:
                     self.addSample(sampleName,[sampleName])
                 samplePtr=self.experiment.samples[sampleName]
@@ -365,12 +388,12 @@ class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
                     exec ("samplePtr.measurement_%s=%s" % (measurementPattern[jidx], allSamples[sampleName][jidx]))
 
 
-def getSampleNamesFromCSVfile(fnCSV):
+def getSampleNamesFromCSVfile(fnCSV, delimiter=';'):
     sampleNames = []
     fh=open(fnCSV)
     lineNo = 1
     for line in fh.readlines():
-        tokens = line.split(';')
+        tokens = line.split(delimiter)
         if len(tokens)==0:
             continue
         if lineNo==1:
@@ -395,11 +418,11 @@ def getSampleNamesFromCSVfile(fnCSV):
     return sampleNames
 
 
-def getVarNamesFromCSVfile(fnCSV):
+def getVarNamesFromCSVfile(fnCSV, delimiter=';'):
     varNames = []
     fh=open(fnCSV)
     for line in fh.readlines():
-        tokens = line.split(';')
+        tokens = line.split(delimiter)
         if len(tokens)==0:
             continue
         for token in tokens:
