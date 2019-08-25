@@ -87,10 +87,11 @@ def verifyMD5(fn):
         fn=fnFile
     return getMD5String(fn)==md5StringFile
 
-def uniqueFloatValues(x,y):
+def uniqueFloatValues(x,y, TOL=-1):
     xp=np.asarray(x,dtype=np.float64)
     yp=np.asarray(y,dtype=np.float64)
-    TOL = np.max(xp.flat) / 1e5
+    if TOL<0:
+        TOL = np.max(xp.flat) / (xp.size*1e3)
     A = np.zeros((xp.size,), dtype=[('x','f8'),('y','f8')])
     A['x']=xp.flat
     A['y']=yp.flat
