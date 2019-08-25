@@ -341,6 +341,100 @@ class DissolutionWeibull(DissolutionModel):
         return self.parameterUnits
 
 
+class DissolutionDoubleWeibull(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x is None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            idx=1
+        else:
+            tlag=0.0
+            idx=0
+        Vmax=parameters[idx]
+        lambdda1=parameters[idx+1]
+        b1=parameters[idx+2]
+        F1=parameters[idx+3]
+        tlag2=parameters[idx+4]
+        lambdda2=parameters[idx+5]
+        b2=parameters[idx+6]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+        argument1 = lambdda1*np.power(xToUse,b1)
+        xToUse2=np.clip(xToUse-tlag-tlag2,0.0,None)
+        argument2 = lambdda2*np.power(xToUse2,b2)
+
+        self.yPredicted = Vmax*(F1*(1-np.exp(-argument1))+(1-F1)*(1-np.exp(-argument2)))
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Double Weibull dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)
+            tmax=np.max(xToUse)
+            lambdda=5/tmax
+            print("First estimate of Double Weibull order dissolution: ")
+            print("Y=(%f)*(1-exp(-(%f)*t)"%(Vmax,lambdda))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax)) # Vmax
+            self.bounds.append((0.1*lambdda,10*lambdda)) # lambda1
+            self.bounds.append((0.0001,5.0)) # b1
+            self.bounds.append((0,1)) # F1
+            self.bounds.append((0.0,tmax)) # tlag2
+            self.bounds.append((0.1*lambdda,10*lambdda)) # lambda2
+            self.bounds.append((0.0001,5.0)) # b2
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            tStr="(t-tlag)"
+        else:
+            tStr="t"
+        return "Y=Vmax*(F1*(1-exp(-lambda1*%s^b1))+(1-F1)*(1-exp(-lambda2*(%s-tlag2)^b2)))"%(tStr,tStr)
+
+    def getEquation(self):
+        if self.allowTlag:
+            tStr="(t-(%f))"%self.parameters[0]
+            idx=1
+        else:
+            tStr="t"
+            idx=0
+        Vmax=self.parameters[idx]
+        lambdda1=self.parameters[idx+1]
+        b1=self.parameters[idx+2]
+        F1=self.parameters[idx+3]
+        tlag2=self.parameters[idx+4]
+        lambdda2=self.parameters[idx+5]
+        b2=self.parameters[idx+6]
+        toPrint="Y=(%f)*((%f)*(1-exp(-(%f)*%s^(%f)))+(%f)*(1-exp(-(%f)*(%s-(%f))^(%f))))"%\
+                (Vmax,F1,lambdda1,tStr,b1,1-F1,lambdda2,tStr,tlag2,b2)
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','lambda1','b1','F1','tlag2','lambda2','b2']
+        else:
+            return ['Vmax','lambda1','b1','F1','tlag2','lambda2','b2']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        x1units = inverseUnits(xunits)
+        self.parameterUnits = []
+        if self.allowTlag:
+            self.parameterUnits.append(xunits)
+        self.parameterUnits+=[yunits, x1units, PKPDUnit.UNIT_NONE, PKPDUnit.UNIT_NONE, xunits, x1units, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+
 class DissolutionHiguchi(DissolutionModel):
     def forwardModel(self, parameters, x=None):
         if x is None:
