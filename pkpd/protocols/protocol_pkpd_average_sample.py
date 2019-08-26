@@ -48,6 +48,8 @@ class ProtPKPDAverageSample(ProtPKPD):
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling. This is only valid when the label to compare is a measurement.')
+        form.addParam('condition', params.StringParam, default="", label="Condition",
+                      help='You must use available labels. Example: $(Oral_F0)<0.25 and $(sex)=="Female"')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
@@ -64,6 +66,8 @@ class ProtPKPDAverageSample(ProtPKPD):
 
         # General
         self.experiment.general["title"]="Average of "+experiment.general["title"]
+        if self.condition.get()!="":
+            self.experiment.general["title"]+=" Condition: %s"%self.condition.get()
         self.experiment.general["comment"]=copy.copy(experiment.general["comment"])
         for key, value in experiment.general.iteritems():
             if not (key in self.experiment.general):
@@ -74,6 +78,11 @@ class ProtPKPDAverageSample(ProtPKPD):
             if not (key in self.experiment.variables):
                 self.experiment.variables[key] = copy.copy(value)
 
+        # Vias
+        for key, value in experiment.vias.iteritems():
+            if not (key in self.experiment.vias):
+                self.experiment.vias[key] = copy.copy(value)
+
         # Doses
         doseName = None
         for key, value in experiment.doses.iteritems():
@@ -82,15 +91,18 @@ class ProtPKPDAverageSample(ProtPKPD):
             doseName = dose.doseName
 
         # Samples
+        self.printSection("Averaging")
         self.experiment.samples["avg"] = PKPDSample()
         tokens=["AverageSample"]
         if doseName is not None:
             tokens.append("dose=%s"%doseName)
         self.experiment.samples["avg"].parseTokens(tokens, self.experiment.variables, self.experiment.doses,
                                                    self.experiment.groups)
+
         for mvarName in mvarNames:
             observations={}
-            for sampleName, sample in experiment.samples.iteritems():
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
+                print("%s participates in the average"%sampleName)
                 t, y = sample.getXYValues(tvarName,mvarName)
                 t=t[0] # [array]
                 y=y[0] # [array]
@@ -100,7 +112,10 @@ class ProtPKPDAverageSample(ProtPKPD):
                         observations[ti]=[]
                     observations[ti].append(y[i])
             for ti in observations:
-                observations[ti]=np.mean(observations[ti])
+                if len(observations[ti])>0:
+                    observations[ti]=np.mean(observations[ti])
+                else:
+                    observations[ti]=np.nan
 
             t=[]
             yavg=[]
@@ -115,6 +130,7 @@ class ProtPKPDAverageSample(ProtPKPD):
                 yavg = B(t)
             self.experiment.samples["avg"].addMeasurementColumn(tvarName,t)
             self.experiment.samples["avg"].addMeasurementColumn(mvarName,yavg)
+        print(" ")
 
         # Print and save
         self.writeExperiment(self.experiment,self._getPath("experiment.pkpd"))
