@@ -52,6 +52,7 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         form.addParam('modelType', params.EnumParam, choices=["Zero order","First order","Fractional","Weibull",
                                                               "Double Weibull", "Higuchi",
                                                               "Korsmeyer-Peppas","Hixson-Crowell","Hopfenberg","Hill",
+                                                              "Makoid-Banakar",
                                                               "Splines2", "Splines3", "Splines4", "Spline5", "Splines6",
                                                               "Splines7", "Splines8", "Splines9", "Splines10"],
                       label="Dissolution model", default=3,
@@ -65,6 +66,7 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Hixson-Crowell: Y=Ymax*(1-(1-K*t)^3)\n'
                            'Hopfenberg: Y=Ymax*(1-(1-K*t)^m)\n'
                            'Hill: Y = Ymax*t^d/(g^d+t^d)\n'
+                           'Makoid-Banakar: Ymax*(t/tmax)^b*exp(b*(1-t/tmax))\n'
                            'SplinesN: Y= Ymax*Bspline(t;N,tmax)\n')
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=0,
                       expertLevel=LEVEL_ADVANCED,
@@ -82,6 +84,7 @@ are independent, which are not. Use Bootstrap estimates instead.\n
                            'Hixson-Crowell: [tlag]; Ymax; K\n'
                            'Hopfenberg: [tlag]; Ymax; K; m\n'
                            'Hill: [tlag]; Ymax; g; d\n'
+                           'Makoid-Banakar: [tlag]; Ymax; Tmax; b\n'
                            'SplinesN: [tlag]; Ymax; tmax; c1; c2; ...; cN\n')
         form.addParam('confidenceInterval', params.FloatParam, label="Confidence interval=", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters')
@@ -122,22 +125,24 @@ are independent, which are not. Use Bootstrap estimates instead.\n
         elif self.modelType.get() == 9:
             return DissolutionHill()
         elif self.modelType.get() == 10:
-            return DissolutionSplines2()
+            return DissolutionMakoidBanakar()
         elif self.modelType.get() == 11:
-            return DissolutionSplines3()
+            return DissolutionSplines2()
         elif self.modelType.get() == 12:
-            return DissolutionSplines4()
+            return DissolutionSplines3()
         elif self.modelType.get() == 13:
-            return DissolutionSplines5()
+            return DissolutionSplines4()
         elif self.modelType.get() == 14:
-            return DissolutionSplines6()
+            return DissolutionSplines5()
         elif self.modelType.get() == 15:
-            return DissolutionSplines7()
+            return DissolutionSplines6()
         elif self.modelType.get() == 16:
-            return DissolutionSplines8()
+            return DissolutionSplines7()
         elif self.modelType.get() == 17:
-            return DissolutionSplines9()
+            return DissolutionSplines8()
         elif self.modelType.get() == 18:
+            return DissolutionSplines9()
+        elif self.modelType.get() == 19:
             return DissolutionSplines10()
 
     def setupFromFormParameters(self):

@@ -786,6 +786,84 @@ class DissolutionHill(DissolutionModel):
         return self.parameterUnits
 
 
+class DissolutionMakoidBanakar(DissolutionModel):
+    def forwardModel(self, parameters, x=None):
+        if x is None:
+            x=self.x
+        xToUse = x[0] if type(x)==list else x # From [array(...)] to array(...)
+        self.yPredicted = np.zeros(xToUse.shape[0])
+        if self.allowTlag:
+            tlag=parameters[0]
+            idx=1
+        else:
+            tlag=0.0
+            idx=0
+        Vmax=parameters[idx]
+        Tmax=parameters[idx+1]
+        b=parameters[idx+2]
+        xToUse=np.clip(xToUse-tlag,0.0,None) # u(t-tlag)
+        xToUseTmax=xToUse/Tmax
+
+        self.yPredicted = np.clip(Vmax*np.power(xToUseTmax,b)*np.exp(b*(1-xToUseTmax)),0.0,Vmax)
+        self.yPredicted = [self.yPredicted] # From array(...) to [array(...)]
+        return self.yPredicted
+
+    def getDescription(self):
+        return "Makoid-Banakar dissolution (%s)"%self.__class__.__name__
+
+    def prepare(self):
+        if self.bounds == None:
+            xToUse=self.x[0] # From [array(...)] to array(...)
+            yToUse=self.y[0] # From [array(...)] to array(...)
+            Vmax = np.max(yToUse)
+            tmax=np.max(xToUse)
+            b=1.0
+            print("First estimate of Makoid-Banakar order dissolution: ")
+            print("Y=(%f)*(t/%f)*exp(-t/%f)"%(Vmax,tmax,tmax))
+
+            self.bounds = []
+            if self.allowTlag:
+                self.bounds.append((0.0,np.max(xToUse)))
+            self.bounds.append((0.1*Vmax,10*Vmax)) # Vmax
+            self.bounds.append((0.0,tmax)) # tmax
+            self.bounds.append((0.0001,5.0)) # b
+
+    def getModelEquation(self):
+        if self.allowTlag:
+            tStr="(t-tlag)/tmax"
+        else:
+            tStr="t/tmax"
+        return "Y=Vmax*((%s)^b*exp(b*(1-%s)) if %s<1 and Vmax if %s>=1"%(tStr,tStr,tStr,tStr)
+
+    def getEquation(self):
+        if self.allowTlag:
+            tStr="(t-(%f))/(%f)"%(self.parameters[0],self.parameters[2])
+            idx=1
+        else:
+            tStr="t/(%f)"%self.parameters[1]
+            idx=0
+        Vmax=self.parameters[idx]
+        b=self.parameters[idx+2]
+        toPrint="Y=(%f)*(%s)^(%s)*exp((%f)*(1-%s)) if %s<1 and %f if %s>=1"%\
+                (Vmax,tStr,b,b,tStr,tStr,Vmax,tStr)
+        return toPrint
+
+    def getParameterNames(self):
+        if self.allowTlag:
+            return ['tlag','Vmax','tmax','b']
+        else:
+            return ['Vmax','tmax','b']
+
+    def calculateParameterUnits(self,sample):
+        yunits = self.experiment.getVarUnits(self.yName)
+        xunits = self.experiment.getVarUnits(self.xName)
+        self.parameterUnits = []
+        if self.allowTlag:
+            self.parameterUnits.append(xunits)
+        self.parameterUnits+=[yunits, xunits, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+
 class DissolutionSplinesGeneric(DissolutionModel):
     def __init__(self):
         self.nknots=0
