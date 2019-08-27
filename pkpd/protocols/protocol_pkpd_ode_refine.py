@@ -227,7 +227,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
 
                 # Add the parameters to the sample and experiment
                 for varName, varUnits, description, varValue in izip(self.getParameterNames(), self.parameterUnits, self.getParameterDescriptions(), self.parameters):
-                    self.experiment.addParameterToSample(sampleName, varName, varUnits, description, varValue)
+                    self.experiment.addParameterToSample(sampleName, varName, varUnits, description, varValue, rewrite=True)
 
                 n+=1
 
