@@ -134,7 +134,8 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
         for sampleName, sample in self.experiment.samples.iteritems():
             sample.interpretDose()
             if len(sample.parsedDoseList)>0:
-                dose = createDeltaDose(1.0, via=createVia("Intravenous; iv"), dunits=sample.parsedDoseList[0].dunits)
+                dose = createDeltaDose(1.0, via=createVia("Intravenous; iv", self.experiment),
+                                       dunits=sample.parsedDoseList[0].dunits)
         if dose is None:
             print("Cannot find any dose among the samples")
             return

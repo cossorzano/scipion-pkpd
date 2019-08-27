@@ -516,7 +516,7 @@ class PKPDExperiment(EMObject):
                         print("Skipping via: ",line)
                         continue
                     vianame = tokens[0].strip()
-                    self.vias[vianame] = PKPDVia()
+                    self.vias[vianame] = PKPDVia(ptrExperiment=self)
                     self.vias[vianame].parseTokens(tokens)
 
             elif state==PKPDExperiment.READING_DOSES:
@@ -775,6 +775,7 @@ class PKPDModelBase(object):
         self.parameterUnits = None
         self.xName = None
         self.yName = None
+        self.experiment = None
 
     def setExperiment(self, experiment):
         self.experiment = experiment
@@ -1062,7 +1063,8 @@ class PKPDODEModel(PKPDModelBase2):
         # Create unit dose
         if self.drugSourceImpulse is None:
             self.drugSourceImpulse = DrugSource()
-            dose = createDeltaDose(1.0, via=createVia("Intravenous; iv"), dunits=self.drugSource.getDoseUnits())
+            dose = createDeltaDose(1.0, via=createVia("Intravenous; iv",self.experiment),
+                                   dunits=self.drugSource.getDoseUnits())
             self.drugSourceImpulse.setDoses([dose], 0.0, self.tFImpulse)
         y=self.forwardModel(parameters, [tImpulse], self.drugSourceImpulse)
         return y[0]

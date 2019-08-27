@@ -29,13 +29,14 @@ Biopharmaceutics: Drug sources and how they dissolve
 import copy
 import math
 import numpy as np
-from .pkpd_units import PKPDUnit, changeRateToWeight
+from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits
 from pkpd.utils import uniqueFloatValues
 from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
 
 class BiopharmaceuticsModel:
     def __init__(self):
         self.parameters = []
+        self.ptrExperiment = None
 
     def getNumberOfParameters(self):
         return len(self.getParameterNames())
@@ -48,6 +49,18 @@ class BiopharmaceuticsModel:
 
     def calculateParameterUnits(self,sample):
         pass
+
+    def setExperiment(self, ptrExperiment):
+        self.ptrExperiment = ptrExperiment
+
+    def getExperiment(self):
+        return self.ptrExperiment
+
+    def getDoseUnits(self):
+        if self.ptrExperiment is None:
+            return PKPDUnit.UNIT_WEIGHT_mg
+        else:
+            return self.ptrExperiment.getDoseUnits()
 
     def setParameters(self, parameters):
         self.parameters = parameters
@@ -153,7 +166,8 @@ class BiopharmaceuticsModelOrder01Tlag1(BiopharmaceuticsModel):
         return ['F0','Rin','tlag1','Ka']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_NONE, PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN, PKPDUnit.UNIT_TIME_MIN,
+        dUnits = self.getDoseUnits()
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, divideUnits(dUnits,PKPDUnit.UNIT_TIME_MIN), PKPDUnit.UNIT_TIME_MIN,
                                PKPDUnit.UNIT_INVTIME_MIN]
         return self.parameterUnits
 
@@ -638,7 +652,7 @@ class BiopharmaceuticsModelNumerical(BiopharmaceuticsModel):
 
 
 class PKPDVia:
-    def __init__(self):
+    def __init__(self, ptrExperiment = None):
         self.viaName = None
         self.via = None
         self.viaProfile = None
@@ -647,6 +661,7 @@ class PKPDVia:
         self.bioavailability = 1
         self.paramsToOptimize = []
         self.paramsUnitsToOptimize=[]
+        self.ptrExperiment = ptrExperiment
 
     def parseTokens(self,tokens):
         # Intravenous; iv; [tlag=0 min]; [bioavailability=1]
@@ -779,6 +794,7 @@ class PKPDVia:
                     self.viaProfile = BiopharmaceuticsModelSplineXY10()
                 elif self.via=="numerical":
                     self.viaProfile=BiopharmaceuticsModelNumerical()
+                self.viaProfile.setExperiment(self.ptrExperiment)
 
     def changeTimeUnitsToMinutes(self):
         if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
@@ -864,8 +880,8 @@ class PKPDVia:
         if self.via != "iv":
             self.viaProfile.setParameters(p[currentIdx:])
 
-def createVia(line):
-    via = PKPDVia()
+def createVia(line, ptrExperiment=None):
+    via = PKPDVia(ptrExperiment)
     via.parseTokens(line.split(';'))
     via.prepare()
     return via

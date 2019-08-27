@@ -145,7 +145,7 @@ class ProtPKPDImportFromText(ProtPKPD):
                         ok = False
                         continue
                     vianame = tokens[0].strip()
-                    self.experiment.vias[vianame] = PKPDVia()
+                    self.experiment.vias[vianame] = PKPDVia(ptrExperiment=self.experiment)
                     self.experiment.vias[vianame].parseTokens(tokens)
 
         # Read the doses
