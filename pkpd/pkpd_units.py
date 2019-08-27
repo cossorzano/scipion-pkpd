@@ -698,6 +698,10 @@ def divideUnits(unitX,unitY):
 
         elif unitY==PKPDUnit.UNIT_CONC_g_uL:
             return PKPDUnit.UNIT_VOLUME_uL
+
+        elif unitY == PKPDUnit.UNIT_TIME_MIN:
+            return PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN
+
         else:
             return PKPDUnit.UNIT_NONE
 
@@ -716,6 +720,10 @@ def divideUnits(unitX,unitY):
 
         elif unitY==PKPDUnit.UNIT_CONC_g_uL:
             return PKPDUnit.UNIT_VOLUME_nL
+
+        elif unitY==PKPDUnit.UNIT_TIME_MIN:
+            return PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN
+
         else:
             return PKPDUnit.UNIT_NONE
 
@@ -737,6 +745,9 @@ def divideUnits(unitX,unitY):
         elif unitY==PKPDUnit.UNIT_CONC_ug_mL:
             return PKPDUnit.UNIT_VOLUME_mL
 
+        elif unitY == PKPDUnit.UNIT_TIME_MIN:
+            return PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN
+
         else:
             return PKPDUnit.UNIT_NONE
 
@@ -755,6 +766,10 @@ def divideUnits(unitX,unitY):
 
         elif unitY==PKPDUnit.UNIT_CONC_g_uL:
             return PKPDUnit.UNIT_NONE
+
+        elif unitY == PKPDUnit.UNIT_TIME_MIN:
+            return PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN
+
         else:
             return PKPDUnit.UNIT_NONE
 
