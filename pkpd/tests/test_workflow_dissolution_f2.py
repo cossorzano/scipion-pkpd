@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-import os
+import numpy as np
 
 from pyworkflow.tests import *
 from pkpd.protocols import *
@@ -87,6 +87,17 @@ class TestDissolutionF2Workflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot._getPath("experiment.pkpd"))
         self.assertTrue(len(experiment.samples)==12)
+
+
+        prot = self.newProtocol(ProtPKPDAverageSample,
+                                objLabel='pkpd - sample average')
+        prot.inputExperiment.set(protImportTest.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("experiment.pkpd")), "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(prot._getPath("experiment.pkpd"))
+        self.assertTrue(len(experiment.samples) == 1)
+        self.assertTrue(np.abs(float(experiment.samples['AverageSample'].measurement_C[0])-0.3058)<1e-4)
 
 if __name__ == "__main__":
     unittest.main()

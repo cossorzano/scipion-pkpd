@@ -33,6 +33,8 @@ from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDExperiment, PKPDSample
 from pkpd.utils import uniqueFloatValues
 
+# Tested in test_workflow_dissolution_f2.py
+
 class ProtPKPDAverageSample(ProtPKPD):
     """ Produce an experiment with a single sample whose value is the average of all the input samples.\n
         Protocol created by http://www.kinestatpharma.com\n """
