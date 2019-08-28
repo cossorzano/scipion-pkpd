@@ -99,5 +99,16 @@ class TestDissolutionF2Workflow(TestWorkflow):
         self.assertTrue(len(experiment.samples) == 1)
         self.assertTrue(np.abs(float(experiment.samples['AverageSample'].measurement_C[0])-0.3058)<1e-4)
 
+
+        prot = self.newProtocol(ProtPKPDJoinSamples, prefix1="Test_", prefix2="Ref_",
+                                objLabel='pkpd - join samples')
+        prot.inputExperiment1.set(protImportTest.outputExperiment)
+        prot.inputExperiment2.set(protImportRef.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertTrue(os.path.exists(prot._getPath("experiment.pkpd")), "There was a problem with the import")
+        experiment = PKPDExperiment()
+        experiment.load(prot._getPath("experiment.pkpd"))
+        self.assertTrue(len(experiment.samples) == 24)
+
 if __name__ == "__main__":
     unittest.main()

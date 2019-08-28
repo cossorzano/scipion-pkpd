@@ -32,6 +32,8 @@ from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDExperiment
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
+# Tested in test_workflow_dissolution_f2.py
+
 class ProtPKPDJoinSamples(ProtPKPD):
     """ Join samples.\n
         Protocol created by http://www.kinestatpharma.com\n """
