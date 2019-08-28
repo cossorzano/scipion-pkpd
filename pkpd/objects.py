@@ -394,6 +394,7 @@ class PKPDSample:
     def evaluateExpression(self, expression, prefix=""):
         expressionPython=self.substituteValuesInExpression(expression,prefix)
         return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
+        return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
 
     def getDescriptorValue(self,descriptorName):
         if descriptorName in self.descriptors.keys():

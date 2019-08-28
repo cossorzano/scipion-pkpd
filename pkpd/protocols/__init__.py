@@ -80,6 +80,7 @@ from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from .protocol_pkpd_ode_bootstrap import ProtPKPDODEBootstrap
 from .protocol_pkpd_ode_refine import ProtPKPDODERefine
 from .protocol_pkpd_ode_two_vias import ProtPKPDODETwoVias
+from .protocol_pkpd_operate_experiment import ProtPKPDOperateExperiment
 from .protocol_pkpd_pdgeneric_fit import ProtPKPDGenericFit
 from .protocol_pkpd_regression_labels import ProtPKPDRegressionLabel
 from .protocol_pkpd_sa_base import ProtPKPDSABase

@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-
+import numpy as np
 import unittest, sys
 from pyworkflow.em import *
 from pyworkflow.tests import *
@@ -345,6 +345,50 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(mu[0]>80.5 and mu[0]<81.5)
         self.assertTrue(mu[1]>0.28 and mu[1]<0.29)
         self.assertTrue(mu[2]>1.4 and mu[2]<1.5)
+
+        # Check that operations are working
+        print "Operations 1 ..."
+        prot = self.newProtocol(ProtPKPDOperateExperiment,
+                                newVarLine = 'Vmax2 ; none ; numeric; label ; Vmax/2',
+                                operation = '$(Vmax)/2',
+                                objLabel='pkpd - operate numeric label')
+        prot.inputExperiment.set(protWeibull.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the operations ")
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        Vmax2 = float(experiment.samples['Profile'].descriptors['Vmax2'])
+        self.assertTrue(Vmax2>40 and Vmax2<41)
+
+
+        # Check that operations are working
+        print "Operations 2 ..."
+        prot = self.newProtocol(ProtPKPDOperateExperiment,
+                                newVarLine='Hello ; none ; text; label ; Hello',
+                                operation='"Hello"',
+                                objLabel='pkpd - operate numeric text')
+        prot.inputExperiment.set(protWeibull.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the operations ")
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        hello = experiment.samples['Profile'].descriptors['Hello']
+        self.assertTrue(hello=="Hello")
+
+        # Check that operations are working
+        print "Operations 3 ..."
+        prot = self.newProtocol(ProtPKPDOperateExperiment,
+                                newVarLine = 'VmaxC ; none ; numeric; measurement ; Vmax+log10(C)',
+                                operation = '$(Vmax)+np.log10($(C)+1)',
+                                objLabel='pkpd - operate numeric measurement')
+        prot.inputExperiment.set(protWeibull.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the operations ")
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        VmaxC0 = float(experiment.samples['Profile'].measurement_VmaxC[0])
+        self.assertTrue(VmaxC0>80 and VmaxC0<82)
+
 
 if __name__ == "__main__":
     unittest.main()
