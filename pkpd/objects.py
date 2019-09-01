@@ -396,6 +396,20 @@ class PKPDSample:
         return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
         return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
 
+    def evaluateParsedExpression(self, parsedOperation, varList):
+        for varName in varList:
+            variable = self.variableDictPtr[varName]
+            if variable.isLabel():
+                exec ("%s=self.getDescriptorValue('%s')" % (varName, varName))
+                if variable.isNumeric():
+                    exec ("%s=float(%s)" % (varName, varName))
+            else:
+                # Measurement or time
+                exec ("%s=np.asarray(self.getValues('%s'),dtype=np.float)" % (varName, varName))
+        aux = None
+        exec ("aux=%s" % parsedOperation)
+        return aux
+
     def getDescriptorValue(self,descriptorName):
         if descriptorName in self.descriptors.keys():
             return self.descriptors[descriptorName]

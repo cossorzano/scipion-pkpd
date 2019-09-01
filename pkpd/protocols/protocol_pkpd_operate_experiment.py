@@ -30,6 +30,9 @@ import numpy as np
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDVariable
+from pkpd.utils import parseOperation
+
+# Tested in test_workflow_dissolution.py
 
 class ProtPKPDOperateExperiment(ProtPKPD):
     """ Create a new label or measurement to an existing experiment.\n
@@ -72,38 +75,14 @@ class ProtPKPDOperateExperiment(ProtPKPD):
         self.experiment.variables[newVarName] = PKPDVariable()
         self.experiment.variables[newVarName].parseTokens(tokens)
 
-        varList = []
-        operation =self.operation.get()
-        idx0 = operation.find("$(")
-        while idx0>=0:
-            idxF = operation.find(")",idx0)
-            varName = operation[(idx0+2):idxF]
-            if not varName in varList:
-                varList.append(varName)
-            idx0 = operation.find("$(",idxF+1)
-        parsedOperation=copy.copy(operation)
-        for varName in varList:
-            exec("parsedOperation=parsedOperation.replace('$(%s)','%s')"%(varName,varName))
+        parsedOperation, varList = parseOperation(self.operation.get())
 
         self.printSection("Operating")
         print("Operation performed: %s"%parsedOperation)
         for sampleName in self.experiment.samples:
             print("   Sample " + sampleName)
             sample = self.experiment.samples[sampleName]
-
-            for varName in varList:
-                variable = self.experiment.variables[varName]
-                if variable.isLabel():
-                    exec("%s=sample.getDescriptorValue('%s')"%(varName,varName))
-                    if variable.isNumeric():
-                        exec("%s=float(%s)"%(varName,varName))
-                else:
-                    # Measurement or time
-                    exec("%s=np.asarray(sample.getValues('%s'),dtype=np.float)"%(varName,varName))
-                # exec("print('%s=',%s)"%(varName,varName))
-
-            exec("%s=%s"%(newVarName,parsedOperation))
-            # exec ("print('%s=',%s)" % (newVarName, newVarName))
+            exec("%s=sample.evaluateParsedExpression(parsedOperation, varList)"%newVarName)
 
             if self.experiment.variables[newVarName].isLabel():
                 exec('sample.setDescriptorValue("%s",%s)'%(newVarName,newVarName))

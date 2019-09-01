@@ -26,6 +26,7 @@
 """
 PKPD functions
 """
+import copy
 import numpy as np
 import math
 import time
@@ -148,3 +149,17 @@ def upper_tri_masking(A):
     c = np.arange(A.shape[1])
     mask = r[:,None] < r
     return A[mask]
+
+def parseOperation(operation):
+    varList = []
+    idx0 = operation.find("$(")
+    while idx0 >= 0:
+        idxF = operation.find(")", idx0)
+        varName = operation[(idx0 + 2):idxF]
+        if not varName in varList:
+            varList.append(varName)
+        idx0 = operation.find("$(", idxF + 1)
+    parsedOperation = copy.copy(operation)
+    for varName in varList:
+        exec ("parsedOperation=parsedOperation.replace('$(%s)','%s')" % (varName, varName))
+    return parsedOperation, varList
