@@ -75,7 +75,7 @@ class ProtPKPDOperateExperiment(ProtPKPD):
         self.experiment.variables[newVarName] = PKPDVariable()
         self.experiment.variables[newVarName].parseTokens(tokens)
 
-        parsedOperation, varList = parseOperation(self.operation.get())
+        parsedOperation, varList, _ = parseOperation(self.operation.get())
 
         self.printSection("Operating")
         print("Operation performed: %s"%parsedOperation)

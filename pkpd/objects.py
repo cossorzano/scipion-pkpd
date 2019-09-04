@@ -26,6 +26,7 @@
 
 import copy
 import math
+import numpy as np
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 import pyworkflow as pw
@@ -394,7 +395,6 @@ class PKPDSample:
     def evaluateExpression(self, expression, prefix=""):
         expressionPython=self.substituteValuesInExpression(expression,prefix)
         return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
-        return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
 
     def evaluateParsedExpression(self, parsedOperation, varList):
         for varName in varList:
@@ -409,6 +409,16 @@ class PKPDSample:
         aux = None
         exec ("aux=%s" % parsedOperation)
         return aux
+
+    def getVariableValues(self, varList):
+        varDict = {}
+        for varName in varList:
+            var = self.variableDictPtr[varName]
+            if var.isLabel():
+                varDict[varName]=self.descriptors[varName]
+            elif var.isMeasurement():
+                varDict[varName]=getattr(self,"measurement_%s"%varName)
+        return varDict
 
     def getDescriptorValue(self,descriptorName):
         if descriptorName in self.descriptors.keys():

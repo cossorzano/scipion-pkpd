@@ -62,5 +62,7 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  	- Double Weibull and Makoid-Banakar are now options for dissolution analysis
  	- Average samples grouping by some condition
  	- Operate experiments to add new labels or measurements
- 	
+
+ September 2019.
+ 	- IVIVC with arbitrary functions added
  	

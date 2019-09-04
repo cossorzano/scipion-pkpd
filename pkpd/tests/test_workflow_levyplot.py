@@ -187,7 +187,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
         # IVIVC
         print "In vitro-in vivo correlation ..."
         protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
-                                    objLabel='pkpd - ivivc'
+                                     responseScale=1,
+                                     objLabel='pkpd - ivivc',
                                     )
         protIVIVC.inputInVitro.set(protWeibull)
         protIVIVC.inputInVivo.set(protDeconv)
@@ -198,7 +199,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
         # IVIVC Wagner
         print "In vitro-in vivo correlation Wagner Nelson..."
         protIVIVCWN = self.newProtocol(ProtPKPDDissolutionIVIVC,
-                                      objLabel='pkpd - ivivc'
+                                       responseScale=1,
+                                       objLabel='pkpd - ivivc'
                                       )
         protIVIVCWN.inputInVitro.set(protWeibull)
         protIVIVCWN.inputInVivo.set(protDeconvWN)
