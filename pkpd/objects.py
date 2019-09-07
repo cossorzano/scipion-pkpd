@@ -27,13 +27,15 @@
 import copy
 import math
 import numpy as np
+import os
+import openpyxl
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.em.data import *
 from pyworkflow.install.funcs import *
-from .utils import writeMD5, verifyMD5
+from .utils import writeMD5, verifyMD5, excelWriteRow, excelFillCells, excelAdjustColumnWidths
 from .biopharmaceutics import PKPDDose, PKPDVia, DrugSource, createDeltaDose, createVia
 
 class PKPDVariable:
@@ -122,6 +124,18 @@ class PKPDVariable:
                                                    displayString,
                                                    self.getRoleString(),
                                                    self.comment))
+
+    def _printToExcel(self,wb,row, col=1):
+        displayString = self.displayString.replace("%%","%%%%")
+        if displayString=="":
+            if self.varType == PKPDVariable.TYPE_NUMERIC:
+                displayString="%f"
+            elif self.varType == PKPDVariable.TYPE_TEXT:
+                displayString="%s"
+        excelWriteRow([self.varName, self.getUnitsString(),
+                       "%s[%s]"%(self.getTypeString(),displayString),
+                       self.getRoleString(), self.comment], wb, row, col)
+        return row+1
 
     def getTypeString(self):
         return self.TYPE_NAMES.get(self.varType, '')
@@ -301,6 +315,18 @@ class PKPDSample:
             fh.write(" %s"%descriptorString)
         fh.write("\n")
 
+    def _printToExcel(self,wb,row,col=1):
+        toPrint=[self.sampleName]
+        if self.doseList:
+            toPrint.append("dose=%s"%(",".join(self.doseList)))
+        if self.groupList:
+            toPrint.append("group=%s"%(",".join(self.groupList)))
+        if self.descriptors:
+            for key in sorted(self.descriptors.keys()):
+                toPrint.append("%s=%s"%(key,self.descriptors[key]))
+        excelWriteRow(toPrint,wb,row,col)
+        return row+1
+
     def _printMeasurements(self,fh):
         patternString = ""
         for n in range(0,len(self.measurementPattern)):
@@ -316,6 +342,22 @@ class PKPDSample:
                     lineString += aux[i]+" "
                 fh.write("%s\n"%lineString)
         fh.write("\n")
+
+    def _printMeasurementsToExcel(self,wb,row):
+        toPrint = [self.sampleName]
+        for n in range(0,len(self.measurementPattern)):
+            toPrint.append(self.measurementPattern[n])
+        excelWriteRow(toPrint,wb,row); row+=1
+        if len(self.measurementPattern)>0:
+            aux=getattr(self,"measurement_%s"%self.measurementPattern[0])
+            N = len(aux)
+            for i in range(0,self.getNumberOfMeasurements()):
+                toPrint = [""]
+                for n in range(0,len(self.measurementPattern)):
+                    aux=getattr(self,"measurement_%s"%self.measurementPattern[n])
+                    toPrint.append(float(aux[i]))
+                excelWriteRow(toPrint,wb,row); row+=1
+        return row+1
 
     def getRange(self, varName):
         if varName not in self.measurementPattern:
@@ -589,14 +631,15 @@ class PKPDExperiment(EMObject):
 
         fh.close()
 
-    def write(self, fnExperiment):
+    def write(self, fnExperiment, writeToExcel=True):
         fh=open(fnExperiment,'w')
         self._printToStream(fh)
         fh.close()
         self.fnPKPD.set(fnExperiment)
         writeMD5(fnExperiment)
-        self.infoStr.set("variables: %d, samples: %d" % (len(self.variables),
-                                                         len(self.samples)))
+        self.infoStr.set("variables: %d, samples: %d" % (len(self.variables), len(self.samples)))
+        if writeToExcel:
+            self.writeToExcel(os.path.splitext(fnExperiment)[0]+".xlsx")
 
     def _printToStream(self,fh):
         fh.write("[EXPERIMENT] ===========================\n")
@@ -633,6 +676,49 @@ class PKPDExperiment(EMObject):
         for key in sorted(self.samples.keys()):
             self.samples[key]._printMeasurements(fh)
         fh.write("\n")
+
+    def writeToExcel(self, fnXls):
+        wb = openpyxl.Workbook()
+        wb.active.title = "Experiment"
+
+        currentRow = 1
+        excelWriteRow("EXPERIMENT",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key, value in self.general.iteritems():
+            excelWriteRow([key,value],wb,currentRow); currentRow+=1
+        currentRow+=1
+
+        excelWriteRow("VARIABLES",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key in sorted(self.variables.keys()):
+            currentRow=self.variables[key]._printToExcel(wb,currentRow)
+        currentRow+=1
+
+        excelWriteRow("VIAS",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key in sorted(self.vias.keys()):
+            currentRow=self.vias[key]._printToExcel(wb,currentRow)
+        currentRow+=1
+
+        excelWriteRow("DOSES",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key in sorted(self.doses.keys()):
+            currentRow=self.doses[key]._printToExcel(wb,currentRow)
+        currentRow+=1
+
+        excelWriteRow("GROUPS",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for groupName in sorted(self.groups.keys()):
+            excelWriteRow(groupName,wb, currentRow); currentRow+=1
+        currentRow+=1
+
+        excelWriteRow("SAMPLES",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key in sorted(self.samples.keys()):
+            currentRow=self.samples[key]._printToExcel(wb,currentRow)
+        currentRow+=1
+
+        excelWriteRow("MEASUREMENTS",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for key in sorted(self.samples.keys()):
+            currentRow=self.samples[key]._printMeasurementsToExcel(wb,currentRow)
+        currentRow+=1
+
+        excelAdjustColumnWidths(wb)
+        wb.save(fnXls)
 
     def getRange(self,varName):
         vmin = None
@@ -1459,6 +1545,14 @@ class PKPDSampleFit:
         fh.write(outputStr+"\n")
         return observations
 
+    def printForPopulationExcel(self,wb, row, observations):
+        toPrint = []
+        for parameter in self.parameters:
+            toPrint.append("%f "%parameter)
+        observations = np.vstack([observations, self.parameters])
+        excelWriteRow(toPrint+[self.R2,self.R2adj,self.AIC,self.AICc,self.BIC], wb, row)
+        return observations, row+1
+
     def getBasicInfo(self):
         """ Return a string with some basic information of the fitting. """
         info = ""
@@ -1491,6 +1585,49 @@ class PKPDSampleFit:
             for x,y,yp,yl,yu in izip(xj,yj,ypj,ylj,yuj):
                 fh.write("%f %s %s [%s,%s]\n"%(x,str(y),str(yp),str(yl),str(yu)))
         fh.write("\n")
+
+    def _printToExcel(self, wb, row, parameterNames):
+        if self.significance == None:
+            self.significance = ["Undetermined"]*len(self.parameters)
+        basicInfo = self.getBasicInfo()
+        i=0
+        for line in basicInfo.split('\n'):
+            if i == 0:
+                excelWriteRow(line.split(':'), wb, row, bold=True)
+                excelFillCells(wb, row)
+            else:
+                excelWriteRow(line.split(':'), wb, row)
+            row += 1
+            i+=1
+        excelWriteRow(["Parameter","Value","lowerBound","upperBound","IsStatisticallySignificant"],wb,row); row+=1
+        for parameterName, parameter, lower, upper, significance in izip(parameterNames,self.parameters,
+                                                          self.lowerBound,self.upperBound,self.significance):
+            excelWriteRow([parameterName, parameter,str(lower),str(upper),significance], wb, row); row+=1
+        row+=1
+        excelWriteRow(["X","Y","Ypredicted", "[Ylower","Yupper]"],wb,row); row+=1
+
+        for j in range(len(self.x)):
+            excelWriteRow("Series %d"%j, wb, row); row+=1
+            xj = self.x[j]
+            yj = self.y[j]
+            ypj = self.yp[j]
+            ylj = self.yl[j]
+            yuj = self.yu[j]
+            for x,y,yp,yl,yu in izip(xj,yj,ypj,ylj,yuj):
+                try:
+                    ypToPrint=float(yp)
+                except:
+                    ypToPrint=str(yp)
+                try:
+                    ylToPrint=float(yl)
+                except:
+                    ylToPrint=str(yl)
+                try:
+                    yuToPrint=float(yu)
+                except:
+                    yuToPrint=str(yu)
+                excelWriteRow([float(x), float(y), ypToPrint, ylToPrint, yuToPrint], wb, row); row+=1
+        return row+1
 
     def restartReadingState(self):
         self.state = PKPDSampleFit.READING_SAMPLEFITTINGS_NAME
@@ -1612,11 +1749,24 @@ class PKPDSampleFitBootstrap:
         outputStr += " # %f %f %f %f %f"%(self.R2[n],self.R2adj[n],self.AIC[n],self.AICc[n],self.BIC[n])
         fh.write(outputStr+"\n")
 
+    def _printSampleExcel(self,wb, row, n, n0=0):
+        toPrint = ["Sample %d"%(n+n0)]
+        for parameter in self.parameters[n,:]:
+            toPrint.append(parameter)
+        excelWriteRow(toPrint+[self.R2[n],self.R2adj[n],self.AIC[n],self.AICc[n],self.BIC[n]],wb,row)
+        return row+1
+
     def printForPopulation(self,fh,observations):
         for n in range(0,self.parameters.shape[0]):
             self._printSample(fh,n,observations.shape[0])
         observations = np.vstack([observations, self.parameters])
         return observations
+
+    def printForPopulationExcel(self,wb,row,observations):
+        for n in range(0,self.parameters.shape[0]):
+            row=self._printSampleExcel(wb,row,n,observations.shape[0])
+        observations = np.vstack([observations, self.parameters])
+        return observations,row+1
 
     def _printToStream(self,fh):
         fh.write("Sample name: %s\n"%self.sampleName)
@@ -1630,6 +1780,14 @@ class PKPDSampleFitBootstrap:
             outputStr += " # %f %f %f %f %f"%(self.R2[n],self.R2adj[n],self.AIC[n],self.AICc[n],self.BIC[n])
             fh.write(outputStr+"\n")
         fh.write("\n")
+
+    def _printToExcel(self,wb,row,parameterNames):
+        excelWriteRow(["Sample name:",self.sampleName],wb,row,bold=True); row+=1
+        for n in range(0,self.parameters.shape[0]):
+            excelWriteRow("Sample %d"%n, wb, row); row+=1
+            excelWriteRow(["xB:"]+self.xB[n][1:-1].split(), wb, row); row+=1
+            excelWriteRow(["yB:"]+self.yB[n][1:-1].split(), wb, row); row+=1
+        return row+1
 
     def restartReadingState(self):
         self.state = PKPDSampleFitBootstrap.READING_SAMPLEFITTINGS_NAME
@@ -1719,12 +1877,15 @@ class PKPDFitting(EMObject):
             return False
         return self.fnFitting.get().endswith("bootstrapPopulation.pkpd")
 
-    def write(self, fnFitting):
+    def write(self, fnFitting, writeToExcel=True):
         fh=open(fnFitting,'w')
         self._printToStream(fh)
         fh.close()
         self.fnFitting.set(fnFitting)
         writeMD5(fnFitting)
+
+        if writeToExcel:
+            self.writeToExcel(os.path.splitext(fnFitting)[0] + ".xlsx")
 
     def getAllParameters(self):
         allParameters = np.empty((0,len(self.modelParameters)),np.double)
@@ -1789,6 +1950,54 @@ class PKPDFitting(EMObject):
         fh.write("[SAMPLE FITTINGS] ===================\n")
         for sampleFitting in self.sampleFits:
             sampleFitting._printToStream(fh)
+
+    def writeToExcel(self,fnXls):
+        wb = openpyxl.Workbook()
+        wb.active.title = "Experiment"
+
+        currentRow = 1
+        excelWriteRow("FITTING",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        excelWriteRow(["Experiment:",self.fnExperiment.get()], wb, currentRow); currentRow+=1
+        excelWriteRow("Predictor (X): ", wb, currentRow);
+        currentRow=self.predictor._printToExcel(wb,currentRow,2)
+        toPrint=["Predicted (Y): "]
+        if type(self.predicted)==list:
+            excelWriteRow(toPrint+["Predicted list=%d"%len(self.predicted)], wb, currentRow); currentRow+=1
+            for y in self.predicted:
+                currentRow=y._printToExcel(wb,currentRow)
+        else:
+            excelWriteRow(toPrint, wb, currentRow)
+            currentRow=self.predicted._printToExcel(wb,currentRow,2); currentRow+=1
+        excelWriteRow(["Model:",self.modelDescription], wb, currentRow); currentRow+=1
+        currentRow+=1
+
+        excelWriteRow("POPULATION PARAMETERS",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        auxUnit = PKPDUnit()
+        toPrint=[]
+        for paramName, paramUnits in izip(self.modelParameters, self.modelParameterUnits):
+            auxUnit.unit = paramUnits
+            toPrint.append("%s [%s] "%(paramName,auxUnit._toString()))
+        excelWriteRow(toPrint+["R2","R2adj","AIC","AICc","BIC"],wb,currentRow); currentRow+=1
+        observations = np.empty((0,len(self.modelParameters)),np.double)
+        for sampleFitting in self.sampleFits:
+            observations, currentRow = sampleFitting.printForPopulationExcel(wb,currentRow,observations)
+        currentRow+=1
+
+        mu=np.mean(observations,axis=0)
+        if observations.shape[0]>2:
+            excelWriteRow(["Mean   parameters  =",np.array_str(mu)], wb, currentRow); currentRow+=1
+            excelWriteRow(["Median parameters  =",np.array_str(np.median(observations,axis=0))], wb, currentRow); currentRow+=1
+            limits = np.percentile(observations,[2.5,97.5],axis=0)
+            excelWriteRow(["Lower bound (2.5%%) =",np.array_str(limits[0])], wb, currentRow); currentRow+=1
+            excelWriteRow(["Upper bound (97.5%%) =",np.array_str(limits[1])], wb, currentRow); currentRow+=1
+        currentRow+=1
+
+        excelWriteRow("SAMPLE FITTINGS",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
+        for sampleFitting in self.sampleFits:
+            currentRow=sampleFitting._printToExcel(wb,currentRow,self.modelParameters)
+
+        excelAdjustColumnWidths(wb)
+        wb.save(fnXls)
 
     def load(self, fnFitting=None):
         fnFitting = str(fnFitting or self.fnFitting)

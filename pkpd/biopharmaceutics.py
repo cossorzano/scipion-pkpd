@@ -30,7 +30,7 @@ import copy
 import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits
-from pkpd.utils import uniqueFloatValues
+from pkpd.utils import uniqueFloatValues, excelWriteRow
 from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
 
 class BiopharmaceuticsModel:
@@ -705,7 +705,7 @@ class PKPDVia:
                     self.paramsUnitsToOptimize.append(PKPDUnit.UNIT_NONE)
             currentToken+=1
 
-    def _printToStream(self,fh):
+    def _printToStrig(self):
         outStr="%s; %s; "%(self.viaName,self.via)
         if "tlag" in self.paramsToOptimize:
             outStr+=" tlag min; "
@@ -715,7 +715,14 @@ class PKPDVia:
             outStr+=" bioavailability"
         else:
             outStr+="bioavailability=%f"%self.bioavailability
-        fh.write("%s\n"%outStr)
+        return outStr
+
+    def _printToStream(self,fh):
+        fh.write("%s\n"%self._printToStrig())
+
+    def _printToExcel(self, wb, row):
+        excelWriteRow(self._printToStrig(), wb, row)
+        return row+1
 
     def prepare(self):
         if self.via=="iv":
@@ -985,6 +992,11 @@ class PKPDDose:
     def _printToStream(self,fh):
         outStr=self.doseName+"; "+self.getDoseString2()
         fh.write("%s\n"%outStr)
+
+    def _printToExcel(self, wb, row):
+        outStr=self.doseName+"; "+self.getDoseString2()
+        excelWriteRow(outStr,wb,row)
+        return row+1
 
     def getDoseString(self):
         if self.doseType == PKPDDose.TYPE_BOLUS:

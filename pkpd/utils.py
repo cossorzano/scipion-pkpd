@@ -32,6 +32,8 @@ import math
 import time
 import hashlib
 from os.path import (exists, splitext, getmtime)
+from openpyxl.styles import Font, PatternFill
+from openpyxl.utils.cell import get_column_letter
 
 def parseRange(auxString):
     if auxString=="":
@@ -175,3 +177,54 @@ def parseOperation(operation):
     for varName in coeffList:
         exec ("parsedOperation=parsedOperation.replace('$[%s]','%s')" % (varName, varName))
     return parsedOperation, varList, coeffList
+
+def excelWriteRow(msgList, workbook, row, col=1, sheetName="", bold=False):
+    currentCol=col
+    if sheetName!="":
+        if not sheetName in workbook.sheetnames:
+            workbook.create_sheet(sheetName)
+        sheet=workbook[sheetName]
+    else:
+        sheet=workbook.active
+    if type(msgList)!=list:
+        msgList2=[msgList]
+    else:
+        msgList2=msgList
+    for msg in msgList2:
+        c = sheet.cell(row=row, column=currentCol)
+        if isinstance(msg,bool):
+            c.value = str(msg)
+        else:
+            c.value = msg
+        if bold:
+            c.font = Font(bold=True)
+        currentCol+=1
+
+def excelFillCells(workbook, row, col0=1, colF=10, sheetName="", fillColor="54B948"):
+    if sheetName!="":
+        if not sheetName in workbook.sheetnames:
+            workbook.create_sheet(sheetName)
+        sheet=workbook[sheetName]
+    else:
+        sheet=workbook.active
+    for col in range(col0,colF+1):
+        c = sheet.cell(row=row, column=col)
+        c.fill = PatternFill(bgColor=fillColor, fill_type="solid")
+
+
+def as_text(value):
+    if value is None:
+        return ""
+    return str(value)
+
+def excelAdjustColumnWidths(workbook, sheetName=""):
+    if sheetName!="":
+        if not sheetName in workbook.sheetnames:
+            workbook.create_sheet(sheetName)
+        sheet=workbook[sheetName]
+    else:
+        sheet=workbook.active
+
+    for column_cells in sheet.columns:
+        length = max(len(as_text(cell.value)) for cell in column_cells)
+        sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
