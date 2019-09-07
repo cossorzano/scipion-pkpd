@@ -188,13 +188,28 @@ class TestLevyPlotWorkflow(TestWorkflow):
         print "In vitro-in vivo correlation ..."
         protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                      responseScale=1,
-                                     objLabel='pkpd - ivivc',
+                                     objLabel='pkpd - ivivc'
                                     )
         protIVIVC.inputInVitro.set(protWeibull)
         protIVIVC.inputInVivo.set(protDeconv)
         self.launchProtocol(protIVIVC)
         self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the IVIVC")
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
+
+        # IVIVC generic
+        print "In vitro-in vivo generic ..."
+        protIVIVCG = self.newProtocol(ProtPKPDDissolutionIVIVCGeneric,
+                                      timeScale='$[a0]+$[a1]*$(t)+$[a2]*np.power($(t),2.0)',
+                                      timeBounds='a0: [-100,100]; a1: [1e-4,1e3]; a2: [1e-8,1e3]',
+                                      responseScale='$[k1]*$(Adissol)',
+                                      responseBounds='k1: [1e-3,1e3]',
+                                      objLabel='pkpd - ivivc generic'
+                                     )
+        protIVIVCG.inputInVitro.set(protWeibull)
+        protIVIVCG.inputInVivo.set(protDeconv)
+        self.launchProtocol(protIVIVCG)
+        self.assertIsNotNone(protIVIVCG.outputExperiment.fnPKPD, "There was a problem with the IVIVC Generic")
+        self.validateFiles('ProtPKPDDissolutionIVIVCG', ProtPKPDDissolutionIVIVCGeneric)
 
         # IVIVC Wagner
         print "In vitro-in vivo correlation Wagner Nelson..."
@@ -239,10 +254,10 @@ class TestLevyPlotWorkflow(TestWorkflow):
             tokens = line.split('=')
             if lineNo==0:
                 AUCmean=float(tokens[-1])
-                self.assertTrue(AUCmean>0.4 and AUCmean<0.5)
+                self.assertTrue(AUCmean>40 and AUCmean<60)
             elif lineNo==1:
                 Cmaxmean = float(tokens[-1])
-                self.assertTrue(Cmaxmean > 0.63 and Cmaxmean < 0.73)
+                self.assertTrue(Cmaxmean > 63 and Cmaxmean < 80)
             lineNo+=1
 
         # Bootstrap dissolution
