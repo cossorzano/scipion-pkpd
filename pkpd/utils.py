@@ -192,12 +192,15 @@ def excelWriteRow(msgList, workbook, row, col=1, sheetName="", bold=False):
         msgList2=msgList
     for msg in msgList2:
         c = sheet.cell(row=row, column=currentCol)
-        if isinstance(msg,bool):
-            c.value = str(msg)
-        else:
-            c.value = msg
-        if bold:
-            c.font = Font(bold=True)
+        try:
+            if isinstance(msg,bool):
+                c.value = str(msg)
+            else:
+                c.value = msg
+            if bold:
+                c.font = Font(bold=True)
+        except:
+            print("Cannot convert the cell row=%d, col=%d"%(row,col),msg)
         currentCol+=1
 
 def excelFillCells(workbook, row, col0=1, colF=10, sheetName="", fillColor="54B948"):
