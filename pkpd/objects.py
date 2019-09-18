@@ -355,7 +355,13 @@ class PKPDSample:
                 toPrint = [""]
                 for n in range(0,len(self.measurementPattern)):
                     aux=getattr(self,"measurement_%s"%self.measurementPattern[n])
-                    toPrint.append(float(aux[i]))
+                    try:
+                        toPrint.append(float(aux[i]))
+                    except:
+                        if isinstance(aux[i],basestring):
+                            toPrint.append(aux[i])
+                        else:
+                            toPrint.append("")
                 excelWriteRow(toPrint,wb,row); row+=1
         return row+1
 
