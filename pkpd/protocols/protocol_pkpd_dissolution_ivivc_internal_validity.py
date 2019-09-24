@@ -73,9 +73,12 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
 
         simAUC = {}
         simCmax = {}
+        simNames = []
         for sampleName, sample in simExp.samples.iteritems():
             fromNames=sample.descriptors["from"]
             sampleName=fromNames.split("---")[0]
+            if not sampleName in simNames:
+                simNames.append(sampleName)
             if not sampleName in simAUC:
                 simAUC[sampleName]=[]
                 simCmax[sampleName]=[]
@@ -101,13 +104,17 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
         np.savetxt(self._getExtraPath("errorAUC.txt"),errorAUC)
         np.savetxt(self._getExtraPath("errorCmax.txt"),errorCmax)
 
-        alpha_2 = (100-95)/2
-        limits = np.percentile(errorAUC,[alpha_2,100-alpha_2])
-        fhSummary=open(self._getPath("summary.txt"),"w")
-        self.doublePrint(fhSummary,"error AUC (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorAUC)))
-        limits = np.percentile(errorCmax,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"error Cmax (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorCmax)))
-        fhSummary.close()
+        if len(errorAUC)==0:
+            print("Cannot find any matching name between the true experiment (%s) and the simulated names (%s)"%\
+                     (" ".join(trueExp.samples.keys())," ".join(simNames)))
+        else:
+            alpha_2 = (100-95)/2
+            limits = np.percentile(errorAUC,[alpha_2,100-alpha_2])
+            fhSummary=open(self._getPath("summary.txt"),"w")
+            self.doublePrint(fhSummary,"error AUC (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorAUC)))
+            limits = np.percentile(errorCmax,[alpha_2,100-alpha_2])
+            self.doublePrint(fhSummary,"error Cmax (normalized to 100, (true-sim)/true) %f%% confidence interval=[%f,%f] mean=%f"%(95,limits[0],limits[1],np.mean(errorCmax)))
+            fhSummary.close()
 
     #--------------------------- INFO functions --------------------------------------------
     def _summary(self):
