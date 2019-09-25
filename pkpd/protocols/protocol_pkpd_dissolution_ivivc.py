@@ -155,8 +155,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.AdissolReinterpolatedUnique = np.clip(A*self.BAdissol(tvitroUnique)+B,0.0,None)
             self.residualsForward = self.AdissolReinterpolatedUnique-self.FabsUnique
 
-            tvivoUnique=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)-t0,self.tvivoMin,self.tvivoMax)
-            self.FabsReinterpolatedUnique = np.clip(self.BFabs(tvivoUnique)/A-B,0.0,None)
+            tvivoUnique=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)+t0,self.tvivoMin,self.tvivoMax)
+            self.FabsReinterpolatedUnique = np.clip((self.BFabs(tvivoUnique)-B)/A,0.0,None)
             self.residualsBackward = self.AdissolUnique-self.FabsReinterpolatedUnique
 
             errorForward  = np.sum(self.residualsForward**2)
