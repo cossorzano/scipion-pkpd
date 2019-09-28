@@ -121,11 +121,35 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
         newSample.descriptors = {}
-        newSample.addMeasurementPattern(["tvivo"])
-        newSample.addMeasurementColumn("tvitro", tvitro)
         newSample.addMeasurementColumn("tvivo",tvivo)
+        newSample.addMeasurementColumn("tvitro", tvitro)
         self.outputExperiment.samples[sampleName] = newSample
         self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+
+    def makeSuggestions(self, levyName, tvitro, tvivo):
+        print("Polynomial fitting suggestions for %s"%levyName)
+        for degree in range(1,10):
+            coeffs =np.polyfit(tvivo,tvitro,degree)
+            p=np.poly1d(coeffs, variable='tvivo')
+            residuals=tvitro-p(tvivo)
+            R2=1-np.var(residuals)/np.var(tvivo)
+            print("Degree %d, R2: %f, tvitro="%(degree,R2))
+            print(p)
+            print(" ")
+
+        logtvivo=np.log10(tvivo)
+        logtvitro=np.log10(tvitro)
+        idx=np.logical_and(np.isfinite(logtvitro),np.isfinite(logtvivo))
+        logtvivo=logtvivo[idx]
+        logtvitro=logtvitro[idx]
+        for degree in range(1,10):
+            coeffs =np.polyfit(logtvivo,logtvitro,degree)
+            p=np.poly1d(coeffs, variable='log10(tvivo)')
+            residuals=logtvitro-p(logtvivo)
+            R2=1-np.var(residuals)/np.var(logtvivo)
+            print("Degree %d, R2: %f, log10(tvitro)="%(degree,R2))
+            print(p)
+            print(" ")
 
     def calculateAllLevy(self, objId1, objId2):
         parametersInVitro, vesselNames =self.getInVitroModels()
@@ -135,7 +159,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         tvitrovar = PKPDVariable()
         tvitrovar.varName = "tvitro"
         tvitrovar.varType = PKPDVariable.TYPE_NUMERIC
-        tvitrovar.role = PKPDVariable.ROLE_TIME
+        tvitrovar.role = PKPDVariable.ROLE_MEASUREMENT
         tvitrovar.units = createUnit("min")
 
         tvivovar = PKPDVariable()
@@ -144,8 +168,8 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         tvivovar.role = PKPDVariable.ROLE_MEASUREMENT
         tvivovar.units = createUnit("min")
 
-        self.outputExperiment.variables[tvitrovar.varName] = tvitrovar
         self.outputExperiment.variables[tvivovar.varName] = tvivovar
+        self.outputExperiment.variables[tvitrovar.varName] = tvitrovar
         self.outputExperiment.general["title"] = "Levy plots"
         self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
 
@@ -161,7 +185,10 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
                 if tvitroUnique[0]>0 and tvivoUnique[0]>0:
                     tvitroUnique=np.insert(tvitroUnique,0,0.0)
                     tvivoUnique = np.insert(tvivoUnique, 0, 0.0)
-                self.addSample("levy_%04d"%i, tvitroUnique, tvivoUnique, sampleFrom, vesselFrom)
+                levyName = "levy_%04d"%i
+                self.addSample(levyName, tvitroUnique, tvivoUnique, sampleFrom, vesselFrom)
+
+                self.makeSuggestions(levyName, tvitroUnique, tvivoUnique)
                 i+=1
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
