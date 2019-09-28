@@ -37,9 +37,9 @@ from pkpd.pkpd_units import createUnit, PKPDUnit
 
 # tested in test_workflow_levyplot
 
-from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
+from .protocol_pkpd_dissolution_ivivc import ProtPKPDDissolutionIVIVC
 
-class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
+class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
     """ Calculate the in vitro-in vivo correlation between two experiments. Each experiment may have
         several profiles and all vs all profiles are calculated. You may scale the time between the two
         sets of experiments"""
@@ -76,33 +76,18 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def addSample(self, sampleName, individualFrom, vesselFrom, Fabs, Adissol,optimum,R):
-        newSample = PKPDSample()
-        newSample.sampleName = sampleName
-        newSample.variableDictPtr = self.outputExperiment.variables
-        newSample.descriptors = {}
-        newSample.addMeasurementPattern(["Adissol"])
-        newSample.addMeasurementColumn("Adissol", Adissol)
-        newSample.addMeasurementColumn("Fabs",Fabs)
-        self.outputExperiment.samples[sampleName] = newSample
-        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
-
+    def addParametersToExperiment(self, outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R):
         i=0
         timeScaleMsg="tvitro=%s"%self.timeScale.get().replace('$(t)','$(tvivo)')
         for prm in self.coeffTimeList:
-            self.outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
+            self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
             i+=1
         responseMsg="Fabs(t)=%s"%self.responseScale.get()
         for prm in self.coeffResponseList:
-            self.outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
+            self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
             i+=1
 
-        self.outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
-
-    def summarize(self,fh,x,msg):
-        if len(x)>0:
-            p = np.percentile(x,[2.5, 50, 97.5],axis=0)
-            self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
+        self.outputExperimentFabs.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
 
     def goalFunction(self,x):
         i=0
@@ -114,38 +99,23 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
             t=self.tvivoUnique
             tvitroUnique=eval(self.parsedTimeOperation)
             tvitroUnique=np.clip(tvitroUnique,self.tvitroMin,self.tvitroMax)
-            self.AdissolPredicted = self.BAdissol(tvitroUnique)
-            Adissol = self.AdissolPredicted
+            self.AdissolReinterpolated = self.BAdissol(tvitroUnique)
+            Adissol = self.AdissolReinterpolated
             FabsPredicted = eval(self.parsedResponseOperation)
             self.FabsPredicted = np.clip(FabsPredicted,0.0,None)
-            self.residualsForward = self.FabsPredicted-self.FabsUnique
 
-            errorForward  = np.sum(self.residualsForward**2)
-            self.residuals = self.residualsForward
-            error = errorForward
-            if error<self.bestError:
-                print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
-                self.bestError=error
-            if self.verbose:
-                print("Forward error")
-                for i in range(len(tvitroUnique)):
-                    print("i=",i,"tvitro[i]=",tvitroUnique[i],"tvivo[i]=",self.tvivoUnique[i],"AdissolPredicted[i]=",self.AdissolPredicted[i],"Fabs[i]",self.FabsPredicted[i])
-                print("Error forward",np.sqrt(np.mean(self.residualsForward**2)),np.sum(self.residualsForward**2))
+            tvitroAux, tvivoAux = uniqueFloatValues(tvitroUnique,self.tvivoUnique)
+            Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
+            tvivoUnique = np.clip(Btinv(self.tvitroUnique), self.tvivoMin, self.tvivoMax)
+            self.FabsReinterpolated = self.BFabs(tvivoUnique)
+            FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
+            Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
+            self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, None)
+
+            error = self.calculateError(x, tvitroUnique, tvivoUnique)
         except:
            return 1e38
         return error
-
-    def produceAdissol(self,parameterInVitro,tmax):
-        tvitro = np.arange(0,tmax+1,1)
-        if self.removeInVitroTlag:
-            i=0
-            for prmName in self.protFit.model.getParameterNames():
-                if "tlag" in prmName:
-                    parameterInVitro[i]=0.0
-                i+=1
-        self.protFit.model.x = tvitro
-        Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
-        return (tvitro, Avitro)
 
     def constructBounds(self, coeffList):
         boundsDict = {}
@@ -163,6 +133,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
         parseBounds(self.timeBounds.get())
         parseBounds(self.responseBounds.get())
         if len(boundsDict)!=len(coeffList):
+            print("Coefficient list: ",coeffList)
+            print("Bounds: ",boundsDict)
             raise Exception("The number of bounds (%d) is different from the number of parameters (%d)"%\
                             (len(boundsDict),len(coeffList)))
 
@@ -179,25 +151,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
         parametersInVitro, vesselNames=self.getInVitroModels()
         profilesInVivo, sampleNames=self.getInVivoProfiles()
 
-        self.outputExperiment = PKPDExperiment()
-        AdissolVar = PKPDVariable()
-        AdissolVar.varName = "Adissol"
-        AdissolVar.varType = PKPDVariable.TYPE_NUMERIC
-        AdissolVar.role = PKPDVariable.ROLE_TIME
-        AdissolVar.units = createUnit(self.experimentInVitro.getVarUnits(self.varNameY))
-        AdissolVar.comment = "Amount disolved in vitro"
-
-        FabsVar = PKPDVariable()
-        FabsVar.varName = "Fabs"
-        FabsVar.varType = PKPDVariable.TYPE_NUMERIC
-        FabsVar.role = PKPDVariable.ROLE_MEASUREMENT
-        FabsVar.units = createUnit(self.experimentInVivo.getVarUnits("A"))
-        FabsVar.comment = "Amount absorbed in vivo"
-
-        self.outputExperiment.variables[AdissolVar.varName] = AdissolVar
-        self.outputExperiment.variables[FabsVar.varName] = FabsVar
-        self.outputExperiment.general["title"] = "In-vitro In-vivo correlation generic"
-        self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
+        self.createOutputExperiments()
 
         self.parsedTimeOperation, self.varTimeList, self.coeffTimeList = parseOperation(self.timeScale.get())
         self.parsedResponseOperation, self.varResponseList, self.coeffResponseList = parseOperation(self.responseScale.get())
@@ -228,6 +182,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
                 self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
 
                 self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
+                self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
 
                 self.bestError = 1e38
                 optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
@@ -237,11 +192,10 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
 
                 # Evaluate correlation
                 self.goalFunction(optimum.x)
-                R2=np.clip(1-np.var(self.residuals)/np.var(self.Fabs),0.0,1.0)
-                R=sqrt(R2)
+                R = self.calculateR()
                 allR.append(R)
 
-                self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx], self.FabsUnique, self.AdissolPredicted, optimum.x, R)
+                self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx], optimum.x, R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
@@ -260,10 +214,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionLevyPlot):
         self.doublePrint(fh,"Response scale: Fabs(t)=%s"%self.responseScale.get())
         fh.close()
 
-        self.outputExperiment.write(self._getPath("experiment.pkpd"))
-
-    def _validate(self):
-        return []
+        self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
+        self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
 
     def _summary(self):
         retval = []

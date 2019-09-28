@@ -26,6 +26,7 @@
 
 from math import sqrt
 import numpy as np
+import sys
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import differential_evolution
 
@@ -87,15 +88,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def addSample(self, sampleName, individualFrom, vesselFrom, Fabs, Adissol,optimum,R):
-        newSample = PKPDSample()
-        newSample.sampleName = sampleName
-        newSample.variableDictPtr = self.outputExperiment.variables
-        newSample.descriptors = {}
-        newSample.addMeasurementPattern(["Adissol"])
-        newSample.addMeasurementColumn("Adissol", Adissol)
-        newSample.addMeasurementColumn("Fabs",Fabs)
-        self.outputExperiment.samples[sampleName] = newSample
+    def addParametersToExperiment(self, outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R):
         if self.timeScale.get()==1:
             timeScaleMsg="tvitro=tvivo-t0"
         elif self.timeScale.get()==2:
@@ -121,23 +114,80 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             exec ("%s=%f" % (prm, optimum[i]))
             i+=1
 
-        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
         if not t0 is None:
-            self.outputExperiment.addParameterToSample(sampleName, "t0", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, t0)
+            outputExperiment.addParameterToSample(sampleName, "t0", PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, t0)
         if not k is None:
-            self.outputExperiment.addParameterToSample(sampleName, "k", PKPDUnit.UNIT_NONE, timeScaleMsg, k)
+            outputExperiment.addParameterToSample(sampleName, "k", PKPDUnit.UNIT_NONE, timeScaleMsg, k)
         if not alpha is None:
-            self.outputExperiment.addParameterToSample(sampleName, "alpha", PKPDUnit.UNIT_NONE, timeScaleMsg, alpha)
+            outputExperiment.addParameterToSample(sampleName, "alpha", PKPDUnit.UNIT_NONE, timeScaleMsg, alpha)
         if not A is None:
-            self.outputExperiment.addParameterToSample(sampleName, "A", PKPDUnit.UNIT_NONE, responseMsg, A)
+            outputExperiment.addParameterToSample(sampleName, "A", PKPDUnit.UNIT_NONE, responseMsg, A)
         if not B is None:
-            self.outputExperiment.addParameterToSample(sampleName, "B", PKPDUnit.UNIT_NONE, responseMsg, B)
-        self.outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+            outputExperiment.addParameterToSample(sampleName, "B", PKPDUnit.UNIT_NONE, responseMsg, B)
+        outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+
+    def addSample(self, sampleName, individualFrom, vesselFrom, optimum, R):
+        newSampleFabs = PKPDSample()
+        newSampleFabs.sampleName = sampleName
+        newSampleFabs.variableDictPtr = self.outputExperimentFabs.variables
+        newSampleFabs.descriptors = {}
+        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
+        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
+        newSampleFabs.addMeasurementColumn("Fabs",self.FabsUnique)
+        self.outputExperimentFabs.samples[sampleName] = newSampleFabs
+        self.addParametersToExperiment(self.outputExperimentFabs, sampleName, individualFrom, vesselFrom, optimum, R)
+
+        newSampleAdissol = PKPDSample()
+        newSampleAdissol.sampleName = sampleName
+        newSampleAdissol.variableDictPtr = self.outputExperimentAdissol.variables
+        newSampleAdissol.descriptors = {}
+        newSampleAdissol.addMeasurementColumn("FabsReinterpolated", self.FabsReinterpolated)
+        newSampleAdissol.addMeasurementColumn("AdissolPredicted", self.AdissolPredicted)
+        newSampleAdissol.addMeasurementColumn("Adissol",self.AdissolUnique)
+        self.outputExperimentAdissol.samples[sampleName] = newSampleAdissol
+        self.addParametersToExperiment(self.outputExperimentAdissol, sampleName, individualFrom, vesselFrom, optimum, R)
 
     def summarize(self,fh,x,msg):
         if len(x)>0:
             p = np.percentile(x,[2.5, 50, 97.5],axis=0)
             self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
+
+    def calculateError(self, x, tvitroUnique, tvivoUnique):
+        self.residualsForward = self.FabsPredicted - self.FabsUnique
+        self.residualsBackward = self.AdissolUnique - self.AdissolPredicted
+
+        idx = np.isnan(self.residualsForward)
+        self.residualsForward[idx] = self.FabsUnique[idx]
+        idx = np.isnan(self.residualsBackward)
+        self.residualsBackward[idx] = self.AdissolUnique[idx]
+
+        errorForward = np.mean(self.residualsForward ** 2)
+        errorBackward = np.mean(self.residualsBackward ** 2)
+        if errorForward > errorBackward:
+            self.residuals = self.residualsForward
+        else:
+            self.residuals = self.residualsBackward
+        error = 0.5*(errorBackward+errorForward)
+
+        # error=np.sqrt(np.mean(self.residuals**2))
+        # error=np.sqrt(np.sum(self.residuals**2))
+        if error < self.bestError:
+            print("New minimum error=%f (back=%f, forw=%f)" % (error,errorBackward,errorForward), "x=%s" % np.array2string(x, max_line_width=1000))
+            self.bestError = error
+            sys.stdout.flush()
+        if self.verbose:
+            print("Forward error")
+            for i in range(len(self.FabsPredicted)):
+                print("i=", i, "tvitro[i]=", tvitroUnique[i], "tvivo[i]=", self.tvivoUnique[i], "FabsPredicted[i]=",
+                      self.FabsPredicted[i], "Fabs[i]", self.FabsUnique[i])
+            print("Backward error")
+            for i in range(len(self.AdissolPredicted)):
+                print("i=", i, "tvitro[i]=", self.tvitroUnique[i], "tvivo[i]=", tvivoUnique[i], "Adissol[i]=",
+                      self.AdissolUnique[i], "AdissolPredicted[i]", self.AdissolPredicted[i])
+            print("Error forward", np.sqrt(np.mean(self.residualsForward ** 2)), np.sum(self.residualsForward ** 2))
+            print("Error backward", np.sqrt(np.mean(self.residualsBackward ** 2)), np.sum(self.residualsBackward ** 2))
+        return error
 
     def goalFunction(self,x):
         t0=0.0
@@ -152,35 +202,14 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 i+=1
 
             tvitroUnique=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
-            self.AdissolReinterpolatedUnique = np.clip(A*self.BAdissol(tvitroUnique)+B,0.0,None)
-            self.residualsForward = self.AdissolReinterpolatedUnique-self.FabsUnique
+            self.AdissolReinterpolated = self.BAdissol(tvitroUnique)
+            self.FabsPredicted = np.clip(A*self.AdissolReinterpolated+B,0.0,None)
 
             tvivoUnique=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)+t0,self.tvivoMin,self.tvivoMax)
-            self.FabsReinterpolatedUnique = np.clip((self.BFabs(tvivoUnique)-B)/A,0.0,None)
-            self.residualsBackward = self.AdissolUnique-self.FabsReinterpolatedUnique
+            self.FabsReinterpolated = self.BFabs(tvivoUnique)
+            self.AdissolPredicted = np.clip((self.FabsReinterpolated-B)/A,0.0,None)
 
-            errorForward  = np.sum(self.residualsForward**2)
-            errorBackward = np.sum(self.residualsBackward**2)
-            if errorForward>errorBackward:
-                self.residuals = self.residualsForward
-                error = errorForward
-            else:
-                self.residuals = self.residualsBackward
-                error = errorBackward
-            # error=np.sqrt(np.mean(self.residuals**2))
-            # error=np.sqrt(np.sum(self.residuals**2))
-            if error<self.bestError:
-                print("New minimum error=%f"%error,"x=%s"%np.array2string(x,max_line_width=1000))
-                self.bestError=error
-            if self.verbose:
-                print("Forward error")
-                for i in range(len(self.AdissolReinterpolatedUnique)):
-                    print("i=",i,"tvitro[i]=",tvitroUnique[i],"tvivo[i]=",self.tvivoUnique[i],"AdissolReinterpolated[i]=",self.AdissolReinterpolatedUnique[i],"Fabs[i]",self.FabsUnique[i])
-                print("Backward error")
-                for i in range(len(self.FabsReinterpolatedUnique)):
-                    print("i=", i, "tvitro[i]=", self.tvitroUnique[i], "tvivo[i]=", tvivoUnique[i], "Adissol[i]=", self.AdissolUnique[i], "FabsReinterpolated[i]", self.FabsReinterpolatedUnique[i])
-                print("Error forward",np.sqrt(np.mean(self.residualsForward**2)),np.sum(self.residualsForward**2))
-                print("Error backward",np.sqrt(np.mean(self.residualsBackward**2)),np.sum(self.residualsBackward**2))
+            error = self.calculateError(x, tvitroUnique, tvivoUnique)
         except:
             return 1e38
         return error
@@ -201,15 +230,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
         return (tvitro, Avitro)
 
-    def calculateAllIvIvC(self, objId1, objId2):
-        parametersInVitro, vesselNames=self.getInVitroModels()
-        profilesInVivo, sampleNames=self.getInVivoProfiles()
-
-        self.outputExperiment = PKPDExperiment()
+    def createOutputExperiments(self):
         AdissolVar = PKPDVariable()
         AdissolVar.varName = "Adissol"
         AdissolVar.varType = PKPDVariable.TYPE_NUMERIC
-        AdissolVar.role = PKPDVariable.ROLE_TIME
+        AdissolVar.role = PKPDVariable.ROLE_MEASUREMENT
         AdissolVar.units = createUnit(self.experimentInVitro.getVarUnits(self.varNameY))
         AdissolVar.comment = "Amount disolved in vitro"
 
@@ -220,10 +245,60 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         FabsVar.units = createUnit(self.experimentInVivo.getVarUnits("A"))
         FabsVar.comment = "Amount absorbed in vivo"
 
-        self.outputExperiment.variables[AdissolVar.varName] = AdissolVar
-        self.outputExperiment.variables[FabsVar.varName] = FabsVar
-        self.outputExperiment.general["title"] = "In-vitro In-vivo correlation"
-        self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
+        AdissolReinterpolatedVar = PKPDVariable()
+        AdissolReinterpolatedVar.varName = "AdissolReinterpolated"
+        AdissolReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
+        AdissolReinterpolatedVar.role = PKPDVariable.ROLE_MEASUREMENT
+        AdissolReinterpolatedVar.units = createUnit(self.experimentInVitro.getVarUnits(self.varNameY))
+        AdissolReinterpolatedVar.comment = "Time reinterpolated amount disolved in vitro"
+
+        FabsReinterpolatedVar = PKPDVariable()
+        FabsReinterpolatedVar.varName = "FabsReinterpolated"
+        FabsReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
+        FabsReinterpolatedVar.role = PKPDVariable.ROLE_MEASUREMENT
+        FabsReinterpolatedVar.units = createUnit(self.experimentInVivo.getVarUnits("A"))
+        FabsReinterpolatedVar.comment = "Time reinterpolated amount absorbed in vivo"
+
+        AdissolPredictedVar = PKPDVariable()
+        AdissolPredictedVar.varName = "AdissolPredicted"
+        AdissolPredictedVar.varType = PKPDVariable.TYPE_NUMERIC
+        AdissolPredictedVar.role = PKPDVariable.ROLE_MEASUREMENT
+        AdissolPredictedVar.units = createUnit(self.experimentInVitro.getVarUnits(self.varNameY))
+        AdissolPredictedVar.comment = "Predicted amount disolved in vitro"
+
+        FabsPredictedVar = PKPDVariable()
+        FabsPredictedVar.varName = "FabsPredicted"
+        FabsPredictedVar.varType = PKPDVariable.TYPE_NUMERIC
+        FabsPredictedVar.role = PKPDVariable.ROLE_MEASUREMENT
+        FabsPredictedVar.units = createUnit(self.experimentInVivo.getVarUnits("A"))
+        FabsPredictedVar.comment = "Predicted amount absorbed in vivo"
+
+        self.outputExperimentFabs = PKPDExperiment()
+        self.outputExperimentFabs.variables[AdissolReinterpolatedVar.varName] = AdissolReinterpolatedVar
+        self.outputExperimentFabs.variables[FabsVar.varName] = FabsVar
+        self.outputExperimentFabs.variables[FabsPredictedVar.varName] = FabsPredictedVar
+        self.outputExperimentFabs.general["title"] = "In-vitro In-vivo correlation"
+        self.outputExperimentFabs.general["comment"] = "Fabs vs Predicted Fabs"
+
+        self.outputExperimentAdissol = PKPDExperiment()
+        self.outputExperimentAdissol.variables[FabsReinterpolatedVar.varName] = FabsReinterpolatedVar
+        self.outputExperimentAdissol.variables[AdissolVar.varName] = AdissolVar
+        self.outputExperimentAdissol.variables[AdissolPredictedVar.varName] = AdissolPredictedVar
+        self.outputExperimentAdissol.general["title"] = "In-vitro In-vivo correlation"
+        self.outputExperimentAdissol.general["comment"] = "Adissol vs Predicted Adissol"
+
+    def calculateR(self):
+        R2forward = np.clip(1 - np.var(self.residualsForward) / np.var(self.FabsUnique), 0.0, 1.0)
+        R2backward = np.clip(1 - np.var(self.residualsBackward) / np.var(self.AdissolUnique), 0.0, 1.0)
+        R2 = min(R2forward, R2backward)
+        R = sqrt(R2)
+        return R
+
+    def calculateAllIvIvC(self, objId1, objId2):
+        parametersInVitro, vesselNames=self.getInVitroModels()
+        profilesInVivo, sampleNames=self.getInVivoProfiles()
+
+        self.createOutputExperiments()
 
         i=1
         allt0=[]
@@ -290,9 +365,13 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
 
                 self.bestError = 1e38
-                optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
+                if len(self.bounds)>0:
+                    optimum = differential_evolution(self.goalFunction,self.bounds,popsize=50)
+                    x = optimum.x
+                else:
+                    x = None
                 # self.verbose=True
-                self.goalFunction(optimum.x)
+                self.goalFunction(x)
 
                 j = 0
                 t0 = 0.0
@@ -305,14 +384,10 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                     j += 1
 
                 # Evaluate correlation
-                R2=np.clip(1-np.var(self.residuals)/np.var(self.Fabs),0.0,1.0)
-                R=sqrt(R2)
+                R = self.calculateR()
                 allR.append(R)
 
-                if np.max(self.AdissolReinterpolatedUnique)>np.max(self.FabsReinterpolatedUnique):
-                    self.addSample("ivivc_%04d"%i,sampleNames[invivoIdx],vesselNames[invitroIdx],self.AdissolReinterpolatedUnique,self.FabsUnique,optimum.x,R)
-                else:
-                    self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx],self.AdissolUnique, self.FabsReinterpolatedUnique, optimum.x, R)
+                self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx], x, R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
@@ -348,7 +423,17 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self.doublePrint(fh,"IVIVC equation: %s"%eqStr)
         fh.close()
 
-        self.outputExperiment.write(self._getPath("experiment.pkpd"))
+        self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
+        self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
+
+    def createOutputStep(self):
+        self._defineOutputs(outputExperimentFabs=self.outputExperimentFabs)
+        self._defineSourceRelation(self.inputInVitro.get(), self.outputExperimentFabs)
+        self._defineSourceRelation(self.inputInVivo.get(), self.outputExperimentFabs)
+
+        self._defineOutputs(outputExperimentAdissol=self.outputExperimentAdissol)
+        self._defineSourceRelation(self.inputInVitro.get(), self.outputExperimentAdissol)
+        self._defineSourceRelation(self.inputInVivo.get(), self.outputExperimentAdissol)
 
     def _validate(self):
         return []
