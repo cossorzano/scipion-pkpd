@@ -93,6 +93,9 @@ def verifyMD5(fn):
 def uniqueFloatValues(x,y, TOL=-1):
     xp=np.asarray(x,dtype=np.float64)
     yp=np.asarray(y,dtype=np.float64)
+    idx = np.logical_not(np.logical_or(np.isnan(xp),np.isnan(yp)))
+    xp=xp[idx]
+    yp=yp[idx]
     if TOL<0:
         TOL = np.max(xp.flat) / (xp.size*1e3)
     A = np.zeros((xp.size,), dtype=[('x','f8'),('y','f8')])
