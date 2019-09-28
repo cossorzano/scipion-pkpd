@@ -128,6 +128,11 @@ def uniqueFloatValues2(x1,x2,y):
     yunique = yp.flat[takeIdx]
     return x1unique,x2unique,yunique
 
+def twoWayUniqueFloatValues(x,y):
+    y1,x1=uniqueFloatValues(y,x)
+    x2,y2=uniqueFloatValues(x1,y1)
+    return x2,y2
+
 def calculateAUC0t(t, C):
     # Make sure that the (0,0) sample is present
     AUC0t = np.zeros(t.shape[0])
