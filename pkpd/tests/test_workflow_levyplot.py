@@ -193,7 +193,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVC.inputInVitro.set(protWeibull)
         protIVIVC.inputInVivo.set(protDeconv)
         self.launchProtocol(protIVIVC)
-        self.assertIsNotNone(protIVIVC.outputExperiment.fnPKPD, "There was a problem with the IVIVC")
+        self.assertIsNotNone(protIVIVC.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC")
+        self.assertIsNotNone(protIVIVC.outputExperimentAdissol.fnPKPD, "There was a problem with the IVIVC")
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # IVIVC generic
@@ -208,7 +209,8 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVCG.inputInVitro.set(protWeibull)
         protIVIVCG.inputInVivo.set(protDeconv)
         self.launchProtocol(protIVIVCG)
-        self.assertIsNotNone(protIVIVCG.outputExperiment.fnPKPD, "There was a problem with the IVIVC Generic")
+        self.assertIsNotNone(protIVIVCG.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC Generic")
+        self.assertIsNotNone(protIVIVCG.outputExperimentAdissol.fnPKPD, "There was a problem with the IVIVC Generic")
         self.validateFiles('ProtPKPDDissolutionIVIVCG', ProtPKPDDissolutionIVIVCGeneric)
 
         # IVIVC Wagner
