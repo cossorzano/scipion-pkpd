@@ -31,6 +31,7 @@ from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
 from pkpd.pkpd_units import createUnit
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.biopharmaceutics import DrugSource
+from pkpd.utils import twoWayUniqueFloatValues
 
 # Tested in test_workflow_deconvolution
 # Tested by test_workflow_levyplot
@@ -66,8 +67,9 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
         newSample.variableDictPtr = self.outputExperiment.variables
         newSample.descriptors = {}
         newSample.addMeasurementPattern(["A"])
-        newSample.addMeasurementColumn("t", t)
-        newSample.addMeasurementColumn("A",y)
+        tUnique, yUnique = twoWayUniqueFloatValues(t,y)
+        newSample.addMeasurementColumn("t", tUnique)
+        newSample.addMeasurementColumn("A",yUnique)
         self.outputExperiment.samples[sampleName] = newSample
 
     def deconvolve(self, objId):
