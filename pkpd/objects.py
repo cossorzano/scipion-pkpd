@@ -539,6 +539,7 @@ class PKPDExperiment(EMObject):
         if not fh:
             raise Exception("Cannot open the file "+self.fnPKPD)
 
+        state=None
         for line in fh.readlines():
             line=line.strip()
             if line=="":
