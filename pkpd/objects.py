@@ -287,7 +287,10 @@ class PKPDSample:
                 raise Exception("Time measurements cannot be NA")
 
     def addMeasurementColumn(self,varName,values):
-        self.measurementPattern.append(varName)
+        if self.measurementPattern is None:
+            self.measurementPattern = []
+        if not varName in self.measurementPattern:
+            self.measurementPattern.append(varName)
         setattr(self, "measurement_%s"%varName, [])
         if type(values)==list:
             for value in values:
