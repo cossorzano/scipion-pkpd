@@ -26,7 +26,7 @@
 
 import numpy as np
 import random
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable, PKPDFitting
@@ -329,8 +329,12 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 A=np.asarray(B(A),dtype=np.float64)
 
             # Set the dissolution profile
-            self.pkModel.drugSource.getVia().viaProfile.setXYValues(t-tlag,A)
+            self.pkModel.drugSource.getVia().viaProfile.setXYValues(t,A)
             C=self.pkModel.forwardModel(pkPrm,[t])[0] # forwardModel returns a list of arrays
+            if tlag!=0.0:
+                B=interp1d(t,C)
+                C=B(np.clip(t-tlag,0.0,None))
+                C[0:int(tlag)]=0.0
 
             self.NCA(t,C)
             AUCarray[i] = self.AUC0t
