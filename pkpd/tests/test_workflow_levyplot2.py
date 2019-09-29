@@ -300,7 +300,7 @@ Individual1 ; t; Cp
                                        )
         protIVIVPKS.inputInVitro.set(protWeibull.outputFitting)
         protIVIVPKS.inputPK.set(protModelInVivo.outputFitting)
-        protIVIVPKS.inputIvIvC.set(protIVIVC.outputExperiment)
+        protIVIVPKS.inputIvIvC.set(protIVIVCS.outputExperimentFabs)
         self.launchProtocol(protIVIVPKS)
         self.assertIsNotNone(protIVIVPKS.outputExperiment.fnPKPD, "There was a problem with the simulation")
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
