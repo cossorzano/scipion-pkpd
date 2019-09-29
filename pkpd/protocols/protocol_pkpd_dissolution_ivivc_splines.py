@@ -79,6 +79,8 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
 
         self.outputExperimentFabs.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
         self.outputExperimentAdissol.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        self.outputExperimentFabs.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        self.outputExperimentAdissol.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def getParameters(self, x, i0, parameterList, vitroPrefix):
         # print("Unsorted x",x)
