@@ -81,13 +81,18 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         timeScaleMsg="tvitro=%s"%self.timeScale.get().replace('$(t)','$(tvivo)')
         for prm in self.coeffTimeList:
             self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
+            self.outputExperimentAdissol.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
             i+=1
         responseMsg="Fabs(t)=%s"%self.responseScale.get()
         for prm in self.coeffResponseList:
             self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
+            self.outputExperimentAdissol.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
             i+=1
 
         self.outputExperimentFabs.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        self.outputExperimentAdissol.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        self.outputExperimentFabs.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        self.outputExperimentAdissol.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def goalFunction(self,x):
         i=0
@@ -98,21 +103,21 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
 
             t=self.tvivoUnique
             tvitroUnique=eval(self.parsedTimeOperation)
-            tvitroUnique=np.clip(tvitroUnique,self.tvitroMin,self.tvitroMax)
-            self.AdissolReinterpolated = self.BAdissol(tvitroUnique)
+            self.tvitroReinterpolated=np.clip(tvitroUnique,self.tvitroMin,self.tvitroMax)
+            self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
             Adissol = self.AdissolReinterpolated
             FabsPredicted = eval(self.parsedResponseOperation)
             self.FabsPredicted = np.clip(FabsPredicted,0.0,None)
 
             tvitroAux, tvivoAux = uniqueFloatValues(tvitroUnique,self.tvivoUnique)
             Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
-            tvivoUnique = np.clip(Btinv(self.tvitroUnique), self.tvivoMin, self.tvivoMax)
-            self.FabsReinterpolated = self.BFabs(tvivoUnique)
+            self.tvivoReinterpolated = np.clip(Btinv(self.tvitroUnique), self.tvivoMin, self.tvivoMax)
+            self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
             FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
             Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
             self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, None)
 
-            error = self.calculateError(x, tvitroUnique, tvivoUnique)
+            error = self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
         except:
            return 1e38
         return error
@@ -148,8 +153,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         return boundList
 
     def calculateAllIvIvC(self, objId1, objId2):
-        parametersInVitro, vesselNames=self.getInVitroModels()
-        profilesInVivo, sampleNames=self.getInVivoProfiles()
+        self.parametersInVitro, self.vesselNames=self.getInVitroModels()
+        self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
         self.createOutputExperiments()
 
@@ -158,16 +163,18 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
 
         self.parameters = self.coeffTimeList + self.coeffResponseList
         self.bounds = self.constructBounds(self.parameters)
+        self.calculateAllIvIvCLoop()
 
+    def calculateAllIvIvCLoop(self):
         i=1
         allCoeffs = []
         allR=[]
 
         invitroIdx=0
         self.verbose=False
-        for parameterInVitro in parametersInVitro:
+        for parameterInVitro in self.parametersInVitro:
             invivoIdx=0
-            for self.tvivo,self.Fabs in profilesInVivo:
+            for self.tvivo,self.Fabs in self.profilesInVivo:
                 print("New combination %d"%i)
                 self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
                 self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
@@ -180,6 +187,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
                 # Make sure they are sorted in x
                 self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
                 self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
+                self.FabsMax = np.max(self.FabsUnique)
+                self.AdissolMax = np.max(self.AdissolUnique)
 
                 self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
                 self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
@@ -195,7 +204,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
                 R = self.calculateR()
                 allR.append(R)
 
-                self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx], optimum.x, R)
+                self.addSample("ivivc_%04d" % i, self.sampleNames[invivoIdx], self.vesselNames[invitroIdx], optimum.x, R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
@@ -209,13 +218,15 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         self.doublePrint(fh," ")
         self.summarize(fh,allR,"Correlation coefficient (R)")
         self.doublePrint(fh," ")
-
-        self.doublePrint(fh,"Time scale: tvitro=%s"%self.timeScale.get().replace('$(t)','$(tvivo)'))
-        self.doublePrint(fh,"Response scale: Fabs(t)=%s"%self.responseScale.get())
+        self.printFormulas(fh)
         fh.close()
 
         self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
         self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
+
+    def printFormulas(self, fh):
+        self.doublePrint(fh,"Time scale: tvitro=%s"%self.timeScale.get().replace('$(t)','$(tvivo)'))
+        self.doublePrint(fh,"Response scale: Fabs(t)=%s"%self.responseScale.get())
 
     def _summary(self):
         retval = []

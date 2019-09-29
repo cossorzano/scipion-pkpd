@@ -54,8 +54,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                       pointerClass='PKPDFitting', help='Select a fitting with dissolution profiles')
         form.addParam('inputPK', params.PointerParam, label="Pharmacokinetic model",
                       pointerClass='PKPDFitting', help='Select the PK model to be simulated with this input')
-        form.addParam('conversionType', params.EnumParam, label='Time scaling', choices=['IVIVC','Levy plot'], default=0,
-                      help='To convert the dissolution profile into an absorption profile you may use an IVIVC or a Levy plot. '
+        form.addParam('conversionType', params.EnumParam, label='Time/Response scaling', choices=['IVIVC','Levy plot'], default=0,
+                      help='To convert the dissolution profile into an absorption profile you may use an IVIVC (Fabs output) or a Levy plot. '
                       'The Levy plot can better represent what is happening in reality with patients.')
         form.addParam('inputIvIvC', params.PointerParam, label="In vitro-In vivo correlation", condition='conversionType==0',
                       pointerClass='PKPDExperiment', help='Select the output of an in vitro-in vivo correlation')
@@ -96,16 +96,17 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.dissolutionModel.allowTlag = "tlag" in self.fittingInVitro.modelParameters
         self.dissolutionPopulation = cls!=""
 
-    def getTimeScaling(self):
+    def getScaling(self):
         self.allTimeScalings = {}
+        self.allResponseScalings = {}
         if self.conversionType.get()==0:
             experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
         else:
             experiment = self.readExperiment(self.inputLevy.get().fnPKPD, show=False)
         for sampleName, sample in experiment.samples.iteritems():
             if self.conversionType.get() == 0:
-                vivo = sample.getValues("Fabs")
-                vitro = sample.getValues("Adissol")
+                vivo = sample.getValues("tvivo")
+                vitro = sample.getValues("tvitroReinterpolated")
             else:
                 vivo = sample.getValues("tvivo")
                 vitro = sample.getValues("tvitro")
@@ -114,6 +115,13 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             if not fromIndividual in self.allTimeScalings.keys():
                 self.allTimeScalings[fromIndividual]=[]
             self.allTimeScalings[fromIndividual].append((np.asarray(vitro,dtype=np.float64),np.asarray(vivo,dtype=np.float64)))
+
+            if self.conversionType.get() == 0:
+                vivo = sample.getValues("FabsPredicted")
+                vitro = sample.getValues("AdissolReinterpolated")
+                if not fromIndividual in self.allResponseScalings.keys():
+                    self.allResponseScalings[fromIndividual]=[]
+                self.allResponseScalings[fromIndividual].append((np.asarray(vitro,dtype=np.float64),np.asarray(vivo,dtype=np.float64)))
 
     def getPKModels(self):
         fnFitting = self.inputPK.get().fnFitting
@@ -205,7 +213,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
     def simulate(self, objId1, objId2, inputDose, inputN):
         self.getInVitroModels()
-        self.getTimeScaling()
+        self.getScaling()
         self.getPKModels()
 
         self.outputExperiment = PKPDExperiment()
@@ -302,23 +310,23 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
             nfit = int(random.uniform(0, len(self.allTimeScalings[sampleFitVivo.sampleName])))
             A = self.dissolutionModel.forwardModel(dissolutionPrm, t)[0]
+
+            tvitroUnique, AdissolUnique = uniqueFloatValues(t, A)
+            Bdissol = InterpolatedUnivariateSpline(tvitroUnique, AdissolUnique, k=1)
+
+            tvitroLevy, tvivoLevy = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
+            tvivoLevyUnique, tvitroLevyUnique = uniqueFloatValues(tvivoLevy, tvitroLevy)
+            BLevy = InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique, k=1)
+
+            tvitro = np.asarray(BLevy(t), dtype=np.float64)
+            A = np.asarray(Bdissol(tvitro), dtype=np.float64)
+
             if self.conversionType.get()==0:
                 # In vitro-in vivo correlation
-                Adissol, Fabs = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
+                Adissol, Fabs = self.allResponseScalings[sampleFitVivo.sampleName][nfit]
                 AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
                 B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
                 A=np.asarray(B(A),dtype=np.float64)
-            else:
-                # Levy plot
-                tvitroUnique, AdissolUnique = uniqueFloatValues(t, A)
-                Bdissol=InterpolatedUnivariateSpline(tvitroUnique, AdissolUnique,k=1)
-
-                tvitroLevy, tvivoLevy = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
-                tvivoLevyUnique, tvitroLevyUnique = uniqueFloatValues(tvivoLevy, tvitroLevy)
-                BLevy=InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique,k=1)
-
-                tvitro=np.asarray(BLevy(t),dtype=np.float64)
-                A=np.asarray(Bdissol(tvitro),dtype=np.float64)
 
             # Set the dissolution profile
             self.pkModel.drugSource.getVia().viaProfile.setXYValues(t-tlag,A)
@@ -363,7 +371,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 self._defineSourceRelation(self.inputLevy.get(), self.outputExperiment)
 
     def _validate(self):
-        return []
+        retval = []
+        if self.conversionType.get() == 0 and not "experimentFabs.pkpd" in self.inputIvIvC.get().fnPKPD.get():
+            retval.append("If the conversion is done from IVIVC, then you must take the Fabs output")
+        return retval
 
     def _summary(self):
         retval = []

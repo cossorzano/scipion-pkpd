@@ -68,20 +68,20 @@ Profile; group=__Profile
 [MEASUREMENTS] ===========================
 Profile ; t; C
 0 0 
-0.25 1.7 
-0.5 8.3 
-0.75 13.3 
-1 20.0 
-2 44.0 
-3 61.0 
-4 70.7 
-6 78.0 
-8 79.7 
-10 80.7 
-12 80.0 
-16 81.3 
-20 82.0 
-24 82.3 
+2.5 1.7 
+5 8.3 
+7.5 13.3 
+10 20.0 
+20 44.0 
+30 61.0 
+40 70.7 
+60 78.0 
+80 79.7 
+100 80.7 
+120 80.0 
+160 81.3 
+200 82.0 
+240 82.3 
 """
         fnExperiment = "experimentInVitro.pkpd"
         fhExperiment = open(fnExperiment, "w")
@@ -113,7 +113,7 @@ Profile ; t; C
         Vmax = float(experiment.samples['Profile'].descriptors['Vmax'])
         self.assertTrue(Vmax>80 and Vmax<82)
         lambdda = float(experiment.samples['Profile'].descriptors['lambda'])
-        self.assertTrue(lambdda>0.28 and lambdda<0.29)
+        self.assertTrue(lambdda>0.009 and lambdda<0.011)
         b = float(experiment.samples['Profile'].descriptors['b'])
         self.assertTrue(b>1.4 and b<1.5)
 
@@ -132,7 +132,7 @@ Cp ; ug/L ; numeric[%f] ; measurement ; Plasma concentration
 t ; min ; numeric[%f] ; time ; 
 
 [VIAS] ================================
-Oral; splineXY4;  tlag min; bioavailability=1.000000
+Oral; splineXY5;  tlag min; bioavailability=1.000000
 
 [DOSES] ================================
 Bolus1; via=Oral; bolus; t=0.000000 h; d=200 ug
@@ -166,10 +166,10 @@ Individual1 ; t; Cp
         os.remove(fnExperiment)
 
         # Fit Order 1
-        print "Fitting splines4-monocompartment model ..."
+        print "Fitting splines5-monocompartment model ..."
         protModelInVivo = self.newProtocol(ProtPKPDMonoCompartment,
                                        objLabel='pkpd - fit monocompartment',
-                                       bounds="(15.0, 30.0); (0.0, 400.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.15, 0.25); (47, 53)"
+                                       bounds="(15.0, 30.0); (0.0, 400.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.15, 0.25); (47, 53)"
                                        )
         protModelInVivo.inputExperiment.set(protImportInVivo.outputExperiment)
         self.launchProtocol(protModelInVivo)
@@ -206,7 +206,7 @@ Individual1 ; t; Cp
         protLevy.inputInVitro.set(protWeibull)
         protLevy.inputInVivo.set(protDeconv)
         self.launchProtocol(protLevy)
-        self.assertIsNotNone(protLevy.outputExperimentTime.fnPKPD, "There was a problem with the Levy plot")
+        self.assertIsNotNone(protLevy.outputExperiment.fnPKPD, "There was a problem with the Levy plot")
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
         # IVIVC
@@ -227,9 +227,9 @@ Individual1 ; t; Cp
         print "In vitro-in vivo generic ..."
         protIVIVCG = self.newProtocol(ProtPKPDDissolutionIVIVCGeneric,
                                       timeScale='$[k1]*$(t)+$[k2]*np.power($(t),2)+$[k3]*np.power($(t),3)',
-                                      timeBounds='k1: [0,1]; k2: [-0.01,0];  k3: [0,1e-3]',
+                                      timeBounds='k1: [0,3]; k2: [-0.1,0.01];  k3: [0,1e-3]',
                                       responseScale='$[A]*$(Adissol)+$[B]+$[C]*np.power($(Adissol),2)',
-                                      responseBounds='A: [0.1,1]; B: [-50,0]; C: [0,0.05]',
+                                      responseBounds='A: [0.01,1]; B: [-50,30]; C: [-0.05,0.05]',
                                       objLabel='pkpd - ivivc generic'
                                      )
         protIVIVCG.inputInVitro.set(protWeibull)
@@ -238,6 +238,18 @@ Individual1 ; t; Cp
         self.assertIsNotNone(protIVIVCG.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC Generic")
         self.validateFiles('ProtPKPDDissolutionIVIVCG', ProtPKPDDissolutionIVIVCGeneric)
 
+        # IVIVC splines
+        print "In vitro-in vivo splies ..."
+        protIVIVCS = self.newProtocol(ProtPKPDDissolutionIVIVCSplines,
+                                      timeScale=1,
+                                      responseScale=1,
+                                      objLabel='pkpd - ivivc splines'
+                                     )
+        protIVIVCS.inputInVitro.set(protWeibull)
+        protIVIVCS.inputInVivo.set(protDeconv)
+        self.launchProtocol(protIVIVCS)
+        self.assertIsNotNone(protIVIVCS.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC Splines")
+        self.validateFiles('ProtPKPDDissolutionIVIVCS', ProtPKPDDissolutionIVIVCSplines)
 
 if __name__ == "__main__":
     unittest.main()

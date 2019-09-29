@@ -126,13 +126,16 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if not B is None:
             outputExperiment.addParameterToSample(sampleName, "B", PKPDUnit.UNIT_NONE, responseMsg, B)
         outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def addSample(self, sampleName, individualFrom, vesselFrom, optimum, R):
         newSampleFabs = PKPDSample()
         newSampleFabs.sampleName = sampleName
         newSampleFabs.variableDictPtr = self.outputExperimentFabs.variables
         newSampleFabs.descriptors = {}
+        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated)
         newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
+        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique)
         newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
         newSampleFabs.addMeasurementColumn("Fabs",self.FabsUnique)
         self.outputExperimentFabs.samples[sampleName] = newSampleFabs
@@ -142,7 +145,9 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         newSampleAdissol.sampleName = sampleName
         newSampleAdissol.variableDictPtr = self.outputExperimentAdissol.variables
         newSampleAdissol.descriptors = {}
+        newSampleAdissol.addMeasurementColumn("tvivoReinterpolated", self.tvivoReinterpolated)
         newSampleAdissol.addMeasurementColumn("FabsReinterpolated", self.FabsReinterpolated)
+        newSampleAdissol.addMeasurementColumn("tvitro", self.tvitroUnique)
         newSampleAdissol.addMeasurementColumn("AdissolPredicted", self.AdissolPredicted)
         newSampleAdissol.addMeasurementColumn("Adissol",self.AdissolUnique)
         self.outputExperimentAdissol.samples[sampleName] = newSampleAdissol
@@ -201,15 +206,15 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 exec ("%s=%f" % (prm, x[i]))
                 i+=1
 
-            tvitroUnique=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
-            self.AdissolReinterpolated = self.BAdissol(tvitroUnique)
+            self.tvitroReinterpolated=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
+            self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
             self.FabsPredicted = np.clip(A*self.AdissolReinterpolated+B,0.0,None)
 
-            tvivoUnique=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)+t0,self.tvivoMin,self.tvivoMax)
-            self.FabsReinterpolated = self.BFabs(tvivoUnique)
+            self.tvivoReinterpolated=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)+t0,self.tvivoMin,self.tvivoMax)
+            self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
             self.AdissolPredicted = np.clip((self.FabsReinterpolated-B)/A,0.0,None)
 
-            error = self.calculateError(x, tvitroUnique, tvivoUnique)
+            error = self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
         except:
             return 1e38
         return error
@@ -231,6 +236,34 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return (tvitro, Avitro)
 
     def createOutputExperiments(self):
+        tvitroVar = PKPDVariable()
+        tvitroVar.varName = "tvitro"
+        tvitroVar.varType = PKPDVariable.TYPE_NUMERIC
+        tvitroVar.role = PKPDVariable.ROLE_TIME
+        tvitroVar.units = createUnit("min")
+        tvitroVar.comment = "tvitro"
+
+        tvivoVar = PKPDVariable()
+        tvivoVar.varName = "tvivo"
+        tvivoVar.varType = PKPDVariable.TYPE_NUMERIC
+        tvivoVar.role = PKPDVariable.ROLE_TIME
+        tvivoVar.units = createUnit("min")
+        tvivoVar.comment = "tvivo"
+
+        tvitroReinterpolatedVar = PKPDVariable()
+        tvitroReinterpolatedVar.varName = "tvitroReinterpolated"
+        tvitroReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
+        tvitroReinterpolatedVar.role = PKPDVariable.ROLE_TIME
+        tvitroReinterpolatedVar.units = createUnit("min")
+        tvitroReinterpolatedVar.comment = "tvitro reinterpolated"
+
+        tvivoReinterpolatedVar = PKPDVariable()
+        tvivoReinterpolatedVar.varName = "tvivoReinterpolated"
+        tvivoReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
+        tvivoReinterpolatedVar.role = PKPDVariable.ROLE_TIME
+        tvivoReinterpolatedVar.units = createUnit("min")
+        tvivoReinterpolatedVar.comment = "tvivo reinterpolated"
+
         AdissolVar = PKPDVariable()
         AdissolVar.varName = "Adissol"
         AdissolVar.varType = PKPDVariable.TYPE_NUMERIC
@@ -274,14 +307,18 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         FabsPredictedVar.comment = "Predicted amount absorbed in vivo"
 
         self.outputExperimentFabs = PKPDExperiment()
+        self.outputExperimentFabs.variables[tvitroReinterpolatedVar.varName] = tvitroReinterpolatedVar
         self.outputExperimentFabs.variables[AdissolReinterpolatedVar.varName] = AdissolReinterpolatedVar
+        self.outputExperimentFabs.variables[tvivoVar.varName] = tvivoVar
         self.outputExperimentFabs.variables[FabsVar.varName] = FabsVar
         self.outputExperimentFabs.variables[FabsPredictedVar.varName] = FabsPredictedVar
         self.outputExperimentFabs.general["title"] = "In-vitro In-vivo correlation"
         self.outputExperimentFabs.general["comment"] = "Fabs vs Predicted Fabs"
 
         self.outputExperimentAdissol = PKPDExperiment()
+        self.outputExperimentAdissol.variables[tvivoReinterpolatedVar.varName] = tvivoReinterpolatedVar
         self.outputExperimentAdissol.variables[FabsReinterpolatedVar.varName] = FabsReinterpolatedVar
+        self.outputExperimentAdissol.variables[tvitroVar.varName] = tvitroVar
         self.outputExperimentAdissol.variables[AdissolVar.varName] = AdissolVar
         self.outputExperimentAdissol.variables[AdissolPredictedVar.varName] = AdissolPredictedVar
         self.outputExperimentAdissol.general["title"] = "In-vitro In-vivo correlation"
@@ -295,8 +332,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return R
 
     def calculateAllIvIvC(self, objId1, objId2):
-        parametersInVitro, vesselNames=self.getInVitroModels()
-        profilesInVivo, sampleNames=self.getInVivoProfiles()
+        self.parametersInVitro, self.vesselNames=self.getInVitroModels()
+        self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
         self.createOutputExperiments()
 
@@ -341,9 +378,9 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
 
         invitroIdx=0
         self.verbose=False
-        for parameterInVitro in parametersInVitro:
+        for parameterInVitro in self.parametersInVitro:
             invivoIdx=0
-            for self.tvivo,self.Fabs in profilesInVivo:
+            for self.tvivo,self.Fabs in self.profilesInVivo:
                 print("New combination %d"%i)
                 self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
                 self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
@@ -387,7 +424,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 R = self.calculateR()
                 allR.append(R)
 
-                self.addSample("ivivc_%04d" % i, sampleNames[invivoIdx], vesselNames[invitroIdx], x, R)
+                self.addSample("ivivc_%04d" % i, self.sampleNames[invivoIdx], self.vesselNames[invitroIdx], x, R)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
