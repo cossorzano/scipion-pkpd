@@ -165,6 +165,27 @@ Individual1 ; t; Cp
 
         os.remove(fnExperiment)
 
+        # NCA numeric
+        print "NCA numeric ..."
+        protNCA = self.newProtocol(ProtPKPDNCANumeric,
+                                objLabel='pkpd - nca numeric')
+        protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
+        self.launchProtocol(protNCA)
+        self.assertIsNotNone(protNCA.outputExperiment.fnPKPD, "There was a problem with the NCA numeric")
+        self.validateFiles('prot', protNCA)
+        experiment = PKPDExperiment()
+        experiment.load(protNCA.outputExperiment.fnPKPD)
+        AUC0t = float(experiment.samples['Individual1'].descriptors['AUC0t'])
+        self.assertTrue(AUC0t > 960 and AUC0t < 980)
+        AUMC0t = float(experiment.samples['Individual1'].descriptors['AUMC0t'])
+        self.assertTrue(AUMC0t > 305000 and AUMC0t < 306000)
+        Cmax = float(experiment.samples['Individual1'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 2.7 and Cmax < 2.9)
+        Tmax = float(experiment.samples['Individual1'].descriptors['Tmax'])
+        self.assertTrue(Tmax > 155 and Tmax < 165)
+        MRT = float(experiment.samples['Individual1'].descriptors['MRT'])
+        self.assertTrue(MRT > 314 and MRT < 315)
+
         # Fit Order 1
         print "Fitting splines5-monocompartment model ..."
         protModelInVivo = self.newProtocol(ProtPKPDMonoCompartment,
@@ -250,6 +271,79 @@ Individual1 ; t; Cp
         self.launchProtocol(protIVIVCS)
         self.assertIsNotNone(protIVIVCS.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC Splines")
         self.validateFiles('ProtPKPDDissolutionIVIVCS', ProtPKPDDissolutionIVIVCSplines)
+
+        # Dissolution simulation
+        print "IVIV+PK simulation ..."
+        protIVIVPKL = self.newProtocol(ProtPKPDDissolutionPKSimulation,
+                                      objLabel='pkpd - ivivc+pk',
+                                      conversionType=1,
+                                      inputN=1,
+                                      tF=16.66,
+                                      addIndividuals=True,
+                                      inputDose=200
+                                      )
+        protIVIVPKL.inputInVitro.set(protWeibull.outputFitting)
+        protIVIVPKL.inputPK.set(protModelInVivo.outputFitting)
+        protIVIVPKL.inputLevy.set(protLevy.outputExperiment)
+        self.launchProtocol(protIVIVPKL)
+        self.assertIsNotNone(protIVIVPKL.outputExperiment.fnPKPD, "There was a problem with the simulation")
+        self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
+        # Dissolution simulation
+        print "IVIV+PK simulation ..."
+        protIVIVPKS = self.newProtocol(ProtPKPDDissolutionPKSimulation,
+                                       objLabel='pkpd - ivivc+pk',
+                                       inputN=1,
+                                       tF=16.66,
+                                       addIndividuals=True,
+                                       inputDose=200
+                                       )
+        protIVIVPKS.inputInVitro.set(protWeibull.outputFitting)
+        protIVIVPKS.inputPK.set(protModelInVivo.outputFitting)
+        protIVIVPKS.inputIvIvC.set(protIVIVC.outputExperiment)
+        self.launchProtocol(protIVIVPKS)
+        self.assertIsNotNone(protIVIVPKS.outputExperiment.fnPKPD, "There was a problem with the simulation")
+        self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
+
+        # Internal validity
+        print "Internal validity ..."
+        protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
+                                        objLabel='pkpd - internal validity')
+        protInternal.inputExperiment.set(protNCA.outputExperiment)
+        protInternal.inputSimulated.set(protIVIVPKL.outputExperiment)
+        self.launchProtocol(protInternal)
+        fnSummary = protInternal._getPath("summary.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+        lineNo = 0
+        for line in open(fnSummary).readlines():
+            tokens = line.split('=')
+            if lineNo == 0:
+                AUCmean = np.abs(float(tokens[-1]))
+                self.assertTrue(AUCmean < 20)
+            elif lineNo == 1:
+                Cmaxmean = np.abs(float(tokens[-1]))
+                self.assertTrue(Cmaxmean < 10)
+            lineNo += 1
+
+        # Internal validity
+        print "Internal validity ..."
+        protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
+                                    objLabel='pkpd - internal validity')
+        protInternal.inputExperiment.set(protNCA.outputExperiment)
+        protInternal.inputSimulated.set(protIVIVPKS.outputExperiment)
+        self.launchProtocol(protInternal)
+        fnSummary = protInternal._getPath("summary.txt")
+        self.assertTrue(os.path.exists(fnSummary))
+        lineNo = 0
+        for line in open(fnSummary).readlines():
+        tokens = line.split('=')
+        if lineNo == 0:
+            AUCmean = np.abs(float(tokens[-1]))
+            self.assertTrue(AUCmean < 10)
+        elif lineNo == 1:
+            Cmaxmean = np.abs(float(tokens[-1]))
+            self.assertTrue(Cmaxmean < 20)
+        lineNo += 1
 
 if __name__ == "__main__":
     unittest.main()
