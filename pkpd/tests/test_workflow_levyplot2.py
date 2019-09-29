@@ -336,14 +336,14 @@ Individual1 ; t; Cp
         self.assertTrue(os.path.exists(fnSummary))
         lineNo = 0
         for line in open(fnSummary).readlines():
-        tokens = line.split('=')
-        if lineNo == 0:
-            AUCmean = np.abs(float(tokens[-1]))
-            self.assertTrue(AUCmean < 10)
-        elif lineNo == 1:
-            Cmaxmean = np.abs(float(tokens[-1]))
-            self.assertTrue(Cmaxmean < 20)
-        lineNo += 1
+            tokens = line.split('=')
+            if lineNo == 0:
+                AUCmean = np.abs(float(tokens[-1]))
+                self.assertTrue(AUCmean < 10)
+            elif lineNo == 1:
+                Cmaxmean = np.abs(float(tokens[-1]))
+                self.assertTrue(Cmaxmean < 20)
+            lineNo += 1
 
 if __name__ == "__main__":
     unittest.main()
