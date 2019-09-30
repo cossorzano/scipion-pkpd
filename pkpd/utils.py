@@ -27,8 +27,10 @@
 PKPD functions
 """
 import copy
+from itertools import izip
 import numpy as np
 import math
+from scipy.interpolate import InterpolatedUnivariateSpline
 import time
 import hashlib
 from os.path import (exists, splitext, getmtime)
@@ -239,3 +241,37 @@ def excelAdjustColumnWidths(workbook, sheetName=""):
     for column_cells in sheet.columns:
         length = max(len(as_text(cell.value)) for cell in column_cells)
         sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
+
+def computeXYmean(XYlist, Nxsteps=300):
+    xmin = 1e38
+    xmax = -1e38
+    for x,_ in XYlist:
+        xmin = min(xmin, np.min(x))
+        xmax = max(xmax, np.max(x))
+
+    dataDict = {}  # key will be x values
+    xrange = np.arange(xmin, xmax, (xmax - xmin) / Nxsteps)
+    for xValues, yValues in XYlist:
+        xValuesUnique, yValuesUnique = twoWayUniqueFloatValues(xValues, yValues)
+        B = InterpolatedUnivariateSpline(xValuesUnique, yValuesUnique, k=1)
+        yrange = B(xrange)
+        for x, y in izip(xrange, yrange):
+            if x in dataDict:
+                dataDict[x].append(y)
+            else:
+                dataDict[x] = [y]
+
+    sortedX = sorted(dataDict.keys())
+
+    # We will store five values (min, 25%, 50%, 75%, max)
+    # for each of the time entries computed
+    # percentileList = [0, 25, 50, 75, 100]
+    # Y = np.zeros((len(sortedX), 5))
+    # for i, t in enumerate(sortedX):
+    #    Y[i, :] = np.percentile(dataDict[t], percentileList)
+
+    Y = np.zeros(len(sortedX))
+    for i, t in enumerate(sortedX):
+        Y[i] = np.mean(dataDict[t])
+
+    return sortedX, Y

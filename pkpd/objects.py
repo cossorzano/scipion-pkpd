@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import copy
+from itertools import izip
 import math
 import numpy as np
 import os
@@ -35,7 +36,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.em.data import *
 from pyworkflow.install.funcs import *
-from .utils import writeMD5, verifyMD5, excelWriteRow, excelFillCells, excelAdjustColumnWidths
+from .utils import writeMD5, verifyMD5, excelWriteRow, excelFillCells, excelAdjustColumnWidths, computeXYmean
 from .biopharmaceutics import PKPDDose, PKPDVia, DrugSource, createDeltaDose, createVia
 
 class PKPDVariable:
@@ -770,6 +771,13 @@ class PKPDExperiment(EMObject):
                         toAdd += value + "(" + str(listOfValues[value]) + ") "
                 summary.append(toAdd)
         return summary
+
+    def getXYMeanValues(self,varNameX,varNameY):
+        XYlist = []
+        for sample in self.samples:
+            xValues, yValues = sample.getXYValues(varNameX,varNameY)
+            XYlist.append(xValues,yValues)
+        return computeXYmean(XYlist)
 
     def getVarUnits(self,varName):
         if varName in self.variables:
