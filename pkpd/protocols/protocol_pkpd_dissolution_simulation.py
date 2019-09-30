@@ -308,13 +308,19 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 dissolutionPrm = sampleFitVitro.parameters
             print("Dissolution parameters: ", np.array2string(np.asarray(dissolutionPrm,dtype=np.float64),max_line_width=1000))
 
-            nfit = int(random.uniform(0, len(self.allTimeScalings[sampleFitVivo.sampleName])))
+            if sampleFitVivo.sampleName in self.allTimeScalings:
+                keyToUse = sampleFitVivo.sampleName
+            elif len(self.allTimeScalings)==1:
+                keyToUse = self.allTimeScalings.keys()[0]
+            else:
+                raise Exception("Cannot find %s in the scaling keys"%sampleFitVivo.sampleName)
+            nfit = int(random.uniform(0, len(self.allTimeScalings[keyToUse])))
             A = self.dissolutionModel.forwardModel(dissolutionPrm, t)[0]
 
             tvitroUnique, AdissolUnique = uniqueFloatValues(t, A)
             Bdissol = InterpolatedUnivariateSpline(tvitroUnique, AdissolUnique, k=1)
 
-            tvitroLevy, tvivoLevy = self.allTimeScalings[sampleFitVivo.sampleName][nfit]
+            tvitroLevy, tvivoLevy = self.allTimeScalings[keyToUse][nfit]
             tvivoLevyUnique, tvitroLevyUnique = uniqueFloatValues(tvivoLevy, tvitroLevy)
             BLevy = InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique, k=1)
 
@@ -323,7 +329,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
             if self.conversionType.get()==0:
                 # In vitro-in vivo correlation
-                Adissol, Fabs = self.allResponseScalings[sampleFitVivo.sampleName][nfit]
+                Adissol, Fabs = self.allResponseScalings[keyToUse][nfit]
                 AdissolUnique, FabsUnique = uniqueFloatValues(Adissol, Fabs)
                 B=InterpolatedUnivariateSpline(AdissolUnique, FabsUnique,k=1)
                 A=np.asarray(B(A),dtype=np.float64)
@@ -376,7 +382,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
     def _validate(self):
         retval = []
-        if self.conversionType.get() == 0 and not "experimentFabs.pkpd" in self.inputIvIvC.get().fnPKPD.get():
+        if self.conversionType.get() == 0 and not "experimentFabs" in self.inputIvIvC.get().fnPKPD.get():
             retval.append("If the conversion is done from IVIVC, then you must take the Fabs output")
         return retval
 
