@@ -54,9 +54,9 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
         form.addParam('removeInVitroTlag',params.BooleanParam, label="Remove in vitro tlag", default=True,
                       help="If there is an in vitro tlag, set it to 0")
         form.addParam('timeScale', params.EnumParam, label="Time scaling", default=2,
-                      choices=["SplineXY1","SplineXY2","SplineXY3","SplineXY4","SplineXY5"])
+                      choices=["SplineXY0","SplineXY1","SplineXY2","SplineXY3","SplineXY4","SplineXY5"])
         form.addParam('responseScale', params.EnumParam, label="Response scaling", default=2,
-                      choices=["SplineXY1","SplineXY2","SplineXY3","SplineXY4","SplineXY5"])
+                      choices=["SplineXY0","SplineXY1","SplineXY2","SplineXY3","SplineXY4","SplineXY5"])
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -145,8 +145,8 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
         return error
 
     def constructBounds(self):
-        self.timeSplinesN = self.timeScale.get()+1
-        self.responseSplinesN = self.responseScale.get()+1
+        self.timeSplinesN = self.timeScale.get()
+        self.responseSplinesN = self.responseScale.get()
         self.coeffTimeList=[]
         for i in range(self.timeSplinesN):
             self.coeffTimeList+=['tvivo%d'%i,'tvitro%d'%i]
@@ -160,7 +160,7 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
         self.parametersInVitro, self.vesselNames=self.getInVitroModels()
         self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
-        self.createOutputExperiments()
+        self.createOutputExperiments(set=1)
         self.parameters, self.bounds = self.constructBounds()
         self.calculateAllIvIvCLoop()
 

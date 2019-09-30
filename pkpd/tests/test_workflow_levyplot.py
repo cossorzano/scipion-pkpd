@@ -222,7 +222,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         protIVIVCWN.inputInVitro.set(protWeibull)
         protIVIVCWN.inputInVivo.set(protDeconvWN)
         self.launchProtocol(protIVIVCWN)
-        self.assertIsNotNone(protIVIVCWN.outputExperiment.fnPKPD, "There was a problem with the IVIVC")
+        self.assertIsNotNone(protIVIVCWN.outputExperimentFabs.fnPKPD, "There was a problem with the IVIVC")
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # Dissolution simulation
@@ -256,10 +256,10 @@ class TestLevyPlotWorkflow(TestWorkflow):
             tokens = line.split('=')
             if lineNo==0:
                 AUCmean=float(tokens[-1])
-                self.assertTrue(AUCmean>40 and AUCmean<60)
+                self.assertTrue(AUCmean>5 and AUCmean<60)
             elif lineNo==1:
                 Cmaxmean = float(tokens[-1])
-                self.assertTrue(Cmaxmean > 63 and Cmaxmean < 80)
+                self.assertTrue(Cmaxmean > 40 and Cmaxmean < 80)
             lineNo+=1
 
         # Bootstrap dissolution

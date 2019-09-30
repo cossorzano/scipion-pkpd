@@ -24,15 +24,13 @@
 # *
 # **************************************************************************
 
-from math import sqrt
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import differential_evolution
 
 import pyworkflow.protocol.params as params
-from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
-from pkpd.utils import uniqueFloatValues, parseOperation
-from pkpd.pkpd_units import createUnit, PKPDUnit
+from pkpd.utils import uniqueFloatValues, parseOperation, computeXYmean
+from pkpd.pkpd_units import PKPDUnit
 
 
 # tested in test_workflow_levyplot
@@ -156,7 +154,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         self.parametersInVitro, self.vesselNames=self.getInVitroModels()
         self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
-        self.createOutputExperiments()
+        self.createOutputExperiments(set=1)
 
         self.parsedTimeOperation, self.varTimeList, self.coeffTimeList = parseOperation(self.timeScale.get())
         self.parsedResponseOperation, self.varResponseList, self.coeffResponseList = parseOperation(self.responseScale.get())
@@ -172,6 +170,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
 
         invitroIdx=0
         self.verbose=False
+        vitroList = []
+        vivoList = []
         for parameterInVitro in self.parametersInVitro:
             invivoIdx=0
             for self.tvivo,self.Fabs in self.profilesInVivo:
@@ -189,6 +189,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
                 self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
                 self.FabsMax = np.max(self.FabsUnique)
                 self.AdissolMax = np.max(self.AdissolUnique)
+                vivoList.append((self.tvivoUnique, self.FabsUnique))
+                vitroList.append((self.tvitroUnique, self.AdissolUnique))
 
                 self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
                 self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
@@ -204,7 +206,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
                 R = self.calculateR()
                 allR.append(R)
 
-                self.addSample("ivivc_%04d" % i, self.sampleNames[invivoIdx], self.vesselNames[invitroIdx], optimum.x, R)
+                self.addSample("ivivc_%04d" % i, self.sampleNames[invivoIdx], self.vesselNames[invitroIdx], optimum.x, R, set=1)
                 i+=1
                 invivoIdx+=1
             invitroIdx+=1
@@ -223,6 +225,27 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
 
         self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
         self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
+
+        # Compute single
+        print("Single IVIVC")
+        self.tvivoUnique, self.FabsUnique = computeXYmean(vivoList)
+        self.tvitroUnique, self.AdissolUnique = computeXYmean(vitroList)
+        self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
+        self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
+
+        self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
+        self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
+        self.bestError = 1e38
+        if len(self.bounds) > 0:
+            optimum = differential_evolution(self.goalFunction, self.bounds, popsize=50)
+            x = optimum.x
+        else:
+            x = None
+        self.goalFunction(x)
+        R = self.calculateR()
+        self.createOutputExperiments(set=2)
+        self.addSample("ivivc_single", "AvgVivo", "AvgVitro", x, R, set=2)
+        self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
 
     def printFormulas(self, fh):
         self.doublePrint(fh,"Time scale: tvitro=%s"%self.timeScale.get().replace('$(t)','$(tvivo)'))
