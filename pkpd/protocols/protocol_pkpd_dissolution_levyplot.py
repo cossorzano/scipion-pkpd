@@ -33,6 +33,7 @@ import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
 from pkpd.utils import uniqueFloatValues, twoWayUniqueFloatValues
 from pkpd.pkpd_units import createUnit
+from pkpd.utils import computeXYmean
 from .protocol_pkpd import ProtPKPD
 
 
@@ -116,15 +117,15 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
             # print("tvitro=%f Avitro=%f Avivo=%f tvivoeqv=%f"%(tvitro[i],Avitro[i],Avivo[i],B(Avitro[i])))
         return (tvitro,np.asarray(tvivo,dtype=np.float64),Avitro)
 
-    def addSample(self, sampleName, tvitro, tvivo, individualFrom, vesselFrom):
+    def addSample(self, outputExperiment, sampleName, tvitro, tvivo, individualFrom, vesselFrom):
         newSample = PKPDSample()
         newSample.sampleName = sampleName
         newSample.variableDictPtr = self.outputExperiment.variables
         newSample.descriptors = {}
         newSample.addMeasurementColumn("tvivo",tvivo)
         newSample.addMeasurementColumn("tvitro", tvitro)
-        self.outputExperiment.samples[sampleName] = newSample
-        self.outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        outputExperiment.samples[sampleName] = newSample
+        outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def makeSuggestions(self, levyName, tvitro, tvivo):
         print("Polynomial fitting suggestions for %s"%levyName)
@@ -174,6 +175,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         self.outputExperiment.general["comment"] = "Time in vivo vs time in vitro"
 
         i=1
+        levyList = []
         for parameterInVitro, vesselFrom in izip(parametersInVitro,vesselNames):
             for aux, sampleFrom in izip(profilesInVivo,sampleNames):
                 t, profileInVivo = aux
@@ -186,17 +188,42 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
                     tvitroUnique=np.insert(tvitroUnique,0,0.0)
                     tvivoUnique = np.insert(tvivoUnique, 0, 0.0)
                 levyName = "levy_%04d"%i
-                self.addSample(levyName, tvitroUnique, tvivoUnique, sampleFrom, vesselFrom)
+                levyList.append((tvitroUnique, tvivoUnique))
+                self.addSample(self.outputExperiment, levyName, tvitroUnique, tvivoUnique, sampleFrom, vesselFrom)
 
                 self.makeSuggestions(levyName, tvitroUnique, tvivoUnique)
                 i+=1
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
 
+        # Single Levy plot
+        self.outputExperimentSingle = PKPDExperiment()
+        self.outputExperimentSingle.variables[tvivovar.varName] = tvivovar
+        self.outputExperimentSingle.variables[tvitrovar.varName] = tvitrovar
+        self.outputExperimentSingle.general["title"] = "Levy plots"
+        self.outputExperimentSingle.general["comment"] = "Time in vivo vs time in vitro"
+
+        tvitroSingle, tvivoSingle = computeXYmean(levyList)
+        tvitroUnique, tvivoUnique = twoWayUniqueFloatValues(tvitroSingle, tvivoSingle)
+        idx = np.logical_and(tvitroUnique > 0, tvivoUnique > 0)
+        tvitroUnique = tvitroUnique[idx]
+        tvivoUnique = tvivoUnique[idx]
+        if tvitroUnique[0] > 0 and tvivoUnique[0] > 0:
+            tvitroUnique = np.insert(tvitroUnique, 0, 0.0)
+            tvivoUnique = np.insert(tvivoUnique, 0, 0.0)
+
+        self.addSample(self.outputExperimentSingle, "levyAvg", tvitroUnique, tvivoUnique, "vivoAvg", "vitroAvg")
+
+        self.outputExperimentSingle.write(self._getPath("experimentSingle.pkpd"))
+
     def createOutputStep(self):
         self._defineOutputs(outputExperiment=self.outputExperiment)
         self._defineSourceRelation(self.inputInVitro.get(), self.outputExperiment)
         self._defineSourceRelation(self.inputInVivo.get(), self.outputExperiment)
+
+        self._defineOutputs(outputExperimentSingle=self.outputExperimentSingle)
+        self._defineSourceRelation(self.inputInVitro.get(), self.outputExperimentSingle)
+        self._defineSourceRelation(self.inputInVivo.get(), self.outputExperimentSingle)
 
     def _validate(self):
         return []
