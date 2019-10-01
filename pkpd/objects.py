@@ -776,9 +776,9 @@ class PKPDExperiment(EMObject):
 
     def getXYMeanValues(self,varNameX,varNameY):
         XYlist = []
-        for sample in self.samples:
+        for sampleName, sample in self.samples.iteritems():
             xValues, yValues = sample.getXYValues(varNameX,varNameY)
-            XYlist.append(xValues,yValues)
+            XYlist.append((xValues,yValues))
         return computeXYmean(XYlist)
 
     def getVarUnits(self,varName):
