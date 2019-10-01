@@ -473,6 +473,8 @@ class PKPDSample:
         return varDict
 
     def getDescriptorValue(self,descriptorName):
+        if self.descriptors is None:
+            return None
         if descriptorName in self.descriptors.keys():
             return self.descriptors[descriptorName]
         else:
