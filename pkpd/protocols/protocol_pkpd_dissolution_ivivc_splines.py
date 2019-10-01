@@ -68,19 +68,15 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
         i=0
         timeScaleMsg="SplineXY%d"%self.timeSplinesN
         for prm in self.coeffTimeList:
-            self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, optimum[i])
-            self.outputExperimentAdissol.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, optimum[i])
+            outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_TIME_MIN, timeScaleMsg, optimum[i])
             i+=1
         responseMsg="SplineXY%d"%self.responseSplinesN
         for prm in self.coeffResponseList:
-            self.outputExperimentFabs.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
-            self.outputExperimentAdissol.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
+            outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
             i+=1
 
-        self.outputExperimentFabs.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
-        self.outputExperimentAdissol.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
-        self.outputExperimentFabs.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
-        self.outputExperimentAdissol.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def getParameters(self, x, i0, parameterList, vitroPrefix):
         # print("Unsorted x",x)
