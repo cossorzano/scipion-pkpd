@@ -112,9 +112,10 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
         newSampleFabsSingle.addMeasurementColumn("tvivo", tvivo1)
         newSampleFabsSingle.addMeasurementColumn("FabsPredicted", vFabsPredicted)
         newSampleFabsSingle.addMeasurementColumn("Fabs",vFabs)
-        self.outputExperimentFabsSingle.addLabelToSample(sampleName, "from", "individual---vesel", "AvgVivo---AvgVitro")
 
         self.outputExperimentFabsSingle.samples[sampleName] = newSampleFabsSingle
+        self.outputExperimentFabsSingle.addLabelToSample(sampleName, "from", "individual---vesel", "AvgVivo---AvgVitro")
+
         self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
     def createOutputStep(self):
         self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)
