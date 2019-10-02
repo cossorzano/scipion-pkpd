@@ -73,6 +73,7 @@ class ProtPKPDFilterSamples(ProtPKPD):
         filteredExperiment = PKPDExperiment()
         filteredExperiment.general = copy.copy(experiment.general)
         filteredExperiment.variables = copy.copy(experiment.variables)
+        filteredExperiment.groups = copy.copy(experiment.groups)
         filteredExperiment.samples = {}
         filteredExperiment.doses = {}
 
