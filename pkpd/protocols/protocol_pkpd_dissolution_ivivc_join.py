@@ -67,20 +67,20 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
         tvivo2, Fabs = computeXYmean(L2)
         AdissolReinterpolated, FabsPredicted = computeXYmean(L3)
 
-        tvivo1, tvitroReinterpolated = twoWayUniqueFloatValues(tvivo1, tvitroReinterpolated)
-        tvivo2, Fabs = twoWayUniqueFloatValues(tvivo2, Fabs)
-        AdissolReinterpolated, FabsPredicted = twoWayUniqueFloatValues(AdissolReinterpolated, FabsPredicted)
-
+        x, y = twoWayUniqueFloatValues(tvivo1, tvitroReinterpolated)
         Bt=InterpolatedUnivariateSpline(tvivo1, tvitroReinterpolated, k=1)
-        BtA=InterpolatedUnivariateSpline(tvitroReinterpolated, AdissolReinterpolated, k=1)
-        BtF=InterpolatedUnivariateSpline(tvivo2, Fabs, k=1)
-        BAF=InterpolatedUnivariateSpline(AdissolReinterpolated, FabsPredicted, k=1)
+        x, y = twoWayUniqueFloatValues(tvitroReinterpolated, AdissolReinterpolated)
+        BtA=InterpolatedUnivariateSpline(x, y, k=1)
+        x, y = twoWayUniqueFloatValues(tvivo2, Fabs)
+        BtF=InterpolatedUnivariateSpline(x, y, k=1)
+        x, y= twoWayUniqueFloatValues(AdissolReinterpolated, FabsPredicted)
+        BAF=InterpolatedUnivariateSpline(x, y, k=1)
 
-        vtvitroReinterpolated = np.zeros(tvivo1.size)
-        vAdissolReinterpolated = np.zeros(tvivo1.size)
-        vFabs = np.zeros(tvivo1.size)
-        vFabsPredicted = np.zeros(tvivo1.size)
-        for i in range(tvivo1.size):
+        vtvitroReinterpolated = np.zeros(len(tvivo1))
+        vAdissolReinterpolated = np.zeros(len(tvivo1))
+        vFabs = np.zeros(len(tvivo1))
+        vFabsPredicted = np.zeros(len(tvivo1))
+        for i in range(len(tvivo1)):
             tvivoi = tvivo1[i]
             vtvitroReinterpolated[i]=Bt(tvivoi)
             vAdissolReinterpolated[i]=BtA(vtvitroReinterpolated[i])
