@@ -387,7 +387,7 @@ class ExperimentWindow(gui.Window):
             return combo, radio, radioVar
 
         self.timeWidget = addVar('Time variable', 0, timeVars)
-        self.measureWidget = addVar('Measure variable', 1, measureVars)
+        self.measureWidget = addVar('Measure variable', 1, measureVars+timeVars)
         self.measureWidget[2].set(True)
 
         self.plotButton = Button(plotFrame, '   Plot   ', font=self.fontBold,
