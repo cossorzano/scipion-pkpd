@@ -212,6 +212,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         print("   MRT=%f [min]"%self.MRT)
 
     def simulate(self, objId1, objId2, inputDose, inputN):
+        import sys
         self.getInVitroModels()
         self.getScaling()
         self.getPKModels()
@@ -278,6 +279,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         MRTarray = np.zeros(inputN)
         CmaxArray = np.zeros(inputN)
         TmaxArray = np.zeros(inputN)
+
         for i in range(0,inputN):
             print("Simulation no. %d ----------------------"%i)
 
@@ -307,6 +309,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             else:
                 dissolutionPrm = sampleFitVitro.parameters
             print("Dissolution parameters: ", np.array2string(np.asarray(dissolutionPrm,dtype=np.float64),max_line_width=1000))
+            sys.stdout.flush()
 
             if sampleFitVivo.sampleName in self.allTimeScalings:
                 keyToUse = sampleFitVivo.sampleName
