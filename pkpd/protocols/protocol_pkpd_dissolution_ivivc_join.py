@@ -128,7 +128,7 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
         newSampleFabsSingle.addMeasurementColumn("tvivo", tvivo1)
         newSampleFabsSingle.addMeasurementColumn("FabsPredicted", vFabsPredicted)
         newSampleFabsSingle.addMeasurementColumn("Fabs",vFabs)
-        newSampleFabsSingle.addMeasurementColumn("FabsOrig",vFabsOrig)
+        newSampleFabsSingle.addMeasurementColumn("FabsOriginal",vFabsOrig)
 
         self.outputExperimentFabsSingle.samples[sampleName] = newSampleFabsSingle
         self.outputExperimentFabsSingle.addLabelToSample(sampleName, "from", "individual---vesel", "AvgVivo---AvgVitro")
