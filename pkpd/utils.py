@@ -253,8 +253,11 @@ def computeXYmean(XYlist, Nxsteps=300):
     xrange = np.arange(xmin, xmax, (xmax - xmin) / Nxsteps)
     for xValues, yValues in XYlist:
         xValuesUnique, yValuesUnique = twoWayUniqueFloatValues(xValues, yValues)
+        xUniqueMin=np.min(xValuesUnique)
+        xUniqueMax=np.max(xValuesUnique)
         B = InterpolatedUnivariateSpline(xValuesUnique, yValuesUnique, k=1)
-        yrange = B(xrange)
+        xrangei=xrange[np.logical_and(xrange>=xUniqueMin,xrange<=xUniqueMax)]
+        yrange = B(xrangei)
         for x, y in izip(xrange, yrange):
             if x in dataDict:
                 dataDict[x].append(y)
