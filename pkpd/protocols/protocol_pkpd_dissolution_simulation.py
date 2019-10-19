@@ -371,7 +371,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         fhSummary.close()
 
         if self.addIndividuals:
-            self.outputExperiment.write(self._getPath("experiment.pkpd"))
+            self.outputExperiment.write(self._getPath("experiment.pkpd"),writeToExcel=False)
 
     def createOutputStep(self):
         if self.addIndividuals:
