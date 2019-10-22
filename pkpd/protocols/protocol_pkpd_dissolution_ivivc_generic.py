@@ -105,7 +105,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
             self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
             Adissol = self.AdissolReinterpolated
             FabsPredicted = eval(self.parsedResponseOperation)
-            self.FabsPredicted = np.clip(FabsPredicted,0.0,None)
+            self.FabsPredicted = np.clip(FabsPredicted,0.0,100)
 
             tvitroAux, tvivoAux = uniqueFloatValues(tvitroUnique,self.tvivoUnique)
             Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
@@ -113,7 +113,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
             self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
             FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
             Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
-            self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, None)
+            self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, 100)
 
             error = self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
         except:
