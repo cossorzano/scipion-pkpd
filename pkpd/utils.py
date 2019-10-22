@@ -281,5 +281,5 @@ def computeXYmean(XYlist, Nxsteps=300):
 
 def smoothPchip(x,y):
     xunique, yunique = uniqueFloatValues(x,y)
-    yuniqueInterpolated = pchip_interpolate(x,y,x)
+    yuniqueInterpolated = pchip_interpolate(xunique,yunique,xunique)
     return xunique, yuniqueInterpolated
