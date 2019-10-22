@@ -127,7 +127,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
             A = np.clip(A,0,100)
             if self.smooth:
-                t, A = smoothPchip(t, A)
+                A = smoothPchip(t, A)
 
             self.addSample(sampleName,t,A)
 
