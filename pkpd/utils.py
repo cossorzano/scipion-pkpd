@@ -280,6 +280,11 @@ def computeXYmean(XYlist, Nxsteps=300):
     return sortedX, Y
 
 def smoothPchip(x,y):
-    xunique, yunique = uniqueFloatValues(x,y)
-    yInterpolated = pchip_interpolate(xunique,yunique,x)
-    return yInterpolated
+    d=np.insert(np.diff(y),0,0)
+    d[d<0]=0
+    ypos=np.cumsum(d)
+    ypos=ypos*np.sum(y)/np.sum(ypos)
+    return ypos
+    #xunique, yunique = uniqueFloatValues(x,ypos)
+    #yInterpolated = pchip_interpolate(xunique,yunique,x)
+    #return yInterpolated

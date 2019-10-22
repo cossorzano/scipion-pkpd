@@ -32,7 +32,7 @@ from scipy.optimize import differential_evolution
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
-from pkpd.utils import uniqueFloatValues, computeXYmean
+from pkpd.utils import uniqueFloatValues, computeXYmean, smoothPchip
 from pkpd.pkpd_units import createUnit, PKPDUnit
 
 
@@ -163,7 +163,12 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             p = np.percentile(x,[2.5, 50, 97.5],axis=0)
             self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
 
+    def guaranteeMonotonicity(self):
+            self.FabsPredicted = np.clip(smoothPchip(self.FabsUnique, self.FabsPredicted),0,100)
+            self.AdissolPredicted = np.clip(smoothPchip(self.AdissolUnique, self.AdissolPredicted),0,100)
+
     def calculateError(self, x, tvitroUnique, tvivoUnique):
+        self.guaranteeMonotonicity()
         self.residualsForward = self.FabsPredicted - self.FabsUnique
         self.residualsBackward = self.AdissolUnique - self.AdissolPredicted
 
@@ -213,11 +218,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
 
             self.tvitroReinterpolated=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
             self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
-            self.FabsPredicted = np.clip(A*self.AdissolReinterpolated+B,0.0,None)
+            self.FabsPredicted = np.clip(A*self.AdissolReinterpolated+B,0.0,100)
 
             self.tvivoReinterpolated=np.clip(np.power(self.tvitroUnique/k,1.0/alpha)+t0,self.tvivoMin,self.tvivoMax)
             self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
-            self.AdissolPredicted = np.clip((self.FabsReinterpolated-B)/A,0.0,None)
+            self.AdissolPredicted = np.clip((self.FabsReinterpolated-B)/A,0.0,100)
 
             error = self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
         except:
