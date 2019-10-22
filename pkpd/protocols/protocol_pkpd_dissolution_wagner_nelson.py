@@ -30,10 +30,9 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.biopharmaceutics import DrugSource
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
 from pkpd.pkpd_units import createUnit
-from pkpd.utils import uniqueFloatValues, calculateAUC0t
+from pkpd.utils import uniqueFloatValues, calculateAUC0t, smoothPchip
 
 # tested in test_workflow_levyplot.py
 
@@ -62,6 +61,8 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
+        form.addParam('smooth', params.BooleanParam, label="Monotonic smooth", default=True,
+                      help='Apply a Pchip interpolation to make sure that the Adissolved is monotonically increasing')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -124,6 +125,9 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             Ke=Cl/V
             AUC0inf = float(AUC0t[-1])
             A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
+            A = np.clip(A,0,100)
+            if self.smooth:
+                t, A = smoothPchip(t, A)
 
             self.addSample(sampleName,t,A)
 
