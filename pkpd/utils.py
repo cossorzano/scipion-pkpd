@@ -30,7 +30,7 @@ import copy
 from itertools import izip
 import numpy as np
 import math
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline, pchip_interpolate
 import time
 import hashlib
 from os.path import (exists, splitext, getmtime)
@@ -278,3 +278,8 @@ def computeXYmean(XYlist, Nxsteps=300):
         Y[i] = np.mean(dataDict[t])
 
     return sortedX, Y
+
+def smoothPchip(x,y):
+    xunique, yunique = uniqueFloatValues(x,y)
+    yuniqueInterpolated = pchip_interpolate(x,y,x)
+    return xunique, yuniqueInterpolated
