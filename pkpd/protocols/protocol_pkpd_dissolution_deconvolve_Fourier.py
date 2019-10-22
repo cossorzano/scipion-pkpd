@@ -182,7 +182,7 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                     A[i] /= totalReleased
                 print("%f %f"%(t[i],A[i]))
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
-            As, ts = uniqueFloatValues(A,t-tlag)
+            As, ts = uniqueFloatValues(np.clip(A,0,100),t-tlag)
             self.addSample(sampleName,ts,As)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
