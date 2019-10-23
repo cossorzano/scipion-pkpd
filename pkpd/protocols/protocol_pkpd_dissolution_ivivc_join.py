@@ -59,6 +59,7 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
         L2=[]
         L3=[]
         L4=[]
+        L5=[]
         for ptrExperiment in self.inputIVIVCs:
             experiment=PKPDExperiment()
             experiment.load(ptrExperiment.get().fnPKPD.get())
@@ -70,18 +71,21 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
             L3.append((x,y))
             x, y = experiment.getXYMeanValues("FabsPredicted", "Fabs")
             L4.append((x, y))
-        tvivo1, tvitroReinterpolated = computeXYmean(L1)
+            x, y = experiment.getXYMeanValues("tvitroReinterpolated", "AdissolReinterpolated")
+            L5.append((x, y))
+        tvivo1, tvitroReinterpolatedY = computeXYmean(L1)
         tvivoOrig, FabsOrig = computeXYmean(L2)
-        AdissolReinterpolated, FabsPredictedY = computeXYmean(L3)
+        AdissolReinterpolatedX, FabsPredictedY = computeXYmean(L3)
         FabsPredictedX, Fabs = computeXYmean(L4)
+        tvitroReinterpolatedX, AdissolReinterpolatedY = computeXYmean(L5)
 
-        x, y = twoWayUniqueFloatValues(tvivo1, tvitroReinterpolated)
+        x, y = twoWayUniqueFloatValues(tvivo1, tvitroReinterpolatedY)
         Bt=InterpolatedUnivariateSpline(x, y, k=1)
-        x, y = twoWayUniqueFloatValues(tvitroReinterpolated, AdissolReinterpolated)
+        x, y = twoWayUniqueFloatValues(tvitroReinterpolatedX, AdissolReinterpolatedY)
         BtA=InterpolatedUnivariateSpline(x, y, k=1)
         x, y = twoWayUniqueFloatValues(tvivoOrig, FabsOrig)
         BtF=InterpolatedUnivariateSpline(x, y, k=1)
-        x, y=twoWayUniqueFloatValues(AdissolReinterpolated, FabsPredictedY)
+        x, y=twoWayUniqueFloatValues(AdissolReinterpolatedX, FabsPredictedY)
         BAF=InterpolatedUnivariateSpline(x, y, k=1)
         x, y= twoWayUniqueFloatValues(FabsPredictedX, Fabs)
         BFF=InterpolatedUnivariateSpline(x, y, k=1)
