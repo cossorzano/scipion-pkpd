@@ -61,10 +61,10 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         form.addParam('timeBounds',params.StringParam,label='Time coefficients bounds',default='',
                       help='a0: [-100,100]; a1: [0.0001,100]; a2: [1e-6,1e-4]')
         form.addParam('responseScale', params.StringParam, label="Response scaling", default="$(Adissol)",
-                      help='Write a response scaling function like $[k1]*$(Adissol)+$[k2]*np.pow($(Adissol),2)$. '
+                      help='Write a response scaling function like $[k1]*$(Adissol)+$[k2]*np.power($(Adissol),2)$. '
                            'Make sure that the time and response scaling coefficients have different names. '
                            'The meaning is Fabs=k1*Adissol+k2*Adissol^2 in the last example. '
-                           'You have all numpy functions at your disposal: np.sqrt, np.log10, np.log, np.exp')
+                           'You have all numpy functions at your disposal: np.sqrt, np.log10, np.log, np.exp, np.power')
         form.addParam('responseBounds',params.StringParam,label='Response coefficients bounds',default='',
                       help='k1: [0.0001,100]; k2: [1e-6,1e-4]')
 

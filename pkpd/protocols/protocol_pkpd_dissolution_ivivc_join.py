@@ -40,7 +40,7 @@ class ProtPKPDDissolutionIVIVCJoin(ProtPKPD):
         after the IVIVC process, while the plot tvivo-FabsOrig is the observed one in the input files. These two
         plots need not be exactly the same. """
 
-    _label = 'dissol ivivc join'
+    _label = 'dissol ivivc join avg'
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
