@@ -29,11 +29,11 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
-from .protocol_pkpd_dissolution_ivivc_generic import ProtPKPDDissolutionIVIVCGeneric
+from .protocol_pkpd_dissolution_ivivc_splines import ProtPKPDDissolutionIVIVCSplines, ProtPKPDDissolutionIVIVCGeneric
 from pkpd.utils import parseOperation
 
 
-class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCGeneric):
+class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
     """ Join several IVIVCs into a single one. The strategy is to compute the average of all the plots involved in the
         IVIVC process: 1) tvivo -> tvitro; 2) tvitro -> Adissol; 3) Adissol->FabsPredicted. The plot tvivo-Fabs comes
         after the IVIVC process, while the plot tvivo-FabsOrig is the observed one in the input files. These two
@@ -122,8 +122,12 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCGeneric):
             else:
                 timeScaleOperation = self.timeScaleOperation.get()
             self.parsedTimeOperation, self.varTimeList, self.coeffTimeList = parseOperation(timeScaleOperation)
+            self.timeBoundsList = ProtPKPDDissolutionIVIVCGeneric.constructBounds(self, self.coeffTimeList, self.timeBounds.get())
         else:
             self.parsedTimeOperation = None # It is a spline
+            self.timeSplinesN = self.timeScale.get()-6
+            self.coeffTimeList = self.constructTimeCoeffs(self.timeSplinesN)
+            self.timeBoundsList = ProtPKPDDissolutionIVIVCSplines.constructBounds(self, self.coeffTimeList, "")
 
         if self.responseScale.get()<=3:
             if self.responseScale.get()==0:
@@ -135,8 +139,15 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCGeneric):
             elif self.responseScale.get()==3:
                 responseScaleOperation=self.responseScaleOperation.get()
             self.parsedResponseOperation, self.varResponseList, self.coeffResponseList = parseOperation(responseScaleOperation)
+            self.responseBoundsList = ProtPKPDDissolutionIVIVCGeneric.constructBounds(self, self.coeffResponseList, self.responseBounds.get())
         else:
             self.parsedResponseOperation = None # It is a spline
+            self.responseSplinesN = self.responseScale.get()-3
+            self.coeffResponseList = self.constructResponseCoeffs(self.responseSplinesN)
+            self.responseBoundsList = ProtPKPDDissolutionIVIVCSplines.constructBounds(self, self.coeffResponseList, "")
+
+        self.parameters = self.coeffTimeList + self.coeffResponseList
+        self.bounds = self.timeBoundsList + self.responseBoundsList
 
 #    def createOutputStep(self):
 #        self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)

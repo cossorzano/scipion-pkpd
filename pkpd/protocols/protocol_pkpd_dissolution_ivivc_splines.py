@@ -140,24 +140,34 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
            return 1e38
         return error
 
-    def constructBounds(self):
-        self.timeSplinesN = self.timeScale.get()
-        self.responseSplinesN = self.responseScale.get()
-        self.coeffTimeList=[]
-        for i in range(self.timeSplinesN):
-            self.coeffTimeList+=['tvivo%d'%i,'tvitro%d'%i]
-        self.coeffResponseList=[]
-        for i in range(self.responseSplinesN):
-            self.coeffResponseList+=['adissol%d'%i,'fabs%d'%i]
-        parameters=self.coeffTimeList+self.coeffResponseList
-        return parameters,[(0,1)]*len(parameters)
+    def constructBounds(self, coeffList, boundsStr):
+        return [(0,1)]*len(coeffList)
+
+    def constructTimeCoeffs(self, N):
+        coeffTimeList=[]
+        for i in range(N):
+            coeffTimeList+=['tvivo%d'%i,'tvitro%d'%i]
+        return coeffTimeList
+
+    def constructResponseCoeffs(self, N):
+        coeffResponseList=[]
+        for i in range(N):
+            coeffResponseList+=['adissol%d'%i,'fabs%d'%i]
+        return coeffResponseList
 
     def calculateAllIvIvC(self, objId1, objId2):
         self.parametersInVitro, self.vesselNames=self.getInVitroModels()
         self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
         self.createOutputExperiments(set=1)
-        self.parameters, self.bounds = self.constructBounds()
+        self.timeSplinesN = self.timeScale.get()
+        self.responseSplinesN = self.responseScale.get()
+
+        self.coeffTimeList=self.constructTimeCoeffs(self.timeSplinesN)
+        self.coeffResponseList=self.constructResponseCoeffs(self.responseSplinesN)
+        self.parameters=self.coeffTimeList+self.coeffResponseList
+        self.bounds = self.constructBounds(self.parameters,"")
+
         self.calculateAllIvIvCLoop()
 
     def printFormulas(self, fh):

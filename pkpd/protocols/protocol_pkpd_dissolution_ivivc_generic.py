@@ -120,7 +120,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
            return 1e38
         return error
 
-    def constructBounds(self, coeffList):
+    def constructBounds(self, coeffList, boundsStr):
         boundsDict = {}
         def parseBounds(allBoundsStr):
             try:
@@ -133,8 +133,7 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
             except:
                 return
 
-        parseBounds(self.timeBounds.get())
-        parseBounds(self.responseBounds.get())
+        parseBounds(boundsStr)
         if len(boundsDict)!=len(coeffList):
             print("Coefficient list: ",coeffList)
             print("Bounds: ",boundsDict)
@@ -160,7 +159,8 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         self.parsedResponseOperation, self.varResponseList, self.coeffResponseList = parseOperation(self.responseScale.get())
 
         self.parameters = self.coeffTimeList + self.coeffResponseList
-        self.bounds = self.constructBounds(self.parameters)
+        self.bounds = self.constructBounds(self.coeffTimeList, self.timeBounds.get()) + \
+                      self.constructBounds(self.coeffResponseList, self.responseBounds.get())
         self.calculateAllIvIvCLoop()
 
     def calculateAllIvIvCLoop(self):
