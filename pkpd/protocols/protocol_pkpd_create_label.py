@@ -51,7 +51,8 @@ class ProtPKPDCreateLabel(ProtPKPD):
                       help='For example, to normalize the apparent volume of distribution by the animal weight use $(Vd)/$(weight), a literal as "T1", or a constant 1.5. '\
                            'If several labels are created, separated by semicolons.')
         form.addParam('units', params.StringParam, label="Units", default="None",
-                      help='For example, L/kg. If several labels are created, separated by semicolons.')
+                      help='For example, L/kg. If several labels are created, separated by semicolons. '\
+                           'Set to None for no units.')
         form.addParam('comment', params.StringParam, label="Label comment(s)", default="",
                       help='For example, apparent volume of distribution per kilogram. '\
                             'If several labels are created, separated by semicolons.')

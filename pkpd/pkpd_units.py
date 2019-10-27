@@ -294,6 +294,8 @@ class PKPDUnit:
             return PKPDUnit.UNIT_CONC_mg_L
         elif unitString == "mg/mL":
             return PKPDUnit.UNIT_CONC_g_L
+        elif unitString == "NA" or unitString == "None":
+            return PKPDUnit.UNIT_NONE
         return None
 
 
