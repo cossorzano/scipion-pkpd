@@ -431,17 +431,18 @@ class PKPDSample:
 
     def substituteValuesInExpression(self, expression, prefix=""):
         expressionPython = copy.copy(expression)
-        for key, variable in self.variableDictPtr.iteritems():
-            if key in self.descriptors:
-                value = self.descriptors[key]
-                if value=="NA" or value=="LLOQ" or value=="ULOQ":
-                    expressionPython="None"
-                    break
-                else:
-                    if variable.varType == PKPDVariable.TYPE_NUMERIC:
-                        expressionPython = expressionPython.replace("$%s(%s)"%(prefix,key),"%f"%float(value))
+        if self.descriptors is not None:
+            for key, variable in self.variableDictPtr.iteritems():
+                if key in self.descriptors:
+                    value = self.descriptors[key]
+                    if value=="NA" or value=="LLOQ" or value=="ULOQ":
+                        expressionPython="None"
+                        break
                     else:
-                        expressionPython = expressionPython.replace("$%s(%s)"%(prefix,key),"'%s'"%value)
+                        if variable.varType == PKPDVariable.TYPE_NUMERIC:
+                            expressionPython = expressionPython.replace("$%s(%s)"%(prefix,key),"%f"%float(value))
+                        else:
+                            expressionPython = expressionPython.replace("$%s(%s)"%(prefix,key),"'%s'"%value)
         return expressionPython
 
     def evaluateExpression(self, expression, prefix=""):

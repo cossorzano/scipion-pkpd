@@ -48,7 +48,7 @@ class ProtPKPDCreateLabel(ProtPKPD):
         form.addParam('rewrite', params.BooleanParam, label="Rewrite labels", default=False,
                       help='Set this flag to true if you want to rewrite the content of existing labels.')
         form.addParam('expression', params.StringParam, label="Expression(s) to calculate", default="",
-                      help='For example, to normalize the apparent volume of distribution by the animal weight use $(Vd)/$(weight). '\
+                      help='For example, to normalize the apparent volume of distribution by the animal weight use $(Vd)/$(weight), a literal as "T1", or a constant 1.5. '\
                            'If several labels are created, separated by semicolons.')
         form.addParam('units', params.StringParam, label="Units", default="None",
                       help='For example, L/kg. If several labels are created, separated by semicolons.')
