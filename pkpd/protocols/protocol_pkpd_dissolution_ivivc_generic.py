@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+from itertools import izip
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import differential_evolution
@@ -172,12 +173,16 @@ class ProtPKPDDissolutionIVIVCGeneric(ProtPKPDDissolutionIVIVC):
         self.verbose=False
         vitroList = []
         vivoList = []
-        for parameterInVitro in self.parametersInVitro:
+        for parameterInVitro, vesselName in izip(self.parametersInVitro,self.vesselNames):
             invivoIdx=0
+            if "tvitroMax" in self.experimentInVitro.variables:
+                tvitroMax=float(self.experimentInVitro.samples[vesselName].getDescriptorValue("tvitroMax"))
+            else:
+                tvitroMax=1e38
             for self.tvivo,self.Fabs in self.profilesInVivo:
                 print("New combination %d"%i)
                 self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
-                self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
+                self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,min(np.max(self.tvivoUnique*10),tvitroMax))
                 self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
                 self.tvivoMin=np.min(self.tvivoUnique)
                 self.tvivoMax=np.max(self.tvivoUnique)
