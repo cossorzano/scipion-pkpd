@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+from itertools import izip
 from math import sqrt
 import numpy as np
 import sys
@@ -402,12 +403,16 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self.verbose=False
         vitroList = []
         vivoList = []
-        for parameterInVitro in self.parametersInVitro:
+        for parameterInVitro, sampleName in izip(self.parametersInVitro,self.sampleNames):
             invivoIdx=0
+            if "tvitroMax" in self.experimentInVitro.variables:
+                tvitroMax=float(self.experimentInVitro.samples[sampleName].getDescriptorValue("tvitroMax"))
+            else:
+                tvitroMax=1e38
             for self.tvivo,self.Fabs in self.profilesInVivo:
                 print("New combination %d"%i)
                 self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
-                self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,np.max(self.tvivoUnique*10))
+                self.tvitro, self.Adissol=self.produceAdissol(parameterInVitro,min(np.max(self.tvivoUnique*10),tvitroMax))
                 self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
                 self.tvivoMin=np.min(self.tvivoUnique)
                 self.tvivoMax=np.max(self.tvivoUnique)
