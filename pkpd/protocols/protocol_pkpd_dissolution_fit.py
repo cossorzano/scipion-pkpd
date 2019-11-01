@@ -157,6 +157,9 @@ are independent, which are not. Use Bootstrap estimates instead.\n
             self.experimentSimulated.general["comment"]="Simulated response from dissolution profiles"
 
     def postSampleAnalysis(self, sampleName):
+        self.experiment.addParameterToSample(sampleName, "tvitroMax",
+                                             self.experiment.variables[self.varNameX].units.unit,
+                                             "Maximum tvitro for which this fitting is valid", np.max(self.model.x))
         if self.resampleT.get()>0:
             newSample = PKPDSample()
             newSample.sampleName = sampleName+"_simulated"
