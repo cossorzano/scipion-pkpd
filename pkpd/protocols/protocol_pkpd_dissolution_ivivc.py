@@ -168,7 +168,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.FabsPredicted = np.clip(smoothPchip(self.FabsUnique, self.FabsPredicted),0,100)
             self.AdissolPredicted = np.clip(smoothPchip(self.AdissolUnique, self.AdissolPredicted),0,100)
 
-    def calculateError(self, x, tvitroUnique, tvivoUnique):
+    def calculateIndividualError(self, x, tvitroUnique, tvivoUnique):
         self.guaranteeMonotonicity()
         self.residualsForward = self.FabsPredicted - self.FabsUnique
         self.residualsBackward = self.AdissolUnique - self.AdissolPredicted
@@ -185,12 +185,17 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         else:
             self.residuals = self.residualsBackward
         diff=errorBackward-errorForward
-        error = 0.5*(errorBackward+errorForward)+np.abs(diff)
+        error = 0.5*(errorBackward+errorForward)#+np.abs(diff)
 
         # error=np.sqrt(np.mean(self.residuals**2))
         # error=np.sqrt(np.sum(self.residuals**2))
+        return error, errorBackward, errorForward
+
+    def calculateError(self, x, tvitroUnique, tvivoUnique):
+        error, errorBackward, errorForward=self.calculateIndividualError(x, tvitroUnique, tvivoUnique)
         if error < self.bestError:
-            print("New minimum error=%f (back=%f, forw=%f)" % (error,errorBackward,errorForward), "x=%s" % np.array2string(x, max_line_width=1000))
+            print("New minimum error=%f (back=%f, forw=%f) R=%f" % (error,errorBackward,errorForward,self.calculateR()),
+                  "x=%s" % np.array2string(x, max_line_width=1000))
             self.bestError = error
             sys.stdout.flush()
         if self.verbose:
@@ -350,7 +355,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
     def calculateR(self):
         R2forward = np.clip(1 - np.var(self.residualsForward) / np.var(self.FabsUnique), 0.0, 1.0)
         R2backward = np.clip(1 - np.var(self.residualsBackward) / np.var(self.AdissolUnique), 0.0, 1.0)
-        R2 = min(R2forward, R2backward)
+        R2 = max(R2forward, R2backward)
         R = sqrt(R2)
         return R
 
@@ -404,10 +409,10 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         self.verbose=False
         vitroList = []
         vivoList = []
-        for parameterInVitro, sampleName in izip(self.parametersInVitro,self.sampleNames):
+        for parameterInVitro, vesselName in izip(self.parametersInVitro,self.vesselNames):
             invivoIdx=0
             if "tvitroMax" in self.experimentInVitro.variables:
-                tvitroMax=float(self.experimentInVitro.samples[sampleName].getDescriptorValue("tvitroMax"))
+                tvitroMax=float(self.experimentInVitro.samples[vesselName].getDescriptorValue("tvitroMax"))
             else:
                 tvitroMax=1e38
             for self.tvivo,self.Fabs in self.profilesInVivo:
