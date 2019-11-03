@@ -27,10 +27,13 @@
 import copy
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import differential_evolution
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd_dissolution_ivivc_splines import ProtPKPDDissolutionIVIVCSplines, ProtPKPDDissolutionIVIVCGeneric
-from pkpd.utils import parseOperation
+from pkpd.pkpd_units import PKPDUnit
+from pkpd.objects import PKPDSample
+from pkpd.utils import parseOperation, uniqueFloatValues
 
 
 class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
@@ -80,10 +83,146 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
         self._insertFunctionStep('calculateAllIvIvC')
-        # self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('createOutputStep')
+
+    def goalFunction(self,x):
+        try:
+            # Get time parameters
+            if self.parsedTimeOperation is None:
+                # Splines for time
+                tvivoXUnique, tvitroXUnique, i0 = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, 0, self.coeffTimeList, 'tvitro')
+                tvivoXUnique = self.tvivoMaxx * tvivoXUnique
+                tvitroXUnique = self.tvitroMaxx * tvitroXUnique
+            else:
+                i = 0
+                for prm in self.coeffTimeList:
+                    exec ("%s=%f" % (prm, x[i]))
+                    i += 1
+                i0 = i
+
+            # Get response parameters
+            if self.parsedResponseOperation is None:
+                # Splines for response
+                fabsXUnique0, adissolXUnique0, _ = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, i0, self.coeffResponseList, 'adissol')
+            else:
+                i = i0
+                for prm in self.coeffResponseList:
+                    exec ("%s=%f" % (prm, x[i]))
+                    i += 1
+
+            error=0
+            N=0
+            self.allR=[]
+            for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax in self.allPairs:
+                self.tvivoUnique = tvivoUnique
+                self.tvitroUnique = tvitroUnique
+
+                # Forward error
+                if self.parsedTimeOperation is None:
+                    # Splines for time
+                    Bt = InterpolatedUnivariateSpline(tvivoXUnique, tvitroXUnique, k=1)
+                    tvitroUnique1 = Bt(tvivoUnique)
+                else:
+                    t = tvivoUnique
+                    tvitroUnique1 = eval(self.parsedTimeOperation)
+
+                self.tvitroReinterpolated=np.clip(tvitroUnique1,self.tvitroMin,self.tvitroMax)
+                self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
+
+                if self.parsedResponseOperation is None:
+                    adissolXUnique = AdissolMax * adissolXUnique0
+                    fabsXUnique = FabsMax * fabsXUnique0
+                    BA = InterpolatedUnivariateSpline(adissolXUnique, fabsXUnique, k=1)
+                    FabsPredicted = BA(self.AdissolReinterpolated)
+                else:
+                    Adissol = self.AdissolReinterpolated
+                    FabsPredicted = eval(self.parsedResponseOperation)
+                self.FabsUnique=FabsUnique
+                self.AdissolUnique=AdissolUnique
+                self.FabsPredicted = np.clip(FabsPredicted,0.0,100)
+
+                # Backward error
+                tvitroAux, tvivoAux = uniqueFloatValues(tvitroUnique1,tvivoUnique)
+                Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
+                self.tvivoReinterpolated = np.clip(Btinv(tvitroUnique), tvivoMin, tvivoMax)
+                self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
+                FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
+                Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
+                self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, 100)
+
+                error += self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
+                self.allR.append(ProtPKPDDissolutionIVIVCSplines.calculateR(self))
+                N += 1
+        except:
+            return 1e38
+
+        if N>0:
+            return error/N
+        else:
+            return 1e38
+
+    def calculateR(self):
+        return np.mean(self.allR)
 
     #--------------------------- STEPS functions --------------------------------------------
+    def getTimeMsg(self):
+        if self.timeScale.get()==0:
+            return "tvitro=tvivo"
+        elif self.timeScale.get()==1:
+            return "tvitro=tvivo-t0"
+        elif self.timeScale.get() == 2:
+            return "tvitro=k*tvivo"
+        elif self.timeScale.get()==3:
+            return "tvitro=k*(tvivo-t0)"
+        elif self.timeScale.get()==4:
+            return "tvitro=k*tvivo^alpha"
+        elif self.timeScale.get()==5:
+            return "tvitro=k*(tvivo-t0)^alpha"
+        elif self.timeScale.get()==6:
+            return "tvitro=%s"%self.timeScaleOperation.get().replace('$(t)', '$(tvivo)')
+        else:
+            return "tvitro=SplineXY%d(tvivo)"%(self.timeScale.get()-7)
+
+    def getResponseMsg(self):
+        if self.responseScale.get()==0:
+            return "FabsPredicted=Adissol",
+        elif self.responseScale.get()==1:
+            return "Fabs=A*Adissol",
+        elif self.responseScale.get()==2:
+            return "Fabs=A*Adissol+B"
+        elif self.responseScale.get()==3:
+            return "Fabs=%s"%self.responseScaleOperation.get()
+        else:
+            return "Fabs=SplineXY%d(Adissol)" % (self.responseScale.get() - 4)
+
+    def addParametersToExperiment(self, outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R):
+        i=0
+        timeScaleMsg=self.getTimeMsg()
+        for prm in self.coeffTimeList:
+            self.outputExperimentFabsSingle.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
+            i+=1
+        responseMsg=self.getResponseMsg()
+        for prm in self.coeffResponseList:
+            self.outputExperimentFabsSingle.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
+            i+=1
+
+        self.outputExperimentFabsSingle.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        self.outputExperimentFabsSingle.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+
+    def addSample(self, sampleName, individualFrom, vesselFrom, optimum, R):
+        newSampleFabs = PKPDSample()
+        newSampleFabs.sampleName = sampleName
+        newSampleFabs.variableDictPtr = self.outputExperimentFabsSingle.variables
+        newSampleFabs.descriptors = {}
+        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated)
+        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
+        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique)
+        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
+        self.outputExperimentFabsSingle.samples[sampleName] = newSampleFabs
+        self.addParametersToExperiment(self.outputExperimentFabsSingle, sampleName, individualFrom, vesselFrom, optimum, R)
+
     def calculateAllIvIvC(self):
+        # Get the PK and dissolution profiles from the input
         self.parametersInVitro = []
         self.vesselNames = []
         self.profilesInVivo = []
@@ -102,10 +241,40 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                 self.experimentInVivo = ptrProt.get().experimentInVivo
                 self.varNameX = ptrProt.get().fitting.predictor.varName
                 self.varNameY = ptrProt.get().fitting.predicted.varName
+                self.protFit = ptrProt.get().protFit
             idx+=1
 
-        self.createOutputExperiments(set=1)
+        # Prepare all data and pairs for processing
+        self.allPairs = []
+        self.tvitroMaxx = -1e38
+        self.tvivoMaxx = -1e38
+        for block  in range(len(self.sampleNames)):
+            for parameterInVitro in self.parametersInVitro[block]:
+                for self.tvivo,self.Fabs in self.profilesInVivo[block]:
+                    self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
+                    self.tvitro, self.Adissol = self.produceAdissol(parameterInVitro, np.max(self.tvivoUnique * 10))
+                    self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
+                    self.tvivoMin = np.min(self.tvivoUnique)
+                    self.tvivoMax = np.max(self.tvivoUnique)
+                    self.tvitroMin = np.min(self.tvitroUnique)
+                    self.tvitroMax = np.max(self.tvitroUnique)
+                    self.tvitroMaxx = max(self.tvitroMaxx,self.tvitroMax)
+                    self.tvivoMaxx = max(self.tvivoMaxx,self.tvivoMax)
 
+                    # Make sure they are sorted in x
+                    self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
+                    self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
+                    self.FabsMax = np.max(self.FabsUnique)
+                    self.AdissolMax = np.max(self.AdissolUnique)
+
+                    self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
+                    self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
+                    self.allPairs.append([self.tvivoUnique, self.tvitroUnique, self.FabsUnique, self.AdissolUnique,
+                                          self.BAdissol, self.BFabs,
+                                          self.tvitroMin, self.tvitroMax, self.tvivoMin, self.tvivoMax,
+                                          self.AdissolMax, self.FabsMax])
+
+        # Prepare the parameter names and bounds
         if self.timeScale.get()<=6:
             if self.timeScale.get()==0:
                 timeScaleOperation="$(t)"
@@ -149,7 +318,32 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.parameters = self.coeffTimeList + self.coeffResponseList
         self.bounds = self.timeBoundsList + self.responseBoundsList
 
-#    def createOutputStep(self):
-#        self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)
-#        for ptrExperiment in self.inputIVIVCs:
-#            self._defineSourceRelation(ptrExperiment.get(), self.outputExperimentFabsSingle)
+        self.createOutputExperiments(set=2)
+
+        self.verbose=False
+        self.bestError = 1e38
+        optimum = differential_evolution(self.goalFunction, self.bounds, popsize=50)
+
+        # Evaluate correlation
+        self.goalFunction(optimum.x)
+        R = self.calculateR()
+
+        self.addSample("ivivc_all", "allSamples", "allVessels", optimum.x, R)
+
+        fh = open(self._getPath("summary.txt"), "w")
+        self.doublePrint(fh, "Correlation coefficient (R) %f"%R)
+        self.printFormulas(fh)
+        fh.close()
+
+        self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
+
+    def printFormulas(self, fh):
+        self.doublePrint(fh, "Time scale: %s" % self.getTimeMsg())
+        self.doublePrint(fh, "Response scale: %s" % self.getResponseMsg())
+
+    def createOutputStep(self):
+        self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)
+        for ptrProt in self.inputIVIVCs:
+            self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabsSingle)
+            self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabsSingle)
+
