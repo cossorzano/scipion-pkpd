@@ -135,8 +135,8 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                 self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
 
                 if self.parsedResponseOperation is None:
-                    adissolXUnique = AdissolMax * adissolXUnique0
-                    fabsXUnique = FabsMax * fabsXUnique0
+                    adissolXUnique = self.AdissolMaxx * adissolXUnique0
+                    fabsXUnique = self.FabsMaxx * fabsXUnique0
                     BA = InterpolatedUnivariateSpline(adissolXUnique, fabsXUnique, k=1)
                     FabsPredicted = BA(self.AdissolReinterpolated)
                 else:
@@ -267,6 +267,8 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.allPairs = []
         self.tvitroMaxx = -1e38
         self.tvivoMaxx = -1e38
+        self.FabsMaxx = -1e38
+        self.AdissolMaxx = -1e38
         for block  in range(len(self.sampleNames)):
             for parameterInVitro, vesselName in izip(self.parametersInVitro[block], self.vesselNames[block]):
                 if "tvitroMax" in self.experimentsInVitro[block].variables:
@@ -283,6 +285,8 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                     self.tvitroMax = np.max(self.tvitroUnique)
                     self.tvitroMaxx = max(self.tvitroMaxx,self.tvitroMax)
                     self.tvivoMaxx = max(self.tvivoMaxx,self.tvivoMax)
+                    self.FabsMaxx = max(self.FabsMaxx,np.max(self.FabsUnique))
+                    self.AdissolMaxx = max(self.AdissolMaxx,np.max(self.AdissolUnique))
 
                     # Make sure they are sorted in x
                     self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
