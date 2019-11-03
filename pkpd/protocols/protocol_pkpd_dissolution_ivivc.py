@@ -184,7 +184,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.residuals = self.residualsForward
         else:
             self.residuals = self.residualsBackward
-        error = 0.5*(errorBackward+errorForward)
+        diff=errorBackward-errorForward
+        error = 0.5*(errorBackward+errorForward)+np.abs(diff)
 
         # error=np.sqrt(np.mean(self.residuals**2))
         # error=np.sqrt(np.sum(self.residuals**2))
