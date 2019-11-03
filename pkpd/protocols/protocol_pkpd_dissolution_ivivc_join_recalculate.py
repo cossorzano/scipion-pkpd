@@ -24,8 +24,9 @@
 # *
 # **************************************************************************
 
-import copy
+from itertools import izip
 import numpy as np
+import sys
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import differential_evolution
 
@@ -111,9 +112,13 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                     i += 1
 
             error=0
+            errorBackward=0
+            errorForward=0
             N=0
             self.allR=[]
+            i=0
             for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax in self.allPairs:
+                i+=1
                 self.tvivoUnique = tvivoUnique
                 self.tvitroUnique = tvitroUnique
 
@@ -150,14 +155,26 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                 Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
                 self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, 100)
 
-                error += self.calculateError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
-                self.allR.append(ProtPKPDDissolutionIVIVCSplines.calculateR(self))
+                errorn, errorBackwardn, errorForwardn = self.calculateIndividualError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
+                error+=errorn
+                errorBackward+=errorBackwardn
+                errorForward+=errorForwardn
+                R=ProtPKPDDissolutionIVIVCSplines.calculateR(self)
+                self.allR.append(R)
                 N += 1
         except:
             return 1e38
 
         if N>0:
-            return error/N
+            error/=N
+            errorForward/=N
+            errorBackward/=N
+            if error < self.bestError:
+                print("New minimum error=%f (back=%f, forw=%f) R=%f" % (
+                error, errorBackward, errorForward, self.calculateR()),
+                      "x=%s" % np.array2string(x, max_line_width=1000))
+                self.bestError = error
+                sys.stdout.flush()
         else:
             return 1e38
 
@@ -227,6 +244,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.vesselNames = []
         self.profilesInVivo = []
         self.sampleNames = []
+        self.experimentsInVitro = []
         idx=1
         for ptrProt in self.inputIVIVCs:
             parametersInVitro, vesselNames = ptrProt.get().getInVitroModels()
@@ -242,6 +260,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                 self.varNameX = ptrProt.get().fitting.predictor.varName
                 self.varNameY = ptrProt.get().fitting.predicted.varName
                 self.protFit = ptrProt.get().protFit
+            self.experimentsInVitro.append(self.experimentInVitro)
             idx+=1
 
         # Prepare all data and pairs for processing
@@ -249,10 +268,14 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.tvitroMaxx = -1e38
         self.tvivoMaxx = -1e38
         for block  in range(len(self.sampleNames)):
-            for parameterInVitro in self.parametersInVitro[block]:
+            for parameterInVitro, vesselName in izip(self.parametersInVitro[block], self.vesselNames[block]):
+                if "tvitroMax" in self.experimentsInVitro[block].variables:
+                    tvitroMax = float(self.experimentsInVitro[block].samples[vesselName].getDescriptorValue("tvitroMax"))
+                else:
+                    tvitroMax = 1e38
                 for self.tvivo,self.Fabs in self.profilesInVivo[block]:
                     self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
-                    self.tvitro, self.Adissol = self.produceAdissol(parameterInVitro, np.max(self.tvivoUnique * 10))
+                    self.tvitro, self.Adissol = self.produceAdissol(parameterInVitro, min(np.max(self.tvivoUnique * 10), tvitroMax))
                     self.AdissolUnique, self.tvitroUnique = uniqueFloatValues(self.Adissol, self.tvitro)
                     self.tvivoMin = np.min(self.tvivoUnique)
                     self.tvivoMax = np.max(self.tvivoUnique)
