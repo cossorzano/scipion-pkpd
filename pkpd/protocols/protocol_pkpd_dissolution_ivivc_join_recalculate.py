@@ -175,6 +175,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                       "x=%s" % np.array2string(x, max_line_width=1000))
                 self.bestError = error
                 sys.stdout.flush()
+            return error
         else:
             return 1e38
 
