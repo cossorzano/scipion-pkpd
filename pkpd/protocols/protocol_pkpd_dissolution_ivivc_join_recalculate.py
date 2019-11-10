@@ -86,30 +86,79 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self._insertFunctionStep('calculateAllIvIvC')
         self._insertFunctionStep('createOutputStep')
 
+    def predict(self, tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax):
+        self.tvivoUnique = tvivoUnique
+        self.tvitroUnique = tvitroUnique
+
+        # Forward error
+        if self.parsedTimeOperation is None:
+            # Splines for time
+            Bt = InterpolatedUnivariateSpline(tvivoXUnique, tvitroXUnique, k=1)
+            self.tvitroUnique1 = Bt(tvivoUnique)
+        else:
+            t = tvivoUnique
+            self.tvitroUnique1 = eval(self.parsedTimeOperation)
+
+        self.tvitroReinterpolated = np.clip(self.tvitroUnique1, self.tvitroMin, self.tvitroMax)
+        self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
+
+        if self.parsedResponseOperation is None:
+            adissolXUnique = self.AdissolMaxx * adissolXUnique0
+            fabsXUnique = self.FabsMaxx * fabsXUnique0
+            BA = InterpolatedUnivariateSpline(adissolXUnique, fabsXUnique, k=1)
+            FabsPredicted = BA(self.AdissolReinterpolated)
+        else:
+            Adissol = self.AdissolReinterpolated
+            FabsPredicted = eval(self.parsedResponseOperation)
+        self.FabsUnique = FabsUnique
+        self.AdissolUnique = AdissolUnique
+        self.FabsPredicted = np.clip(FabsPredicted, 0.0, 100)
+
+        # Backward error
+        tvitroAux, tvivoAux = uniqueFloatValues(self.tvitroUnique1, tvivoUnique)
+        Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
+        self.tvivoReinterpolated = np.clip(Btinv(tvitroUnique), tvivoMin, tvivoMax)
+        self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
+        FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
+        Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
+        self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, 100)
+
+    def getAxes(self,x):
+        # Get time parameters
+        if self.parsedTimeOperation is None:
+            # Splines for time
+            tvivoXUnique, tvitroXUnique, i0 = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, 0,
+                                                                                            self.coeffTimeList,
+                                                                                            'tvitro')
+            tvivoXUnique = self.tvivoMaxx * tvivoXUnique
+            tvitroXUnique = self.tvitroMaxx * tvitroXUnique
+        else:
+            i = 0
+            for prm in self.coeffTimeList:
+                exec ("%s=%f" % (prm, x[i]))
+                i += 1
+            i0 = i
+            tvivoXUnique = None
+            tvitroXUnique = None
+
+        # Get response parameters
+        if self.parsedResponseOperation is None:
+            # Splines for response
+            fabsXUnique0, adissolXUnique0, _ = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, i0,
+                                                                                             self.coeffResponseList,
+                                                                                             'adissol')
+        else:
+            i = i0
+            for prm in self.coeffResponseList:
+                exec ("%s=%f" % (prm, x[i]))
+                i += 1
+            adissolXUnique0 = None
+            fabsXUnique0 = None
+        return tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0
+
     def goalFunction(self,x):
         try:
-            # Get time parameters
-            if self.parsedTimeOperation is None:
-                # Splines for time
-                tvivoXUnique, tvitroXUnique, i0 = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, 0, self.coeffTimeList, 'tvitro')
-                tvivoXUnique = self.tvivoMaxx * tvivoXUnique
-                tvitroXUnique = self.tvitroMaxx * tvitroXUnique
-            else:
-                i = 0
-                for prm in self.coeffTimeList:
-                    exec ("%s=%f" % (prm, x[i]))
-                    i += 1
-                i0 = i
-
-            # Get response parameters
-            if self.parsedResponseOperation is None:
-                # Splines for response
-                fabsXUnique0, adissolXUnique0, _ = ProtPKPDDissolutionIVIVCSplines.getParameters(self, x, i0, self.coeffResponseList, 'adissol')
-            else:
-                i = i0
-                for prm in self.coeffResponseList:
-                    exec ("%s=%f" % (prm, x[i]))
-                    i += 1
+            tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0=self.getAxes(x)
 
             error=0
             errorBackward=0
@@ -117,43 +166,9 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             N=0
             self.allR=[]
             i=0
-            for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax in self.allPairs:
+            for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax, _, _ in self.allPairs:
                 i+=1
-                self.tvivoUnique = tvivoUnique
-                self.tvitroUnique = tvitroUnique
-
-                # Forward error
-                if self.parsedTimeOperation is None:
-                    # Splines for time
-                    Bt = InterpolatedUnivariateSpline(tvivoXUnique, tvitroXUnique, k=1)
-                    tvitroUnique1 = Bt(tvivoUnique)
-                else:
-                    t = tvivoUnique
-                    tvitroUnique1 = eval(self.parsedTimeOperation)
-
-                self.tvitroReinterpolated=np.clip(tvitroUnique1,self.tvitroMin,self.tvitroMax)
-                self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
-
-                if self.parsedResponseOperation is None:
-                    adissolXUnique = self.AdissolMaxx * adissolXUnique0
-                    fabsXUnique = self.FabsMaxx * fabsXUnique0
-                    BA = InterpolatedUnivariateSpline(adissolXUnique, fabsXUnique, k=1)
-                    FabsPredicted = BA(self.AdissolReinterpolated)
-                else:
-                    Adissol = self.AdissolReinterpolated
-                    FabsPredicted = eval(self.parsedResponseOperation)
-                self.FabsUnique=FabsUnique
-                self.AdissolUnique=AdissolUnique
-                self.FabsPredicted = np.clip(FabsPredicted,0.0,100)
-
-                # Backward error
-                tvitroAux, tvivoAux = uniqueFloatValues(tvitroUnique1,tvivoUnique)
-                Btinv = InterpolatedUnivariateSpline(tvitroAux, tvivoAux, k=1)
-                self.tvivoReinterpolated = np.clip(Btinv(tvitroUnique), tvivoMin, tvivoMax)
-                self.FabsReinterpolated = self.BFabs(self.tvivoReinterpolated)
-                FabsPredictedAux, AdissolAux = uniqueFloatValues(self.FabsPredicted, self.AdissolReinterpolated)
-                Bfinv = InterpolatedUnivariateSpline(FabsPredictedAux, AdissolAux, k=1)
-                self.AdissolPredicted = np.clip(Bfinv(self.FabsReinterpolated), 0.0, 100)
+                self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
 
                 errorn, errorBackwardn, errorForwardn = self.calculateIndividualError(x, self.tvitroReinterpolated, self.tvivoReinterpolated)
                 error+=errorn
@@ -217,17 +232,17 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         i=0
         timeScaleMsg=self.getTimeMsg()
         for prm in self.coeffTimeList:
-            self.outputExperimentFabsSingle.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
+            outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, timeScaleMsg, optimum[i])
             i+=1
         responseMsg=self.getResponseMsg()
         for prm in self.coeffResponseList:
-            self.outputExperimentFabsSingle.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
+            outputExperiment.addParameterToSample(sampleName, prm, PKPDUnit.UNIT_NONE, responseMsg, optimum[i])
             i+=1
 
-        self.outputExperimentFabsSingle.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
-        self.outputExperimentFabsSingle.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
+        outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
+        outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
-    def addSample(self, sampleName, individualFrom, vesselFrom, optimum, R):
+    def addSample(self, outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R, addFabs=False):
         newSampleFabs = PKPDSample()
         newSampleFabs.sampleName = sampleName
         newSampleFabs.variableDictPtr = self.outputExperimentFabsSingle.variables
@@ -236,8 +251,10 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
         newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique)
         newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
-        self.outputExperimentFabsSingle.samples[sampleName] = newSampleFabs
-        self.addParametersToExperiment(self.outputExperimentFabsSingle, sampleName, individualFrom, vesselFrom, optimum, R)
+        if addFabs:
+            newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique)
+        outputExperiment.samples[sampleName] = newSampleFabs
+        self.addParametersToExperiment(outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R)
 
     def calculateAllIvIvC(self):
         # Get the PK and dissolution profiles from the input
@@ -276,6 +293,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                     tvitroMax = float(self.experimentsInVitro[block].samples[vesselName].getDescriptorValue("tvitroMax"))
                 else:
                     tvitroMax = 1e38
+                j=0
                 for self.tvivo,self.Fabs in self.profilesInVivo[block]:
                     self.FabsUnique, self.tvivoUnique = uniqueFloatValues(self.Fabs, self.tvivo)
                     self.tvitro, self.Adissol = self.produceAdissol(parameterInVitro, min(np.max(self.tvivoUnique * 10), tvitroMax))
@@ -300,7 +318,8 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
                     self.allPairs.append([self.tvivoUnique, self.tvitroUnique, self.FabsUnique, self.AdissolUnique,
                                           self.BAdissol, self.BFabs,
                                           self.tvitroMin, self.tvitroMax, self.tvivoMin, self.tvivoMax,
-                                          self.AdissolMax, self.FabsMax])
+                                          self.AdissolMax, self.FabsMax, vesselName, self.sampleNames[j]])
+                    j+=1
 
         # Prepare the parameter names and bounds
         if self.timeScale.get()<=6:
@@ -356,14 +375,24 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.goalFunction(optimum.x)
         R = self.calculateR()
 
-        self.addSample("ivivc_all", "allSamples", "allVessels", optimum.x, R)
+        self.addSample(self.outputExperimentFabsSingle, "ivivc_all", "allSamples", "allVessels", optimum.x, R)
+        self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
 
         fh = open(self._getPath("summary.txt"), "w")
         self.doublePrint(fh, "Correlation coefficient (R) %f"%R)
         self.printFormulas(fh)
         fh.close()
 
-        self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
+        # Generate Fabs and FabsPredicted for all pairs
+        self.createOutputExperiments(set=1)
+        tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0 = self.getAxes(optimum.x)
+        i=1
+        for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax, vesselName, sampleName in self.allPairs:
+            self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
+            R = ProtPKPDDissolutionIVIVCSplines.calculateR(self)
+            self.addSample(self.outputExperimentFabs, "ivivc_%d"%i, sampleName, vesselName, optimum.x, R, True)
+            i+=1
+        self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
 
     def printFormulas(self, fh):
         self.doublePrint(fh, "Time scale: %s" % self.getTimeMsg())
@@ -371,7 +400,10 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
 
     def createOutputStep(self):
         self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)
+        self._defineOutputs(outputExperimentFabs=self.outputExperimentFabs)
         for ptrProt in self.inputIVIVCs:
             self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabsSingle)
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabsSingle)
+            self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabs)
+            self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabs)
 
