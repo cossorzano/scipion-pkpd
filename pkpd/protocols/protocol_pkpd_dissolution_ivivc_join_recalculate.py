@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+import copy
 from itertools import izip
 import numpy as np
 import sys
@@ -272,9 +273,9 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             self.profilesInVivo.append(profilesInVivo)
             self.sampleNames.append(sampleNames)
 
+            self.experimentInVitro = ptrProt.get().experimentInVitro
+            self.experimentInVivo = ptrProt.get().experimentInVivo
             if idx==1:
-                self.experimentInVitro = ptrProt.get().experimentInVitro
-                self.experimentInVivo = ptrProt.get().experimentInVivo
                 self.varNameX = ptrProt.get().fitting.predictor.varName
                 self.varNameY = ptrProt.get().fitting.predicted.varName
                 self.protFit = ptrProt.get().protFit
@@ -287,7 +288,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.tvivoMaxx = -1e38
         self.FabsMaxx = -1e38
         self.AdissolMaxx = -1e38
-        for block  in range(len(self.sampleNames)):
+        for block in range(len(self.sampleNames)):
             for parameterInVitro, vesselName in izip(self.parametersInVitro[block], self.vesselNames[block]):
                 if "tvitroMax" in self.experimentsInVitro[block].variables:
                     tvitroMax = float(self.experimentsInVitro[block].samples[vesselName].getDescriptorValue("tvitroMax"))
