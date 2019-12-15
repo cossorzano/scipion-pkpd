@@ -398,6 +398,10 @@ class ExperimentWindow(gui.Window):
 
         self.plotButton.grid(row=0, column=2, sticky='ne', padx=5)
 
+        self.useCurrentPlotVar = tk.IntVar()
+        self.useCurrentPlot = tk.Checkbutton(plotFrame, text='Use current plot', variable=self.useCurrentPlotVar)
+        self.useCurrentPlot.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
+
         self.plotSummaryButton = Button(plotFrame, ' Summary Plot ',
                                         font=self.fontBold,
                                         command=self._onPlotSummaryClick,
@@ -515,12 +519,15 @@ class ExperimentWindow(gui.Window):
 
         return newXValues, newYValues
 
+    def reuseFigure(self):
+        return None if not self.useCurrentPlotVar.get() else 'active'
+
     def _onPlotClick(self, e=None):
         sampleKeys = self.samplesTree.selection()
 
         if sampleKeys:
             if self.plotter is None or self.plotter.isClosed():
-                self.plotter = EmPlotter(style='seaborn-whitegrid')
+                self.plotter = EmPlotter(style='seaborn-whitegrid', figure=self.reuseFigure())
                 doShow = True
                 ax = self.plotter.createSubPlot("Plot", self.getTimeLabel(),
                                                 self.getMeasureLabel())
@@ -586,7 +593,8 @@ class ExperimentWindow(gui.Window):
             for i, t in enumerate(sortedTime):
                 Y[i,:] = np.percentile(dataDict[t], percentileList)
 
-            plotter = EmPlotter(style='seaborn-whitegrid')
+            plotter = EmPlotter(style='seaborn-whitegrid', figure=self.reuseFigure())
+            # *** Pending
             ax = plotter.createSubPlot("Summary Plot", self.getTimeLabel(),
                                        self.getMeasureLabel())
             ax.plot(sortedTime, Y[:, 0], 'r--', label="Minimum")
@@ -644,7 +652,7 @@ class ExperimentWindow(gui.Window):
                 return [_value(float(x), useLog) for x in values]
 
             def _plot(varLabelX, varLabelY, x, y, yp):
-                plotter = EmPlotter(style='seaborn-whitegrid')
+                plotter = EmPlotter(style='seaborn-whitegrid', figure=self.reuseFigure())
                 ax = plotter.createSubPlot("Plot", varLabelX, varLabelY)
                 xValues = _values(x, useLog=self.useTimeLog())
                 ax.plot(xValues, _values(y), 'x', label="Observations")
