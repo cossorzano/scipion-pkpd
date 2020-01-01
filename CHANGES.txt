@@ -65,4 +65,14 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
 
  September 2019.
  	- IVIVC with arbitrary functions added
+        - IVIVC with splines added
+
+ October 2019.
+	- Smooth PChip added to IVIVC
+
+ November 2019.
+	- Bug fixes in IVIVC
  	
+ January 2020.
+        - Exported to PyPI
+
