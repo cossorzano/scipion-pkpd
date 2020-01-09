@@ -935,6 +935,33 @@ class PKPDExperiment(EMObject):
             newExperiment.samples[sample.sampleName] = sample
         return newExperiment
 
+    def gather(self, otherExperiment):
+        # General
+        for key, value in otherExperiment.general.iteritems():
+            if not (key in self.general):
+                self.general[key] = copy.copy(value)
+
+        # Variables
+        for key, value in otherExperiment.variables.iteritems():
+            if not (key in self.variables):
+                self.variables[key] = copy.copy(value)
+
+        # Doses
+        for key, value in otherExperiment.doses.iteritems():
+            if not (key in self.doses):
+                self.doses[key] = copy.copy(value)
+
+        # Vias
+        for key, value in otherExperiment.vias.iteritems():
+            if key not in self.vias:
+                self.vias[key] = copy.copy(value)
+
+        # Samples
+        for key, value in otherExperiment.samples.iteritems():
+            if key not in self.samples:
+                self.addSample(copy.copy(value))
+
+
 class PKPDModelBase(object):
     def __init__(self):
         self.fnExperiment = None
