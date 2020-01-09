@@ -899,6 +899,41 @@ class PKPDExperiment(EMObject):
                 retval.append(varName)
         return retval
 
+    def subset(self,listOfSampleNames):
+        newExperiment = PKPDExperiment()
+
+        # General
+        for key, value in self.general.iteritems():
+            if not (key in newExperiment.general):
+                newExperiment.general[key] = copy.copy(value)
+
+        # Variables
+        for key, value in self.variables.iteritems():
+            if not (key in newExperiment.variables):
+                newExperiment.variables[key] = copy.copy(value)
+
+        # Doses
+        viasSubset = []
+        for key, value in self.doses.iteritems():
+            dose = copy.copy(value)
+            newExperiment.doses[dose.doseName] = dose
+            viasSubset.append(dose.via.viaName)
+
+        # Vias
+        for via in viasSubset:
+            newExperiment.vias[via] = self.vias[via]
+
+        # Samples and groups
+        newExperiment.groups = {}
+        for sampleName in listOfSampleNames:
+            sample = copy.copy(self.samples[sampleName])
+            for groupName, group in self.groups.iteritems():
+                if sampleName in group.sampleList:
+                    if not groupName in newExperiment.groups.keys():
+                        newExperiment.groups[groupName]=PKPDGroup(groupName)
+                    newExperiment.groups[groupName].sampleList.append(sampleName)
+            newExperiment.samples[sample.sampleName] = sample
+        return newExperiment
 
 class PKPDModelBase(object):
     def __init__(self):
