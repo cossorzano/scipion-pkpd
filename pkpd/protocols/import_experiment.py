@@ -29,8 +29,7 @@ Import experiment
 """
 import sys
 from os.path import exists, basename
-from pyworkflow.utils.path import copyFile
-from pyworkflow.em.protocol.protocol_import import ProtImportFiles
+from pwem.protocols.protocol_import import ProtImportFiles
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment
 

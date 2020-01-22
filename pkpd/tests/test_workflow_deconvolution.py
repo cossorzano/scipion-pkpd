@@ -25,11 +25,9 @@
 # **************************************************************************
 
 import numpy as np
-import unittest
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -44,7 +42,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
     def testDeconvolutionWorkflow(self):
         #First, import an experiment
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.validateFiles('protImport', protImport)      
 
         # Fit a monocompartmental model with first order absorption
-        print "Fitting monocompartmental model..."
+        print("Fitting monocompartmental model...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(0.0, 20.0); (0.0, 0.2); (0.0, 1.0); (0.0, 100.0)')
@@ -80,7 +78,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-14)
 
         # Deconvolution
-        print "Deconvolving ..."
+        print("Deconvolving ...")
         prot = self.newProtocol(ProtPKPDDeconvolve,
                                 objLabel='dissol deconv')
         prot.inputODE.set(protEV1MonoCompartment)
@@ -96,7 +94,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
 
 
         # Simulate PK
-        print "Simulate PK ..."
+        print("Simulate PK ...")
         prot = self.newProtocol(ProtPKPDODESimulate,
                                 objLabel='PK simulate',
                                 paramsSource=1,
@@ -115,7 +113,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(AUMC0t > 455 and AUMC0t < 457)
 
         # Fit a monocompartmental model with first order absorption
-        print "Fitting monocompartmental model..."
+        print("Fitting monocompartmental model...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment simulated',
                                                   bounds='(0.0, 20.0); (0.0, 0.2); (0.0, 1.0); (0.0, 100.0)')
@@ -139,7 +137,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(Ka > 0.03 and Ka < 0.042)
 
         # Deconvolution Fourier
-        print "Deconvolving Fourier ..."
+        print("Deconvolving Fourier ...")
         prot = self.newProtocol(ProtPKPDDeconvolveFourier,
                                 objLabel='dissol deconv Fourier')
         prot.inputODE.set(protEV1MonoCompartment)
@@ -152,7 +150,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(A[400] > 97 and A[400] <= 100)
 
         # Change via
-        print "Change via ..."
+        print("Change via ...")
         protVia = self.newProtocol(ProtPKPDChangeVia,
                                 objLabel='change via - spline',
                                 viaName='Oral',newViaType='spline2')
@@ -163,7 +161,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
 
 
         # Fit a monocompartmental model with first order absorption
-        print "Fitting monocompartmental model..."
+        print("Fitting monocompartmental model...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment spline',
                                                   bounds='(0.0, 20.0); (0.9, 1.0); (0.0, 100.0); (0.0, 1.0); (0.0, 1.0); (0.2, 0.4); (10.0, 40.0)')
@@ -194,7 +192,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC < -14)
 
         # Deconvolution
-        print "Deconvolving ..."
+        print("Deconvolving ...")
         prot = self.newProtocol(ProtPKPDDeconvolve,
                                 objLabel='dissol deconv spline')
         prot.inputODE.set(protEV1MonoCompartment)
@@ -209,7 +207,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(A[200] > 90 and A[200] <=100)
 
         # NCA numeric
-        print "NCA numeric ..."
+        print("NCA numeric ...")
         prot = self.newProtocol(ProtPKPDNCANumeric,
                                 objLabel='nca numeric')
         prot.inputExperiment.set(protImport.outputExperiment)

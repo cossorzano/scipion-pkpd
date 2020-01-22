@@ -24,7 +24,10 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import differential_evolution

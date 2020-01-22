@@ -38,7 +38,7 @@ import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import Button, HotButton, ComboBox
 from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui.tree import TreeProvider, BoundTree
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 
 
 class VariablesTreeProvider(TreeProvider):

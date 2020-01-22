@@ -28,8 +28,7 @@ import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_fit_base import ProtPKPDFitBase
 from pkpd.models.dissolution_models import *
-from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
-from pkpd.pkpd_units import createUnit, strUnit
+from pkpd.objects import PKPDExperiment, PKPDSample
 
 # Tested by test_workflow_dissolution
 # Tested by test_workflow_levyplot

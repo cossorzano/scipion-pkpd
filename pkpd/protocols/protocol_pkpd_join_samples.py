@@ -25,7 +25,6 @@
 # **************************************************************************
 
 import copy
-import sys
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD

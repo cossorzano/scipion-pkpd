@@ -28,7 +28,7 @@ import numpy as np
 import os
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
+from pkpd.objects import PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 

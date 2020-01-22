@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 import pkpd.protocols
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -44,7 +42,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
     def testGabrielssonPD03Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(pkpd.protocols.ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a PD model
-        print "Fitting a saturated PD model ..."
+        print("Fitting a saturated PD model ...")
         protPDfitting = self.newProtocol(pkpd.protocols.ProtPKPDGenericFit,
                                          objLabel='pkpd - pd saturated',
                                          modelType=2, fitType=0,
@@ -76,7 +74,7 @@ class TestGabrielssonPD03Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.96)
 
         # Fit a PD model
-        print "Fitting a sigmoid PD model ..."
+        print("Fitting a sigmoid PD model ...")
         protPDfitting = self.newProtocol(pkpd.protocols.ProtPKPDGenericFit,
                                          objLabel='pkpd - pd sigmoid',
                                          modelType=3, fitType=0,

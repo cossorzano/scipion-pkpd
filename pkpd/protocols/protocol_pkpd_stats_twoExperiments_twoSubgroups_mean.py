@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
+from pkpd.objects import PKPDVariable
 from scipy import stats
 import numpy as np
 

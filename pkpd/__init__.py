@@ -31,7 +31,7 @@ PKPD functions
 # Batch effects, Reese2013
 
 import os
-import pyworkflow.em
+import pwem as em
 from pyworkflow.utils import Environ
 from .constants import *
 
@@ -40,7 +40,7 @@ _references = ['']
 _logo = ''
 
 
-class Plugin(pyworkflow.em.Plugin):
+class Plugin(em.Plugin):
     _homeVar = PKDP_HOME
 
     # @classmethod
@@ -85,4 +85,4 @@ def tryAddPipModule(env, moduleName, *args, **kwargs):
             raise Exception(e)
 
 
-pyworkflow.em.Domain.registerPlugin(__name__)
+em.Domain.registerPlugin(__name__)

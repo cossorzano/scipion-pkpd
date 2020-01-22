@@ -29,7 +29,7 @@ import numpy as np
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 class TestDeconvolution2Workflow(TestWorkflow):
 
@@ -41,7 +41,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         cls.pkFn = cls.dataset.getFile('excelinvivoMean')
 
     def testDissolutionWorkflow(self):
-        print "Import Dissolution"
+        print("Import Dissolution")
         protImport = self.newProtocol(ProtPKPDImportFromTable,
                                       objLabel='pkpd - import dissolution',
                                       tVar='t; min; numeric; time; Time variable',
@@ -51,7 +51,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.validateFiles('protImportTest', protImport)
 
         # Fit a Weibull dissolution
-        print "Fitting Weibull model ..."
+        print("Fitting Weibull model ...")
         protWeibull = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Weibull',
                                 allowTlag=True,bounds="(120,120);(80,100);(0,2);(0.1,4)",
@@ -75,7 +75,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.997)
 
 
-        print "Import In vivo"
+        print("Import In vivo")
         protImport = self.newProtocol(ProtPKPDImportFromExcel,
                                       objLabel='pkpd - import invivo',
                                       variables='t;min;numeric;time; ;;Cp;ug/L;numeric;measurement;plasma concentration',
@@ -87,7 +87,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.validateFiles('protImportTest', protImport)
 
         # NCA numeric
-        print "NCA numeric ..."
+        print("NCA numeric ...")
         protNCA = self.newProtocol(ProtPKPDNCANumeric,
                                 objLabel='pkpd - nca numeric')
         protNCA.inputExperiment.set(protImport.outputExperiment)
@@ -108,7 +108,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.assertTrue(MRT > 950 and MRT < 1000)
 
         # Fit a monocompartmental model with first order absorption
-        print "Fitting two-compartments model..."
+        print("Fitting two-compartments model...")
         protPK = self.newProtocol(ProtPKPDTwoCompartments,
                                                   objLabel='pkpd - twocompartments',
                                                   globalSearch=False,
@@ -131,7 +131,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.assertTrue(Vp>9 and Vp<11)
 
         # Deconvolution
-        print "Deconvolving ..."
+        print("Deconvolving ...")
         protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                 objLabel='dissol deconv')
         protDeconv.inputODE.set(protPK)
@@ -146,7 +146,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.assertTrue(A[606]>98)
 
         # Levy plot
-        print "Levy plot ..."
+        print("Levy plot ...")
         protLevy = self.newProtocol(ProtPKPDDissolutionLevyPlot,
                                       objLabel='pkpd - levy plot'
                                       )
@@ -157,7 +157,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
         # Dissolution simulation
-        print "IVIV+PK simulation ..."
+        print("IVIV+PK simulation ...")
         protIVIVPK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk',
                                       conversionType=1,
@@ -174,7 +174,7 @@ class TestDeconvolution2Workflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # Internal validity
-        print "Internal validity ..."
+        print("Internal validity ...")
         protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
                                       objLabel='pkpd - internal validity'
                                       )

@@ -25,19 +25,26 @@
 # **************************************************************************
 
 import copy
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import math
-import numpy as np
-import os
+from os.path import join
+
 import openpyxl
+from pyworkflow.plugin import PluginInfo
+
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import *
-from pyworkflow.install.funcs import *
-from .utils import writeMD5, verifyMD5, excelWriteRow, excelFillCells, excelAdjustColumnWidths, computeXYmean
-from .biopharmaceutics import PKPDDose, PKPDVia, DrugSource, createDeltaDose, createVia
+from pwem.objects import *
+from .utils import (writeMD5, verifyMD5, excelWriteRow, excelFillCells,
+                    excelAdjustColumnWidths, computeXYmean)
+from .biopharmaceutics import (PKPDDose, PKPDVia, DrugSource, createDeltaDose,
+                               createVia)
+
 
 class PKPDVariable:
     TYPE_NUMERIC = 1000
@@ -2601,7 +2608,6 @@ class PKPDDataSet:
         self._datasetDict[name] = self
         self.folder = folder
         import pkg_resources
-        from pyworkflow.install.plugin_funcs import PluginInfo
         package = PluginInfo('scipion-pkpd', 'scipion-pkpd',
                              remote=False).pipName
         dist = pkg_resources.get_distribution(package).location

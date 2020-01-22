@@ -24,13 +24,11 @@
 # *
 # **************************************************************************
 
-import numpy as np
 import random
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable, PKPDFitting
-from pkpd.utils import uniqueFloatValues
 from .protocol_pkpd import ProtPKPD
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.models.dissolution_models import *

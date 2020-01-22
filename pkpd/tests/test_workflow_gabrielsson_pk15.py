@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK15Workflow(TestWorkflow):
@@ -44,7 +42,7 @@ class TestGabrielssonPK15Workflow(TestWorkflow):
 
     def testGabrielssonPK15Workflow(self):
         # Import an experiment
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK15Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a mono-compartment model with fractional oral absorption to a set of measurements
-        print "Fitting a mono-compartment model ..."
+        print("Fitting a mono-compartment model ...")
         protPKPDPOMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                      objLabel='pkpd - iv-ev1 mono-compartment',
                                                      globalSearch=True, fitType=2,
@@ -78,7 +76,7 @@ class TestGabrielssonPK15Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.85)
 
         # Import an experiment
-        print "Import Experiment PD"
+        print("Import Experiment PD")
         protImportPD = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment PD',
                                       inputFile=self.exptPDFn)
@@ -87,7 +85,7 @@ class TestGabrielssonPK15Workflow(TestWorkflow):
         self.validateFiles('protImportPD', protImportPD)
 
         # Fit a PD model
-        print "Fitting a PD model ..."
+        print("Fitting a PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd fitting', predicted='S',
                                          modelType=3, fitType=0,

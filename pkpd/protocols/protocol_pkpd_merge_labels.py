@@ -26,8 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
-from pkpd.pkpd_units import PKPDUnit
+from pkpd.objects import PKPDVariable
 
 
 class ProtPKPDMergeLabels(ProtPKPD):

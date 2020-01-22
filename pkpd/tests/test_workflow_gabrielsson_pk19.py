@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK19Workflow(TestWorkflow):
@@ -45,7 +43,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
     def testGabrielssonPK19Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment (intravenous doses) Group"
+        print("Import Experiment (intravenous doses) Group")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment Group',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         self.assertIsNotNone(protImport.outputExperiment.fnPKPD, "There was a problem with the import")
         self.validateFiles('protImport', protImport)
 
-        print "Fitting a two-compartments model intrinsic with metabolite ..."
+        print("Fitting a two-compartments model intrinsic with metabolite ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartmentsClintMetabolite,
                                                      objLabel='pkpd - iv two-compartments intrinsic, metabolite, group',
                                                      globalSearch=False,
@@ -84,7 +82,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         fitting.load(protPKPDTwoCompartment.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.98)
 
-        print "Fitting a two-compartments model intrinsic ..."
+        print("Fitting a two-compartments model intrinsic ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartmentsClint,
                                                      objLabel='pkpd - iv two-compartments intrinsic, group',
                                                      globalSearch=False,
@@ -112,7 +110,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a mono-compartment model with intravenous absorption to a set of measurements
-        print "Fitting a two-compartments model intrinsic with metabolite, group, linear ..."
+        print("Fitting a two-compartments model intrinsic with metabolite, group, linear ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartmentsClintMetabolite,
                                                      objLabel='pkpd - iv two-compartments intrinsic, metabolite, group, linear',
                                                      globalSearch=False,
@@ -144,7 +142,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         fitting.load(protPKPDTwoCompartment.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
-        print "Import Experiment (intravenous doses) Individual"
+        print("Import Experiment (intravenous doses) Individual")
         protImportIndividual = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment Individual',
                                       inputFile=self.expIFn)
@@ -152,7 +150,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         self.assertIsNotNone(protImportIndividual.outputExperiment.fnPKPD, "There was a problem with the import")
         self.validateFiles('protImportIndividual', protImportIndividual)
 
-        print "Fitting a two-compartments model intrinsic with metabolite, individual ..."
+        print("Fitting a two-compartments model intrinsic with metabolite, individual ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartmentsClintMetabolite,
                                                      objLabel='pkpd - iv two-compartments intrinsic, metabolite',
                                                      globalSearch=False,
@@ -218,7 +216,7 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[1].R2>0.97)
         self.assertTrue(fitting.sampleFits[2].R2>0.97)
 
-        print "Fitting a two-compartments model, individual ..."
+        print("Fitting a two-compartments model, individual ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - iv two-compartments',
                                                      globalSearch=False,

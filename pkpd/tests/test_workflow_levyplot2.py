@@ -30,7 +30,7 @@ import os
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet, PKPDExperiment
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 def unitResponse(D,V,Ka,Cl,t):
     Ke=Cl/V
@@ -88,7 +88,7 @@ Profile ; t; C
         fhExperiment.write(experimentStr)
         fhExperiment.close()
 
-        print "Import Experiment in vitro"
+        print("Import Experiment in vitro")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment in vitro',
                                       inputFile=fnExperiment)
@@ -99,7 +99,7 @@ Profile ; t; C
         os.remove(fnExperiment)
 
         # Fit a Weibull dissolution
-        print "Fitting Weibull model ..."
+        print("Fitting Weibull model ...")
         protWeibull = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Weibull',
                                 globalSearch=True, modelType=3)
@@ -155,7 +155,7 @@ Individual1 ; t; Cp
         fhExperiment.write(experimentStr)
         fhExperiment.close()
 
-        print "Import Experiment in vivo"
+        print("Import Experiment in vivo")
         protImportInVivo = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment in vivo',
                                       inputFile=fnExperiment)
@@ -166,7 +166,7 @@ Individual1 ; t; Cp
         os.remove(fnExperiment)
 
         # NCA numeric
-        print "NCA numeric ..."
+        print("NCA numeric ...")
         protNCA = self.newProtocol(ProtPKPDNCANumeric,
                                 objLabel='pkpd - nca numeric')
         protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
@@ -187,7 +187,7 @@ Individual1 ; t; Cp
         self.assertTrue(MRT > 314 and MRT < 315)
 
         # Fit Order 1
-        print "Fitting splines5-monocompartment model ..."
+        print("Fitting splines5-monocompartment model ...")
         protModelInVivo = self.newProtocol(ProtPKPDMonoCompartment,
                                        objLabel='pkpd - fit monocompartment',
                                        bounds="(15.0, 30.0); (0.0, 400.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.0, 1.0); (0.15, 0.25); (47, 53)"
@@ -210,7 +210,7 @@ Individual1 ; t; Cp
         self.assertTrue(fitting.sampleFits[0].R2>0.998)
 
         # Deconvolve the in vivo
-        print "Deconvolving in vivo ..."
+        print("Deconvolving in vivo ...")
         protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                        objLabel='pkpd - deconvolution'
                                        )
@@ -220,7 +220,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDeconvolve', ProtPKPDDeconvolve)
 
         # Levy plot
-        print "Levy plot ..."
+        print("Levy plot ...")
         protLevy = self.newProtocol(ProtPKPDDissolutionLevyPlot,
                                       objLabel='pkpd - levy plot'
                                       )
@@ -231,7 +231,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
         # IVIVC
-        print "In vitro-in vivo correlation ..."
+        print("In vitro-in vivo correlation ...")
         protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                      timeScale=5,
                                      responseScale=1,
@@ -245,7 +245,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # IVIVC generic
-        print "In vitro-in vivo generic ..."
+        print("In vitro-in vivo generic ...")
         protIVIVCG = self.newProtocol(ProtPKPDDissolutionIVIVCGeneric,
                                       timeScale='$[k1]*$(t)+$[k2]*np.power($(t),2)+$[k3]*np.power($(t),3)',
                                       timeBounds='k1: [0,3]; k2: [-0.1,0.01];  k3: [0,1e-3]',
@@ -260,7 +260,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionIVIVCG', ProtPKPDDissolutionIVIVCGeneric)
 
         # IVIVC splines
-        print "In vitro-in vivo splies ..."
+        print("In vitro-in vivo splies ...")
         protIVIVCS = self.newProtocol(ProtPKPDDissolutionIVIVCSplines,
                                       timeScale=1,
                                       responseScale=1,
@@ -273,7 +273,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionIVIVCS', ProtPKPDDissolutionIVIVCSplines)
 
         # Dissolution simulation
-        print "IVIV+PK simulation ..."
+        print("IVIV+PK simulation ...")
         protIVIVPKL = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk',
                                       conversionType=1,
@@ -290,7 +290,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # Dissolution simulation
-        print "IVIV+PK simulation ..."
+        print("IVIV+PK simulation ...")
         protIVIVPKS = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                        objLabel='pkpd - ivivc+pk',
                                        inputN=1,
@@ -306,7 +306,7 @@ Individual1 ; t; Cp
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # Internal validity
-        print "Internal validity ..."
+        print("Internal validity ...")
         protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
                                         objLabel='pkpd - internal validity')
         protInternal.inputExperiment.set(protNCA.outputExperiment)
@@ -326,7 +326,7 @@ Individual1 ; t; Cp
             lineNo += 1
 
         # Internal validity
-        print "Internal validity ..."
+        print("Internal validity ...")
         protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
                                     objLabel='pkpd - internal validity')
         protInternal.inputExperiment.set(protNCA.outputExperiment)

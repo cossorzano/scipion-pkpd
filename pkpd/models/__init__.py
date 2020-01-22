@@ -28,3 +28,4 @@
 from .pd_models import *
 from .pk_models import *
 from .sa_models import *
+from .dissolution_models import *

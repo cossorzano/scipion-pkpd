@@ -26,8 +26,8 @@
 # **************************************************************************
 
 import os
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import pyworkflow.object as pwobj
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog

@@ -31,7 +31,7 @@ import math
 import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits
 from pkpd.utils import uniqueFloatValues, excelWriteRow
-from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
+from scipy.interpolate import PchipInterpolator
 
 class BiopharmaceuticsModel:
     def __init__(self):

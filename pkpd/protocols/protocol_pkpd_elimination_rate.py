@@ -31,6 +31,7 @@ from .protocol_pkpd_exponential_fit import ProtPKPDExponentialFit
 # TESTED in test_workflow_gabrielsson_pk06.py
 # TESTED in test_workflow_gabrielsson_pk07.py
 
+
 class ProtPKPDEliminationRate(ProtPKPDExponentialFit):
     """ Fit a single exponential to the input data.\n
         Protocol created by http://www.kinestatpharma.com\n"""

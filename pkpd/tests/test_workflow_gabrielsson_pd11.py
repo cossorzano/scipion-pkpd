@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 class TestGabrielssonPD11Workflow(TestWorkflow):
@@ -43,7 +41,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
     def testGabrielssonPD11Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -52,7 +50,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a PD model
-        print "Fitting a Gompertz E0 PD model ..."
+        print("Fitting a Gompertz E0 PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Gompertz e0',
                                          predictor='distance',predicted='waterContent',
@@ -78,7 +76,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.97)
 
         # Fit a PD model
-        print "Fitting a Gompertz PD model ..."
+        print("Fitting a Gompertz PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Gompertz',
                                          predictor='distance',predicted='waterContent',
@@ -104,7 +102,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.97)
 
         # Fit a PD model
-        print "Fitting a Logistic1 PD model ..."
+        print("Fitting a Logistic1 PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Logistic1',
                                          predictor='distance',predicted='waterContent',
@@ -130,7 +128,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a PD model
-        print "Fitting a Weibull PD model ..."
+        print("Fitting a Weibull PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Weibull',
                                          predictor='distance',predicted='waterContent',
@@ -156,7 +154,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a PD model
-        print "Fitting a Richards PD model ..."
+        print("Fitting a Richards PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Richards',
                                          predictor='distance',predicted='waterContent',
@@ -184,7 +182,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a PD model
-        print "Fitting a Morgan PD model ..."
+        print("Fitting a Morgan PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Morgan',
                                          predictor='distance',predicted='waterContent',
@@ -212,7 +210,7 @@ class TestGabrielssonPD11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a PD model
-        print "Fitting a Hill PD model ..."
+        print("Fitting a Hill PD model ...")
         protPDfitting = self.newProtocol(ProtPKPDGenericFit,
                                          objLabel='pkpd - pd Hill',
                                          predictor='distance',predicted='waterContent',

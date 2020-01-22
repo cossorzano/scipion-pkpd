@@ -25,7 +25,8 @@
 # **************************************************************************
 
 
-from pyworkflow.protocol.params import PointerParam, MultiPointerParam, IntParam, EnumParam
+from pyworkflow.protocol.params import (PointerParam, MultiPointerParam,
+                                        IntParam, EnumParam)
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDExperiment
 

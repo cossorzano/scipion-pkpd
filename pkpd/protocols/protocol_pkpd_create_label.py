@@ -26,9 +26,8 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment
 from pkpd.pkpd_units import PKPDUnit
-from itertools import izip_longest
+from itertools import zip_longest
 
 
 class ProtPKPDCreateLabel(ProtPKPD):
@@ -73,7 +72,7 @@ class ProtPKPDCreateLabel(ProtPKPD):
         units = self.units.get().split(';')
         comments = self.comment.get().split(';')
 
-        for label, expression, unit, comment in izip_longest(labels,expressions,units,comments,fillvalue=""):
+        for label, expression, unit, comment in zip_longest(labels,expressions,units,comments,fillvalue=""):
             labelToAdd = label.strip().replace(' ',"_")
             units = PKPDUnit(unit.strip())
             for sampleName, sample in self.experiment.samples.iteritems():

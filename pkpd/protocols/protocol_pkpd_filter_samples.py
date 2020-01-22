@@ -102,7 +102,7 @@ class ProtPKPDFilterSamples(ProtPKPD):
                                     conditionPython = conditionPython.replace("$(%s)"%key,"'%s'"%sample.descriptors[key])
                 ok=eval(conditionPython, {"__builtins__" : {"True": True, "False": False} }, {})
             except:
-                print sys.exc_info()[0]
+                print(sys.exc_info()[0])
                 pass
             if (ok and (filterType=="keep" or filterType=="rmNA")) or (not ok and filterType=="exclude"):
                 filteredExperiment.samples[sampleKey] = copy.copy(sample)

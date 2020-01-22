@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -45,7 +43,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
     def testGabrielssonPK06Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment (intravenous doses)"
+        print("Import Experiment (intravenous doses)")
         protImportIV = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment iv',
                                       inputFile=self.exptIVFn)
@@ -54,7 +52,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.validateFiles('protImportIV', protImportIV)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -64,7 +62,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Fit a monocompartmental model to a set of measurements obtained by intravenous doses
-        print "Fitting a monocompartmental model (intravenous)..."
+        print("Fitting a monocompartmental model (intravenous)...")
         protIVMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - iv monocompartment',
                                                   bounds='(0.0, 0.1); (0.0, 300.0)')
@@ -84,7 +82,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-45)
 
         # Fit a monocompartmental model to a set of measurements obtained by intravenous doses and urine
-        print "Fitting a monocompartmental model (intravenous doses and urine) ..."
+        print("Fitting a monocompartmental model (intravenous doses and urine) ...")
         protIVMonoCompartmentUrine = self.newProtocol(ProtPKPDMonoCompartmentUrine,
                                                       objLabel='pkpd - iv monocompartment urine',
                                                       globalSearch=False,
@@ -108,7 +106,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-55)
 
         # Import an experiment (extravascular)
-        print "Import Experiment (extravascular)"
+        print("Import Experiment (extravascular)")
         protImportEV = self.newProtocol(ProtImportExperiment,
                                         objLabel='pkpd - import experiment po',
                                         inputFile=self.exptEVFn)
@@ -117,7 +115,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.validateFiles('protImportEV', protImportEV)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit2 = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -127,7 +125,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.validateFiles('protChangeTimeUnit2', protChangeTimeUnit2)
 
         # Fit a monocompartmental model to a set of measurements obtained by extravascular doses and urine
-        print "Fitting a monocompartmental model (extravascular and urine)..."
+        print("Fitting a monocompartmental model (extravascular and urine)...")
         protEV1MonoCompartmentUrine = self.newProtocol(ProtPKPDMonoCompartmentUrine,
                                                        objLabel='pkpd - ev1 monocompartment urine',
                                                        globalSearch=False,
@@ -155,7 +153,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-7)
 
         # Elimination rate of IV
-        print "Elimination rate IV ..."
+        print("Elimination rate IV ...")
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
                                                predictor='t', predicted='Cp')
@@ -177,7 +175,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-45)
 
         # Non-compartmental analysis IV
-        print "Performing Non-compartmental analysis of IV ..."
+        print("Performing Non-compartmental analysis of IV ...")
         protNCAIVObs = self.newProtocol(ProtPKPDNCAIVObs,
                                         objLabel='pkpd - nca iv observations')
         protNCAIVObs.inputExperiment.set(protChangeTimeUnit.outputExperiment)
@@ -193,7 +191,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(AUC_0inf>120 and AUC_0inf<125)
 
         # Filter time variable in PO
-        print "Filter time in PO"
+        print("Filter time in PO")
         protFilterTime = self.newProtocol(ProtPKPDFilterMeasurements,
                                                   objLabel='pkpd - filter measurements t>800',
                                                   filterType=1, condition='$(t)>800')
@@ -203,7 +201,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.validateFiles('protFilterTime', protFilterTime)
 
         # Elimination rate of PO
-        print "Elimination rate PO ..."
+        print("Elimination rate PO ...")
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
                                                predictor='t', predicted='Cp')
@@ -225,7 +223,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-25)
 
         # Estimate absorption rate
-        print "Estimation of the absorption rate..."
+        print("Estimation of the absorption rate...")
         protAbsorptionRate = self.newProtocol(ProtPKPDAbsorptionRate,
                                               objLabel='pkpd - absorption rate',
                                               bounds='(0,0.07);(200,500);(5,30)')
@@ -253,7 +251,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-27)
 
         # Non-compartmental analysis EV
-        print "Performing Non-compartmental analysis of PO ..."
+        print("Performing Non-compartmental analysis of PO ...")
         protNCAEVObs = self.newProtocol(ProtPKPDNCAEV,
                                         objLabel='pkpd - nca ev')
         protNCAEVObs.protAbsorption.set(protAbsorptionRate)
@@ -268,7 +266,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         self.assertTrue(AUC_0inf>270 and AUC_0inf<273)
 
         # Non-compartmental analysis EV
-        print "Estimating bioavailability ..."
+        print("Estimating bioavailability ...")
         protBioavail = self.newProtocol(ProtPKPDNCAEstimateBioavailability,
                                         objLabel='pkpd - bioavailability nca')
         protBioavail.protNCAEV.set(protNCAEVObs)

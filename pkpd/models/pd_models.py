@@ -30,7 +30,7 @@ PD models
 import numpy as np
 
 from pkpd.objects import PKPDModel
-from pkpd.pkpd_units import inverseUnits, divideUnits, unitFromString, PKPDUnit
+from pkpd.pkpd_units import inverseUnits, divideUnits, PKPDUnit
 
 import math
 
@@ -195,8 +195,8 @@ class PDLogLinear(PDGenericModel):
             self.bounds.append((-9 * C0, 11 * C0))
 
     def printSetup(self):
-        print ("Model: %s " %self.getModelEquation())
-        print ("Bounds:  " + str(self.bounds))
+        print("Model: %s " %self.getModelEquation())
+        print("Bounds:  " + str(self.bounds))
 
     def getModelEquation(self):
         return "Y = m*log(X - C0)"

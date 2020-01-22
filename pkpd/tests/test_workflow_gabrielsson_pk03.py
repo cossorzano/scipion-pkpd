@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -43,7 +41,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
 
     
     def testGabrielssonPK03Workflow(self):
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -52,7 +50,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                            objLabel='pkpd - change units (t to min)',
                                            labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -62,7 +60,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Change the concentration unit to mg/L
-        print "Change Units"
+        print("Change Units")
         protChangeCpUnit = self.newProtocol(ProtPKPDChangeUnits,
                                             objLabel='pkpd - change units (Cp to mg/L)',
                                             labelToChange='Cp', newUnitsCategory=4, newUnitsCategoryConc=1)
@@ -72,7 +70,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeCpUnit)
 
         # Fit a monocompartmental model with zero order absorption
-        print "Fitting monocompartmental model with zero order..."
+        print("Fitting monocompartmental model with zero order...")
         protEV0MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev0 monocompartment',
                                                   bounds='(5.0, 20.0); (0.0, 0.2); (0.4, 1.2); (50.0, 150.0)')
@@ -97,7 +95,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-20)
 
         # Change via to ev1
-        print "Change via to ev1"
+        print("Change via to ev1")
         protChangeVia1 = self.newProtocol(ProtPKPDChangeVia,
                                           objLabel='pkpd - change via ev1',
                                           viaName='Oral', newViaType="ev1", tlag="", bioavailability=1.0)
@@ -107,7 +105,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protChangeVia1', protChangeVia1)
 
         # Fit a monocompartmental model with 1st order absorption
-        print "Fitting monocompartmental model with 1st order..."
+        print("Fitting monocompartmental model with 1st order...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(10.0, 30.0); (0.0, 0.05); (0.4, 1.2); (50.0, 150.0)')
@@ -132,7 +130,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-15)
 
         # Change via to ev01
-        print "Change via to ev01"
+        print("Change via to ev01")
         protChangeVia01 = self.newProtocol(ProtPKPDChangeVia,
                                            objLabel='pkpd - change via ev01',
                                            viaName='Oral', newViaType="ev01", tlag="", bioavailability=1.0)
@@ -142,7 +140,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protChangeVia01', protChangeVia01)
 
         # Fit a monocompartmental model with 0th and 1st order absorption
-        print "Fitting monocompartmental model with 0th and 1st order..."
+        print("Fitting monocompartmental model with 0th and 1st order...")
         protEV01MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev01 monocompartment',
                                                   bounds='(10.0, 30.0); (0.04, 0.08); (220.0, 300.0); (0.0, 0.02); (0.7, 0.9); (20.0, 60.0)')

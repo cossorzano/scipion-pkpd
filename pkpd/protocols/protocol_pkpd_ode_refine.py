@@ -24,7 +24,10 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDFitting, PKPDSampleFit, PKPDLSOptimizer

@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -45,7 +43,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
     def testGabrielssonPK01Workflow(self):
         #First, import an experiment
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -54,7 +52,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)      
 
         # Change the concentration unit to mg/L
-        print "Change Units"
+        print("Change Units")
         protChangeUnits = self.newProtocol(ProtPKPDChangeUnits,
                                            objLabel='pkpd - change units',
                                            labelToChange='Cp', newUnitsCategory=4,
@@ -65,7 +63,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeUnits)
 
         # Fit a single exponential to the input data_test
-        print "Compute elimination rate..."
+        print("Compute elimination rate...")
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
                                                predictor='t', predicted='Cp')
@@ -84,7 +82,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-45.8)
 
         # Non-compartmental analysis
-        print "Performing Non-compartmental analysis..."
+        print("Performing Non-compartmental analysis...")
         protNCAIVObs = self.newProtocol(ProtPKPDNCAIVObs,
                                         objLabel='pkpd - nca iv observations')
         protNCAIVObs.inputExperiment.set(protChangeUnits.outputExperiment)
@@ -120,7 +118,7 @@ class TestGabrielssonPK01Workflow(TestWorkflow):
         self.assertAlmostEqual(thalf,66.387,3) # Gabrielsson p 495: 67.6
 
         # Fit a monocompartmental model
-        print "Fitting monocompartmental model..."
+        print("Fitting monocompartmental model...")
         protIVMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                  objLabel='pkpd - iv monocompartment',
                                                  bounds='(0.0, 0.2); (0.0, 20.0)')

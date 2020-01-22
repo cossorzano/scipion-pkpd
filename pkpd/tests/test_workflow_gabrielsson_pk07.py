@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -44,7 +42,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
     def testGabrielssonPK07Workflow(self):
         # Import an experiment
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a two-compartmentx model with intravenous absorption to a set of measurements
-        print "Fitting a two-compartmentx model (intravenous)..."
+        print("Fitting a two-compartmentx model (intravenous)...")
         protPKPDIVTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - iv two-compartments',
                                                      globalSearch=False,
@@ -79,7 +77,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-65)
 
         # Fit a two-compartmentx model with intravenous absorption to a set of measurements
-        print "Fitting a two-compartmentx model (intravenous)..."
+        print("Fitting a two-compartmentx model (intravenous)...")
         protODERefine = self.newProtocol(ProtPKPDODERefine,
                                                      objLabel='pkpd - ode refinement')
         protODERefine.inputODE.set(protPKPDIVTwoCompartments)
@@ -103,7 +101,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-65)
 
         # Fit a two-compartmentx model with intravenous absorption to a set of measurements
-        print "Fitting two exponentials ..."
+        print("Fitting two exponentials ...")
         protExponentials = self.newProtocol(ProtPKPDExponentialFit,
                                             objLabel='pkpd - exponential fit',
                                             Nexp=2)
@@ -128,7 +126,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-65)
 
         # Filter time variable
-        print "Filter time"
+        print("Filter time")
         protFilterTime = self.newProtocol(ProtPKPDFilterMeasurements,
                                                   objLabel='pkpd - filter measurements t>116',
                                                   filterType=1, condition='$(t)>116')
@@ -138,7 +136,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.validateFiles('protFilterTime', protFilterTime)
 
         # Elimination rate of PO
-        print "Elimination rate ..."
+        print("Elimination rate ...")
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
                                                predictor='t', predicted='Cp')
@@ -160,7 +158,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-20)
 
         # Non-compartmental analysis IV
-        print "Performing Non-compartmental analysis of IV ..."
+        print("Performing Non-compartmental analysis of IV ...")
         protNCAIVObs = self.newProtocol(ProtPKPDNCAIVObs,
                                         objLabel='pkpd - nca iv observations')
         protNCAIVObs.inputExperiment.set(protImport.outputExperiment)
@@ -184,7 +182,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(thalf>233 and thalf<237)
 
         # Non-compartmental analysis IV with exponentials
-        print "Performing Non-compartmental analysis of IV with exponentials ..."
+        print("Performing Non-compartmental analysis of IV with exponentials ...")
         protNCAIVExp = self.newProtocol(ProtPKPDNCAIVExp,
                                         objLabel='pkpd - nca iv exponentials')
         protNCAIVExp.protExponential.set(protExponentials)

@@ -29,7 +29,7 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 from pkpd.objects import PKPDExperiment
 from pkpd.utils import uniqueFloatValues
 

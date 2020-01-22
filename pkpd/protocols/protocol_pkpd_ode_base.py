@@ -26,7 +26,10 @@
 
 import copy
 import math
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 from collections import OrderedDict
 import numpy as np
 

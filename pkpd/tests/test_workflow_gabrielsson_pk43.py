@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK43Workflow(TestWorkflow):
@@ -44,7 +42,7 @@ class TestGabrielssonPK43Workflow(TestWorkflow):
     def testGabrielssonPK43Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment (intravenous doses)"
+        print("Import Experiment (intravenous doses)")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK43Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -63,7 +61,7 @@ class TestGabrielssonPK43Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Fit a monocompartmental model to a set of measurements obtained by intravenous doses and urine
-        print "Fitting a two-compartmental model ..."
+        print("Fitting a two-compartmental model ...")
         protMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                       objLabel='pkpd - mono-compartment',
                                                       globalSearch=False,

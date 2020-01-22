@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -45,7 +43,7 @@ class TestGabrielssonPK05Workflow(TestWorkflow):
     def testGabrielssonPK05Workflow(self):
         #First, import an experiment
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -54,7 +52,7 @@ class TestGabrielssonPK05Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -64,7 +62,7 @@ class TestGabrielssonPK05Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Fit a monocompartmental model to a set of measurements obtained by intravenous doses
-        print "Fitting a monocompartmental model (intravenous)..."
+        print("Fitting a monocompartmental model (intravenous)...")
         protIVMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - iv monocompartment',
                                                   bounds='(0.01, 0.1); (0.0, 20.0)')
@@ -85,7 +83,7 @@ class TestGabrielssonPK05Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-55)
 
         # Fit a monocompartmental model to a set of measurements obtained by intravenous doses and urine
-        print "Fitting a monocompartmental model (intravenous doses and urine )..."
+        print("Fitting a monocompartmental model (intravenous doses and urine )...")
         protIVMonoCompartmentUrine = self.newProtocol(ProtPKPDMonoCompartmentUrine,
                                                   objLabel='pkpd - iv monocompartment urine',
                                                   bounds='(0.0, 0.1); (0.0, 20.0); (0.0, 1.0)')

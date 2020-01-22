@@ -24,10 +24,8 @@
 # *
 # **************************************************************************
 
-from math import sqrt
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import differential_evolution
 
 import pyworkflow.protocol.params as params
 from pkpd.utils import uniqueFloatValues

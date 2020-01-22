@@ -26,7 +26,10 @@
 
 import math
 from collections import OrderedDict
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 
 import pyworkflow.protocol.params as params

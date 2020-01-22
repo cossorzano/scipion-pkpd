@@ -28,7 +28,7 @@ import numpy as np
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDVariable
-from pkpd.pkpd_units import createUnit, PKPDUnit, multiplyUnits, strUnit
+from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 import math
 
 # Tested in test_workflow_deconvolution.py

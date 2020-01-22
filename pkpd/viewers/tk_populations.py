@@ -34,7 +34,7 @@ import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import HotButton
 from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.text import TaggedText
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 
 from pkpd.pkpd_units import PKPDUnit
 
