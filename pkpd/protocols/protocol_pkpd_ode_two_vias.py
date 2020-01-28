@@ -337,7 +337,7 @@ class ProtPKPDODETwoVias(ProtPKPD,PKPDModelBase2):
 
         # The fitting is performed by sampleName and not by groupName
         self.someInCommon = False
-        for sample2name, sample2 in self.experiment2.samples.iteritems():
+        for sample2name, sample2 in self.experiment2.samples.items():
             if sample2name in self.experiment1.samples:
                 self.someInCommon = True
                 self.setupSample(prot2,sample2,"")

@@ -152,7 +152,7 @@ class SamplesTreeProvider(TreeProvider):
 
         numberOfSamples = len(experiment.samples)
         if numberOfSamples > 0:
-            sample = self.experiment.samples.values()[0]
+            sample = list(self.experiment.samples.values())[0]
             if sample.descriptors:
                 self.columns = [(key, 60)
                                 for key in sorted(sample.descriptors.keys())]
@@ -568,7 +568,7 @@ class ExperimentWindow(gui.Window):
             if n > 1:
                 samples = [self.experiment.samples[k] for k in sampleKeys]
             else:
-                samples = self.experiment.samples.values()
+                samples = list(self.experiment.samples.values())
 
             xmin=1e38
             xmax=-1e38

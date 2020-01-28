@@ -60,7 +60,7 @@ class ProtPKPDCumulatedDose(ProtPKPD):
         fromTime*=60
         toTime*=60
         comment = "Cumulated dose between %s and %s"%(fromTime,toTime)
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             sample.interpretDose()
             Dunits = sample.getDoseUnits()
             varValue = sample.getCumulatedDose(fromTime,toTime)

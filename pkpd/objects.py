@@ -441,7 +441,7 @@ class PKPDSample:
     def substituteValuesInExpression(self, expression, prefix=""):
         expressionPython = copy.copy(expression)
         if self.descriptors is not None:
-            for key, variable in self.variableDictPtr.iteritems():
+            for key, variable in self.variableDictPtr.items():
                 if key in self.descriptors:
                     value = self.descriptors[key]
                     if value=="NA" or value=="LLOQ" or value=="ULOQ":
@@ -666,7 +666,7 @@ class PKPDExperiment(EMObject):
 
     def _printToStream(self,fh):
         fh.write("[EXPERIMENT] ===========================\n")
-        for key, value in self.general.iteritems():
+        for key, value in self.general.items():
             fh.write("%s = %s\n"%(key,value))
         fh.write("\n")
 
@@ -706,7 +706,7 @@ class PKPDExperiment(EMObject):
 
         currentRow = 1
         excelWriteRow("EXPERIMENT",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
-        for key, value in self.general.iteritems():
+        for key, value in self.general.items():
             excelWriteRow([key,value],wb,currentRow); currentRow+=1
         currentRow+=1
 
@@ -746,7 +746,7 @@ class PKPDExperiment(EMObject):
     def getRange(self,varName):
         vmin = None
         vmax = None
-        for key, value in self.samples.iteritems():
+        for key, value in self.samples.items():
             vmini, vmaxi = value.getRange(varName)
             if vmin==None or vmini<vmin:
                 vmin = vmini
@@ -756,14 +756,14 @@ class PKPDExperiment(EMObject):
 
     def sampleSummary(self):
         summary=[]
-        for varName, var in self.variables.iteritems():
+        for varName, var in self.variables.items():
             if var.role == PKPDVariable.ROLE_LABEL:
                 toAdd = varName+": "
                 if var.varType==PKPDVariable.TYPE_NUMERIC:
                     listOfValues=[]
                 else:
                     listOfValues={}
-                for sampleName, sample in self.samples.iteritems():
+                for sampleName, sample in self.samples.items():
                     value = sample.descriptors[varName]
                     if var.varType==PKPDVariable.TYPE_NUMERIC:
                         listOfValues.append(float(value))
@@ -786,7 +786,7 @@ class PKPDExperiment(EMObject):
 
     def getXYMeanValues(self,varNameX,varNameY):
         XYlist = []
-        for sampleName, sample in self.samples.iteritems():
+        for sampleName, sample in self.samples.items():
             xValues, yValues = sample.getXYValues(varNameX,varNameY)
             XYlist.append((xValues,yValues))
         return computeXYmean(XYlist)
@@ -866,21 +866,21 @@ class PKPDExperiment(EMObject):
         if condition=="":
             return self.samples
         samplesSubGroup = {}
-        for sampleName, sample in self.samples.iteritems():
+        for sampleName, sample in self.samples.items():
             if sample.evaluateExpression(condition):
                 samplesSubGroup[sampleName] = sample
         return samplesSubGroup
 
     def getSubGroupLabels(self,condition,labelName):
         subgroupLabels = []
-        for sampleName, sample in self.samples.iteritems():
+        for sampleName, sample in self.samples.items():
             if condition!="" and sample.evaluateExpression(condition) or condition=="":
                 subgroupLabels.append(sample.descriptors[labelName])
         return subgroupLabels
 
     def getNonBolusDoses(self):
         nonBolusList = []
-        for sampleName, sample in self.samples.iteritems():
+        for sampleName, sample in self.samples.items():
             sample.interpretDose()
             if not sample.isDoseABolus():
                 nonBolusList.append(sampleName)
@@ -912,18 +912,18 @@ class PKPDExperiment(EMObject):
         newExperiment = PKPDExperiment()
 
         # General
-        for key, value in self.general.iteritems():
+        for key, value in self.general.items():
             if not (key in newExperiment.general):
                 newExperiment.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in self.variables.iteritems():
+        for key, value in self.variables.items():
             if not (key in newExperiment.variables):
                 newExperiment.variables[key] = copy.copy(value)
 
         # Doses
         viasSubset = []
-        for key, value in self.doses.iteritems():
+        for key, value in self.doses.items():
             dose = copy.copy(value)
             newExperiment.doses[dose.doseName] = dose
             viasSubset.append(dose.via.viaName)
@@ -936,7 +936,7 @@ class PKPDExperiment(EMObject):
         newExperiment.groups = {}
         for sampleName in listOfSampleNames:
             sample = copy.copy(self.samples[sampleName])
-            for groupName, group in self.groups.iteritems():
+            for groupName, group in self.groups.items():
                 if sampleName in group.sampleList:
                     if not groupName in newExperiment.groups.keys():
                         newExperiment.groups[groupName]=PKPDGroup(groupName)
@@ -946,27 +946,27 @@ class PKPDExperiment(EMObject):
 
     def gather(self, otherExperiment):
         # General
-        for key, value in otherExperiment.general.iteritems():
+        for key, value in otherExperiment.general.items():
             if not (key in self.general):
                 self.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in otherExperiment.variables.iteritems():
+        for key, value in otherExperiment.variables.items():
             if not (key in self.variables):
                 self.variables[key] = copy.copy(value)
 
         # Doses
-        for key, value in otherExperiment.doses.iteritems():
+        for key, value in otherExperiment.doses.items():
             if not (key in self.doses):
                 self.doses[key] = copy.copy(value)
 
         # Vias
-        for key, value in otherExperiment.vias.iteritems():
+        for key, value in otherExperiment.vias.items():
             if key not in self.vias:
                 self.vias[key] = copy.copy(value)
 
         # Samples
-        for key, value in otherExperiment.samples.iteritems():
+        for key, value in otherExperiment.samples.items():
             if key not in self.samples:
                 self.addSample(copy.copy(value))
 
@@ -2416,7 +2416,7 @@ class PKPDAllometricScale(EMObject):
         fh.write("\n")
         fh.write("[DATA] =========================================\n")
         fh.write("%s= %s\n"%(self.predictor,str(self.X)))
-        for varName, y in self.Y.iteritems():
+        for varName, y in self.Y.items():
             fh.write("%s= %s\n"%(varName,str(y)))
 
     def load(self,fnScale):
@@ -2631,7 +2631,7 @@ class PKPDDataSet:
 
     @classmethod
     def getScipionScript(cls):
-        return cls.getScipionPath('scipion-app/scipion')
+        return cls.getScipionPath('scipion')
 
     @classmethod
     def getDataSet(cls, name):

@@ -75,7 +75,7 @@ class ProtPKPDCreateLabel(ProtPKPD):
         for label, expression, unit, comment in zip_longest(labels,expressions,units,comments,fillvalue=""):
             labelToAdd = label.strip().replace(' ',"_")
             units = PKPDUnit(unit.strip())
-            for sampleName, sample in self.experiment.samples.iteritems():
+            for sampleName, sample in self.experiment.samples.items():
                 varValue = sample.evaluateExpression(expression.strip())
                 self.experiment.addParameterToSample(sampleName, labelToAdd, units.unit, comment.strip(), varValue,
                                                      self.rewrite.get())

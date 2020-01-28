@@ -184,7 +184,7 @@ class PKPDResponsiveDialog(dialog.Dialog):
         i = 0
         self.sliders = {}
         paramUnits = self.targetProtocol.parameterUnits
-        for paramName, bounds in self.targetProtocol.getParameterBounds().iteritems():
+        for paramName, bounds in self.targetProtocol.getParameterBounds().items():
             bounds = bounds or (0, 1)
             slider = MinMaxSlider(lfBounds, "%s [%s]"%(paramName,strUnit(paramUnits[i])),
                                   bounds[0], bounds[1],

@@ -69,7 +69,7 @@ class ProtPKPDCreateLabel2Exps(ProtPKPD):
 
         labelToAdd = self.labelToAdd.get().replace(' ',"_")
         units = PKPDUnit(self.units.get())
-        for sampleName, sample1 in self.experiment1.samples.iteritems():
+        for sampleName, sample1 in self.experiment1.samples.items():
             if sampleName in self.experiment2.samples:
                 expression1 = sample1.substituteValuesInExpression(self.expression.get(),"Exp1")
                 sample2 = self.experiment2.samples[sampleName]

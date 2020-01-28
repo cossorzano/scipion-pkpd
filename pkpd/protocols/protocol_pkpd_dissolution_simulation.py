@@ -101,7 +101,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
         else:
             experiment = self.readExperiment(self.inputLevy.get().fnPKPD, show=False)
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             if self.conversionType.get() == 0:
                 vivo = sample.getValues("tvivo")
                 vitro = sample.getValues("tvitroReinterpolated")

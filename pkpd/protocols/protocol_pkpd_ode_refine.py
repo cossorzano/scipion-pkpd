@@ -145,7 +145,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
             fitType = "relative"
 
         parameterNames = None
-        for groupName, group in self.experiment.groups.iteritems():
+        for groupName, group in self.experiment.groups.items():
             self.printSection("Fitting "+groupName)
             self.protODE.clearGroupParameters()
             self.clearGroupParameters()

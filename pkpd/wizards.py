@@ -509,7 +509,7 @@ class PKPDODEWizard(Wizard):
                     protocol.model.drugSource = protocol.drugSource
 
                 i = 0
-                for sampleName, sample in protocol.experiment.samples.iteritems():
+                for sampleName, sample in protocol.experiment.samples.items():
                     sample.interpretDose()
                     if i == 0:
                         if not type(protocol) in PKPDODEWizard._nonODE:

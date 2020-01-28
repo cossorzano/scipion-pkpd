@@ -116,7 +116,7 @@ class ProtPKPDChangeUnits(ProtPKPD):
 
         variable = self.experiment.variables[self.labelToChange.get()]
 
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             if variable.varName == "dose":
                 pass
             else:

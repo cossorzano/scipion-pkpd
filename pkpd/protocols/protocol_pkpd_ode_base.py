@@ -390,7 +390,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         elif self.fitType.get()==2:
             fitType = "relative"
 
-        for groupName, group in self.experiment.groups.iteritems():
+        for groupName, group in self.experiment.groups.items():
             self.printSection("Fitting "+groupName)
             self.clearGroupParameters()
 

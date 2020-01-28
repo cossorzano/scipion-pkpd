@@ -76,7 +76,7 @@ class ProtPKPDStatsExp2Subgroups2Mean(ProtPKPD):
         if self.paired:
             x1=[]
             x2=[]
-            for sampleName, sample in self.experiment1.getSubGroup(self.expression1.get()).iteritems():
+            for sampleName, sample in self.experiment1.getSubGroup(self.expression1.get()).items():
                 x1.append(float(sample.descriptors[self.label1.get()]))
                 if sampleName in self.experiment2.samples:
                     x2.append(float(self.experiment2.samples[sampleName].descriptors[label2ToUse]))

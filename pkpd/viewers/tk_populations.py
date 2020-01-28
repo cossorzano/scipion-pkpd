@@ -42,7 +42,7 @@ from pkpd.pkpd_units import PKPDUnit
 class PopulationVar(pwobj.Object):
     def __init__(self, **kwargs):
         self.data = kwargs
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 

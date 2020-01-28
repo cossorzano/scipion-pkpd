@@ -97,7 +97,7 @@ class ProtPKPDSABase(ProtPKPD):
         self.signalAnalysis.analysisParameters = self.analysis.getParameterNames()
 
         self.printSection("Processing samples")
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             print("%s -------------------"%sampleName)
             if not self.prepareForSampleAnalysis(sampleName):
                 continue

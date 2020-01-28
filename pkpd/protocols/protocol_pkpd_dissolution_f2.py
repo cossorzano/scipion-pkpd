@@ -89,7 +89,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
     def getProfiles(self,prmExp,varNameT,varNameC):
         experiment = self.readExperiment(prmExp.fnPKPD)
         allY = []
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             x=np.asarray(sample.getValues(varNameT),dtype=np.float64)
             y=np.asarray(sample.getValues(varNameC),dtype=np.float64)
             if self.resampleT.get()>0:

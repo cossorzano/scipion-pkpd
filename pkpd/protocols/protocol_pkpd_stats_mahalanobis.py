@@ -112,7 +112,7 @@ class ProtPKPDStatsMahalanobis(ProtPKPD):
             temp=[]
             minX=1e38
             maxX=-1e38
-            for sampleName, sample in experiment.samples.iteritems():
+            for sampleName, sample in experiment.samples.items():
                 x,y=sample.getXYValues(Xlabel,Ylabel)
                 minX=min(minX,np.min(x))
                 maxX=max(maxX,np.max(x))

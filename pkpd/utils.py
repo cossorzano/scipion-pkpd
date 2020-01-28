@@ -67,7 +67,14 @@ def find_nearest(array,value):
 
 def getMD5String(fn):
     fnTime = time.strftime("%Y-%m-%d-%M:%S\n",time.gmtime(getmtime(fn)))
-    return hashlib.md5(fnTime+open(fn, 'rb').read()).hexdigest()
+
+    mhash = hashlib.md5()
+    with open(fn, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * mhash.block_size), b""):
+            mhash.update(chunk)
+    return mhash.hexdigest()
+
+    #return hashlib.md5(fnTime+open(fn, 'rb').read()).hexdigest().
 
 def writeMD5(fn):
     if not exists(fn):

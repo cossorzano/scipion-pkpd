@@ -88,7 +88,7 @@ class ProtPKPDFilterMeasurements(ProtPKPD):
         filteredExperiment.vias = {}
 
         usedDoses = []
-        for sampleKey, sample in experiment.samples.iteritems():
+        for sampleKey, sample in experiment.samples.items():
             candidateSample = PKPDSample()
             candidateSample.variableDictPtr    = copy.copy(sample.variableDictPtr)
             candidateSample.doseDictPtr        = copy.copy(sample.doseDictPtr)

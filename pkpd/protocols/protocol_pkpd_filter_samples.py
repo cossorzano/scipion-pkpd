@@ -81,7 +81,7 @@ class ProtPKPDFilterSamples(ProtPKPD):
         safe_list = ['descriptors']
         safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
         usedDoses = []
-        for sampleKey, sample in experiment.samples.iteritems():
+        for sampleKey, sample in experiment.samples.items():
             ok = filterType=="rmNA"
             try:
                 if filterType == "rmNA":
@@ -89,7 +89,7 @@ class ProtPKPDFilterSamples(ProtPKPD):
                 else:
                     conditionPython = copy.copy(condition)
                 conditionPython = conditionPython.replace('$(sampleName)','"%s"'%sample.sampleName)
-                for key, variable in experiment.variables.iteritems():
+                for key, variable in experiment.variables.items():
                     if key in sample.descriptors:
                         value = sample.descriptors[key]
                         if value=="NA":

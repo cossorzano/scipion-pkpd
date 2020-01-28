@@ -61,7 +61,7 @@ class ProtPKPDNCAEstimateBioavailability(ProtPKPD):
         self.experimentIV=self.readExperiment(self.protNCAIV.get().outputExperiment.fnPKPD)
 
         Flist = []
-        for sampleEVname, sampleEV in self.experimentEV.samples.iteritems():
+        for sampleEVname, sampleEV in self.experimentEV.samples.items():
             if sampleEVname in self.experimentIV.samples:
                 sampleEV.interpretDose()
                 DEV=sampleEV.getDoseAt(0)

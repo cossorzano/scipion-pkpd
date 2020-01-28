@@ -176,7 +176,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         CmaxArray = np.zeros(inputN)
         TmaxArray = np.zeros(inputN)
         i=0
-        for sampleName, sample in self.outputExperiment.samples.iteritems():
+        for sampleName, sample in self.outputExperiment.samples.items():
             [t,Cp] = sample.getXYValues(tvarName,xvarName)
             print("Analyzing %s"%sampleName)
             self.analyzeSample(sample, t[0], Cp[0])
