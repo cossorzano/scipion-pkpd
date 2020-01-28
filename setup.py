@@ -35,7 +35,7 @@ setup(
     },
     install_requires=['scipy==0.15.0','openpyxl'],
     entry_points={
-        'pyworkflow.plugin': 'xmipp3 = xmipp3'
+        'pyworkflow.plugin': 'pkpd = pkpd'
     },
 
 )
