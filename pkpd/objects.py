@@ -2630,7 +2630,7 @@ class PKPDDataSet:
 
     @classmethod
     def getScipionScript(cls):
-        return cls.getScipionPath('scipion-app/scipion')
+        return cls.getScipionPath('scipion')
 
     @classmethod
     def getDataSet(cls, name):
