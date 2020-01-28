@@ -25,6 +25,8 @@
 # **************************************************************************
 
 import copy
+import sys
+
 try:
     from itertools import izip
 except ImportError:
@@ -369,7 +371,7 @@ class PKPDSample:
                     try:
                         toPrint.append(float(aux[i]))
                     except:
-                        if isinstance(aux[i],basestring):
+                        if isinstance(aux[i], str):
                             toPrint.append(aux[i])
                         else:
                             toPrint.append("")
@@ -2608,8 +2610,7 @@ class PKPDDataSet:
         self._datasetDict[name] = self
         self.folder = folder
         import pkg_resources
-        package = PluginInfo('scipion-pkpd', 'scipion-pkpd',
-                             remote=False).pipName
+        package = PluginInfo('scipion-pkpd')._name
         dist = pkg_resources.get_distribution(package).location
         self.path = join(dist, 'pkpd',
                          'data', 'test', folder)
@@ -2624,20 +2625,25 @@ class PKPDDataSet:
     def getPath(self):
         return self.path
 
-    @classmethod
-    def getDataSet(cls, name):
+    def getScipionPath(self, *paths):
+        return os.path.join(pw.Config.SCIPION_HOME, *paths)
+
+    def getScipionScript(self):
+        return self.getScipionPath('scipion')
+
+    def getDataSet(self, name):
         """
         This method is called every time the dataset want to be retrieved
         """
-        assert name in cls._datasetDict, "Dataset: %s dataset doesn't exist." % name
+        assert name in self._datasetDict, "Dataset: %s dataset doesn't exist." % name
 
-        ds = cls._datasetDict[name]
+        ds = self._datasetDict[name]
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, pw.getScipionScript(), folder, url))
+                       % (pw.PYTHON, self.getScipionScript(), folder, url))
             print(">>>> %s" % command)
             os.system(command)
-        return cls._datasetDict[name]
+        return self._datasetDict[name]
