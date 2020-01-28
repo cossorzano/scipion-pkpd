@@ -2612,8 +2612,7 @@ class PKPDDataSet:
         import pkg_resources
         package = PluginInfo('scipion-pkpd')._name
         dist = pkg_resources.get_distribution(package).location
-        self.path = join(dist, 'pkpd',
-                         'data', 'test', folder)
+        self.path = join(dist, 'pkpd', 'data', 'test', folder)
         self.filesDict = files
         self.url = url
 
