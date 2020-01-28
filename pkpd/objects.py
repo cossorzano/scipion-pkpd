@@ -2629,7 +2629,7 @@ class PKPDDataSet:
         return os.path.join(pw.Config.SCIPION_HOME, *paths)
 
     def getScipionScript(self):
-        return self.getScipionPath('scipion')
+        return self.getScipionPath('scipion/scipion-app/scipion')
 
     @classmethod
     def getDataSet(cls, name):
