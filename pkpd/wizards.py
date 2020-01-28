@@ -25,10 +25,8 @@
 # *
 # **************************************************************************
 
-import os
 import tkinter as tk
 import tkinter.ttk as ttk
-import pyworkflow.object as pwobj
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog
 from pyworkflow.gui.tree import TreeProvider, BoundTree

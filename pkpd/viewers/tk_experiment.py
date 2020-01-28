@@ -27,9 +27,14 @@
 
 import math
 import numpy as np
-from itertools import izip
-import Tkinter as tk
-import ttk
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
+
+import tkinter as tk
+import tkinter.ttk as ttk
+
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.object as pwobj

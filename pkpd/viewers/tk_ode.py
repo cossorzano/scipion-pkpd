@@ -27,9 +27,12 @@
 
 import math
 import numpy as np
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 from datetime import datetime
-import Tkinter as tk
+import tkinter as tk
 
 import pyworkflow.gui.dialog as dialog
 import pyworkflow.gui as gui

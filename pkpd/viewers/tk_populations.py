@@ -27,7 +27,7 @@
 
 import numpy as np
 from collections import OrderedDict
-import Tkinter as tk
+import tkinter as tk
 
 import pyworkflow.object as pwobj
 import pyworkflow.gui as gui

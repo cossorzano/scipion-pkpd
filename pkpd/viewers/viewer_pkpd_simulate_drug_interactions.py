@@ -24,7 +24,10 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
