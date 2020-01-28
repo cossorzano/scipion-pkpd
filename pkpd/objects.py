@@ -2625,11 +2625,13 @@ class PKPDDataSet:
     def getPath(self):
         return self.path
 
-    def getScipionPath(self, *paths):
+    @classmethod
+    def getScipionPath(cls, *paths):
         return os.path.join(pw.Config.SCIPION_HOME, *paths)
 
-    def getScipionScript(self):
-        return self.getScipionPath('scipion/scipion-app/scipion')
+    @classmethod
+    def getScipionScript(cls):
+        return cls.getScipionPath('scipion/scipion-app/scipion')
 
     @classmethod
     def getDataSet(cls, name):
@@ -2644,7 +2646,7 @@ class PKPDDataSet:
 
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, cls.getScipionScript(cls), folder, url))
+                       % (pw.PYTHON, cls.getScipionScript(), folder, url))
             print(">>>> %s" % command)
             os.system(command)
         return cls._datasetDict[name]
