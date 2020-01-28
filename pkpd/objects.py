@@ -2631,19 +2631,20 @@ class PKPDDataSet:
     def getScipionScript(self):
         return self.getScipionPath('scipion')
 
-    def getDataSet(self, name):
+    @classmethod
+    def getDataSet(cls, name):
         """
         This method is called every time the dataset want to be retrieved
         """
-        assert name in self._datasetDict, "Dataset: %s dataset doesn't exist." % name
+        assert name in cls._datasetDict, "Dataset: %s dataset doesn't exist." % name
 
-        ds = self._datasetDict[name]
+        ds = cls._datasetDict[name]
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, self.getScipionScript(), folder, url))
+                       % (pw.PYTHON, cls.getScipionScript(), folder, url))
             print(">>>> %s" % command)
             os.system(command)
-        return self._datasetDict[name]
+        return cls._datasetDict[name]
