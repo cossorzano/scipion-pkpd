@@ -33,7 +33,7 @@ setup(
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
     },
-    install_requires=['scipy==0.15.0','openpyxl'],
+    install_requires=['openpyxl'],
     entry_points={
         'pyworkflow.plugin': 'pkpd = pkpd'
     },
