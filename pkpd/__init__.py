@@ -83,6 +83,3 @@ def tryAddPipModule(env, moduleName, *args, **kwargs):
             return moduleName
         else:
             raise Exception(e)
-
-
-em.Domain.registerPlugin(__name__)
