@@ -2644,7 +2644,7 @@ class PKPDDataSet:
 
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, cls.getScipionScript(), folder, url))
+                       % (pw.PYTHON, cls.getScipionScript(cls), folder, url))
             print(">>>> %s" % command)
             os.system(command)
         return cls._datasetDict[name]
