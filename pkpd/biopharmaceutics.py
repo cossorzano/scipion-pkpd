@@ -669,7 +669,7 @@ class PKPDVia:
         # Default values
         self.tlag = 0
         self.bioavailability = 1
-        self.tunits = PKPDUnit("min")
+        self.tunits = self.ptrExperiment.getTimeUnits()
 
         # Get name
         currentToken = 0
