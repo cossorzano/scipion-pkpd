@@ -892,6 +892,10 @@ class PKPDExperiment(EMObject):
             if self.variables[varName].isTime():
                 return varName
 
+    def getTimeUnits(self):
+        timeName = self.getTimeVariable()
+        return self.variables[timeName].units
+
     def getMeasurementVariables(self):
         retval=[]
         for varName in self.variables:
