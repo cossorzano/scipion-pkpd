@@ -36,6 +36,7 @@ from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 class ProtPKPDJoinSamples(ProtPKPD):
     """ Join samples.\n
+        Vias are not prefixed. If they are repeated, those from Experiment 1 prevail.\n
         Protocol created by http://www.kinestatpharma.com\n """
     _label = 'join samples'
 
@@ -104,6 +105,15 @@ class ProtPKPDJoinSamples(ProtPKPD):
             dose = copy.copy(value)
             dose.doseName = "%s%s"%(prefix2,key)
             self.experiment.doses[dose.doseName] = dose
+
+        # Vias
+        for key, value in experiment1.vias.iteritems():
+            via = copy.copy(value)
+            self.experiment.vias[via.viaName] = via
+        for key, value in experiment2.vias.iteritems():
+            if key not in self.experiment.vias:
+                via = copy.copy(value)
+                self.experiment.vias[via.viaName] = via
 
         # Samples
         for key, value in experiment1.samples.iteritems():

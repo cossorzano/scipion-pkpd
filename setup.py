@@ -22,7 +22,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='scipion-pkpd',  # Required
-    version='1.0.0',  # Required
+    version='1.0.1',  # Required
     description='scipion-pkpd.',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/cossorzano/scipion-pkpd',  # Optional
@@ -33,5 +33,5 @@ setup(
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
     },
-    install_requires=['scipy==0.15.0']
+    install_requires=['scipy==0.15.0','openpyxl']
 )
