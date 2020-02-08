@@ -29,7 +29,7 @@ Biopharmaceutics: Drug sources and how they dissolve
 import copy
 import math
 import numpy as np
-from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits
+from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits, inverseUnits
 from pkpd.utils import uniqueFloatValues, excelWriteRow
 from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
 
@@ -131,7 +131,12 @@ class BiopharmaceuticsModelOrder01(BiopharmaceuticsModel):
         return ['Rin','t0','Ka']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN, PKPDUnit.UNIT_TIME_MIN, PKPDUnit.UNIT_INVTIME_MIN]
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        if tunits == PKPDUnit.UNIT_TIME_MIN:
+            rateUnits = PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN
+        else:
+            rateUnits = PKPDUnit.UNIT_WEIGHTINVTIME_mg_H
+        self.parameterUnits = [rateUnits, tunits, inverseUnits(tunits)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -167,8 +172,8 @@ class BiopharmaceuticsModelOrder01Tlag1(BiopharmaceuticsModel):
 
     def calculateParameterUnits(self,sample):
         dUnits = self.getDoseUnits()
-        self.parameterUnits = [PKPDUnit.UNIT_NONE, divideUnits(dUnits,PKPDUnit.UNIT_TIME_MIN), PKPDUnit.UNIT_TIME_MIN,
-                               PKPDUnit.UNIT_INVTIME_MIN]
+        tUnits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, divideUnits(dUnits,tUnits), tUnits, inverseUnits(tUnits)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -207,7 +212,7 @@ class BiopharmaceuticsModelOrder1(BiopharmaceuticsModel):
         return ['Ka']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN]
+        self.parameterUnits = [inverseUnits(self.ptrExperiment.getTimeUnits().unit)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -273,7 +278,7 @@ class BiopharmaceuticsModelImmediateAndOrder1(BiopharmaceuticsModel):
         return ['Ka','F']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_NONE]
+        self.parameterUnits = [inverseUnits(self.ptrExperiment.getTimeUnits().unit),PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -303,7 +308,8 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
         return ['Ka1','Ka2','tlag12','F1']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [inverseUnits(tunits),inverseUnits(tunits),tunits,PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -347,7 +353,7 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
         return retval
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
+        self.parameterUnits = [self.ptrExperiment.getTimeUnits().unit]
         self.parameterUnits += [PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
@@ -509,8 +515,8 @@ class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
         return retval
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
-        self.parameterUnits += [PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]*(self.nknots)
+        self.parameterUnits = [self.ptrExperiment.getTimeUnits().unit]
+        self.parameterUnits += [self.ptrExperiment.getTimeUnits().unit,PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
     def rearrange(self,parameters):
@@ -700,7 +706,7 @@ class PKPDVia:
                 optionalTokens=optionalTokens.split()[0]
                 self.paramsToOptimize.append(optionalTokens)
                 if optionalTokens=="tlag":
-                    self.paramsUnitsToOptimize.append(PKPDUnit.UNIT_TIME_MIN)
+                    self.paramsUnitsToOptimize.append(self.tunits.unit)
                 elif optionalTokens=="bioavailability":
                     self.paramsUnitsToOptimize.append(PKPDUnit.UNIT_NONE)
             currentToken+=1

@@ -325,7 +325,7 @@ class PK_Monocompartment(PKPDODEModel):
         return ['Cl','V']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName)
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
