@@ -30,8 +30,7 @@ import math
 import numpy as np
 import os
 import openpyxl
-from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
-                        changeRateToWeight)
+from .pkpd_units import PKPDUnit, convertUnits, changeRateTo, changeRateToWeight
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.em.data import *
@@ -217,17 +216,27 @@ class PKPDSample:
     def getSampleName(self):
         return self.sampleName
 
+    def getTimeVariable(self):
+        for varName in self.variableDictPtr:
+            if self.variableDictPtr[varName].isTime():
+                return varName
+
+    def getTimeUnits(self):
+        timeName = self.getTimeVariable()
+        return self.variableDictPtr[timeName].units
+
+
     def interpretDose(self):
         self.parsedDoseList = []
         firstUnit = None
         for doseName in sorted(self.doseList):
             dose = copy.copy(self.doseDictPtr[doseName])
             dose.doseAmount = self.evaluateExpression(dose.doseAmount)
-            dose.changeTimeUnitsToMinutes()
+            dose.changeTimeUnitsTo(self.getTimeUnits().unit)
             dose.prepare()
 
             if dose.doseType == PKPDDose.TYPE_INFUSION:
-                dose.doseAmount, dose.dunits.unit = changeRateToMinutes(dose.doseAmount, dose.dunits.unit)
+                dose.doseAmount, dose.dunits.unit = changeRateTo(self.getTimeUnits().unit, dose.doseAmount, dose.dunits.unit)
 
             if firstUnit==None:
                 firstUnit = dose.dunits.unit

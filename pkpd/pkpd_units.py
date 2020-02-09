@@ -523,34 +523,63 @@ def convertUnits(x, unitsIn, unitsOut):
 
     return None
 
-def changeRateToMinutes(amount,unit):
-    if unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_H:
-        return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN)
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_SEC:
-        return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN)
+def changeRateTo(targetUnit, amount,unit):
+    if targetUnit==PKPDUNIT.UNIT_TIME_MIN:
+        if unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_H:
+            return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_SEC:
+            return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN)
 
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_mg_H:
-        return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN)
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_mg_SEC:
-        return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_mg_H:
+            return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_mg_SEC:
+            return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN)
 
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ug_H:
-        return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN)
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ug_SEC:
-        return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ug_H:
+            return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ug_SEC:
+            return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN)
 
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ng_H:
-        return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN)
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ng_SEC:
-        return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ng_H:
+            return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_ng_SEC:
+            return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN)
 
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_umol_H:
-        return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN)
-    elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_umol_SEC:
-        return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_umol_H:
+            return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN)
+        elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_umol_SEC:
+            return (amount*60,PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN)
 
-    else:
-        return (amount,unit)
+        else:
+            return (amount,unit)
+    elif targetUnit==PKPDUnit.UNIT_TIME_H:
+        if unit == PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN:
+            return (amount * 60, PKPDUnit.UNIT_WEIGHTINVTIME_g_H)
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_g_SEC:
+            return (amount * 3600, PKPDUnit.UNIT_WEIGHTINVTIME_g_H)
+
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN:
+            return (amount * 60, PKPDUnit.UNIT_WEIGHTINVTIME_mg_H)
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_mg_SEC:
+            return (amount * 3600, PKPDUnit.UNIT_WEIGHTINVTIME_mg_H)
+
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_ug_MIN:
+            return (amount * 60, PKPDUnit.UNIT_WEIGHTINVTIME_ug_H)
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_ug_SEC:
+            return (amount * 3600, PKPDUnit.UNIT_WEIGHTINVTIME_ug_H)
+
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_ng_MIN:
+            return (amount * 60, PKPDUnit.UNIT_WEIGHTINVTIME_ng_H)
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_ng_SEC:
+            return (amount * 3600, PKPDUnit.UNIT_WEIGHTINVTIME_ng_H)
+
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_umol_MIN:
+            return (amount * 60, PKPDUnit.UNIT_WEIGHTINVTIME_umol_H)
+        elif unit == PKPDUnit.UNIT_WEIGHTINVTIME_umol_SEC:
+            return (amount * 3600, PKPDUnit.UNIT_WEIGHTINVTIME_umol_H)
+
+        else:
+            return (amount, unit)
 
 def changeRateToWeight(unit):
     if unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN:

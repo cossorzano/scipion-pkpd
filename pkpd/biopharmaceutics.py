@@ -1022,27 +1022,45 @@ class PKPDDose:
                                     self.dunits._toString())
         return outStr
 
-    def changeTimeUnitsToMinutes(self):
-        if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
-            pass
-        elif self.tunits.unit==PKPDUnit.UNIT_TIME_H:
-            if self.doseType == PKPDDose.TYPE_BOLUS:
-                self.t0 *= 60
-            elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
-                self.t0 *= 60
-                self.tF *= 60
-                self.every *= 60
-            elif self.doseType == PKPDDose.TYPE_INFUSION:
-                self.t0 *= 60
-                self.tF *= 60
+    def changeTimeUnitsTo(self, targetUnit):
+        if targetUnit==PKPDUnit.UNIT_TIME_MIN:
+            if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
+                pass
+            elif self.tunits.unit==PKPDUnit.UNIT_TIME_H:
+                if self.doseType == PKPDDose.TYPE_BOLUS:
+                    self.t0 *= 60
+                elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
+                    self.t0 *= 60
+                    self.tF *= 60
+                    self.every *= 60
+                elif self.doseType == PKPDDose.TYPE_INFUSION:
+                    self.t0 *= 60
+                    self.tF *= 60
+            else:
+                raise Exception("Time for doses must be hours or minutes")
+        elif targetUnit==PKPDUnit.UNIT_TIME_H:
+            if self.tunits.unit==PKPDUnit.UNIT_TIME_H:
+                pass
+            elif self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
+                if self.doseType == PKPDDose.TYPE_BOLUS:
+                    self.t0 /= 60
+                elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
+                    self.t0 /= 60
+                    self.tF /= 60
+                    self.every /= 60
+                elif self.doseType == PKPDDose.TYPE_INFUSION:
+                    self.t0 /= 60
+                    self.tF /= 60
+            else:
+                raise Exception("Time for doses must be hours or minutes")
         else:
-            raise Exception("Time for doses must be hours or minutes")
+            raise Exception("Target time unit must be hours or minutes")
 
     def prepare(self):
         self.via.prepare()
 
     def getDoseAt(self,t0,dt=0.5):
-        """Dose between t0<=t<t0+dt, t0 is in minutes"""
+        """Dose between t0<=t<t0+dt, t0 is in the units of the dose"""
         t0-=self.via.tlag
         t1=t0+dt-self.via.tlag
         if self.doseType == PKPDDose.TYPE_BOLUS:
