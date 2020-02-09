@@ -240,7 +240,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
         self.outputExperiment.variables[self.varNameX] = tvar
         if type(self.fitting.predicted)!=list:
@@ -358,7 +358,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     MRTvar.varName = "MRT"
                     MRTvar.varType = PKPDVariable.TYPE_NUMERIC
                     MRTvar.role = PKPDVariable.ROLE_LABEL
-                    MRTvar.units = createUnit("min")
+                    MRTvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cmaxvar = PKPDVariable()
                     Cmaxvar.varName = "Cmax"
@@ -370,7 +370,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     Tmaxvar.varName = "Tmax"
                     Tmaxvar.varType = PKPDVariable.TYPE_NUMERIC
                     Tmaxvar.role = PKPDVariable.ROLE_LABEL
-                    Tmaxvar.units = createUnit("min")
+                    Tmaxvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cminvar = PKPDVariable()
                     Cminvar.varName = "Cmin"
@@ -382,7 +382,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     Tminvar.varName = "Tmin"
                     Tminvar.varType = PKPDVariable.TYPE_NUMERIC
                     Tminvar.role = PKPDVariable.ROLE_LABEL
-                    Tminvar.units = createUnit("min")
+                    Tminvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cavgvar = PKPDVariable()
                     Cavgvar.varName = "Cavg"

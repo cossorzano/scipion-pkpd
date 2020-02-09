@@ -222,7 +222,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.fittingPK.predictor.units.unit)
 
         self.Cunits = self.fittingPK.predicted.units
         self.AUCunits = multiplyUnits(tvar.units.unit, self.Cunits.unit)
@@ -253,7 +253,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             MRTvar.varName = "MRT"
             MRTvar.varType = PKPDVariable.TYPE_NUMERIC
             MRTvar.role = PKPDVariable.ROLE_LABEL
-            MRTvar.units = createUnit("min")
+            MRTvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
 
             Cmaxvar = PKPDVariable()
             Cmaxvar.varName = "Cmax"
@@ -265,7 +265,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             Tmaxvar.varName = "Tmax"
             Tmaxvar.varType = PKPDVariable.TYPE_NUMERIC
             Tmaxvar.role = PKPDVariable.ROLE_LABEL
-            Tmaxvar.units = createUnit("min")
+            Tmaxvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
 
             self.outputExperiment.variables["AUC0t"] = AUCvar
             self.outputExperiment.variables["AUMC0t"] = AUMCvar

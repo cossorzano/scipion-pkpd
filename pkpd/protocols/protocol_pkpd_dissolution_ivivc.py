@@ -257,28 +257,28 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         tvitroVar.varName = "tvitro"
         tvitroVar.varType = PKPDVariable.TYPE_NUMERIC
         tvitroVar.role = PKPDVariable.ROLE_TIME
-        tvitroVar.units = createUnit("min")
+        tvitroVar.units = createUnit(self.experimentInVitro.getTimeUnits().unit)
         tvitroVar.comment = "tvitro"
 
         tvivoVar = PKPDVariable()
         tvivoVar.varName = "tvivo"
         tvivoVar.varType = PKPDVariable.TYPE_NUMERIC
         tvivoVar.role = PKPDVariable.ROLE_TIME
-        tvivoVar.units = createUnit("min")
+        tvivoVar.units = createUnit(self.experimentInVivo.getTimeUnits().unit)
         tvivoVar.comment = "tvivo"
 
         tvitroReinterpolatedVar = PKPDVariable()
         tvitroReinterpolatedVar.varName = "tvitroReinterpolated"
         tvitroReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
         tvitroReinterpolatedVar.role = PKPDVariable.ROLE_TIME
-        tvitroReinterpolatedVar.units = createUnit("min")
+        tvitroReinterpolatedVar.units = createUnit(self.experimentInVitro.getTimeUnits().unit)
         tvitroReinterpolatedVar.comment = "tvitro reinterpolated"
 
         tvivoReinterpolatedVar = PKPDVariable()
         tvivoReinterpolatedVar.varName = "tvivoReinterpolated"
         tvivoReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
         tvivoReinterpolatedVar.role = PKPDVariable.ROLE_TIME
-        tvivoReinterpolatedVar.units = createUnit("min")
+        tvivoReinterpolatedVar.units = createUnit(self.experimentInVivo.getTimeUnits().unit)
         tvivoReinterpolatedVar.comment = "tvivo reinterpolated"
 
         AdissolVar = PKPDVariable()

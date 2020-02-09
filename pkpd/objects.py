@@ -426,7 +426,7 @@ class PKPDSample:
             yPartial = []
             for x, y in izip(xs, ys):
                 if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
-                   x!= "None" and y!="None":
+                   x!= "None" and y!="None" and x!="NS" and y!="NS":
                     xPartial.append(float(x))
                     if "[" in y:
                         y=y.replace("[","").replace("]","")

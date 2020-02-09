@@ -161,13 +161,13 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         tvitrovar.varName = "tvitro"
         tvitrovar.varType = PKPDVariable.TYPE_NUMERIC
         tvitrovar.role = PKPDVariable.ROLE_MEASUREMENT
-        tvitrovar.units = createUnit("min")
+        tvitrovar.units = createUnit(self.experimentInVitro.getTimeUnits().unit)
 
         tvivovar = PKPDVariable()
         tvivovar.varName = "tvivo"
         tvivovar.varType = PKPDVariable.TYPE_NUMERIC
         tvivovar.role = PKPDVariable.ROLE_MEASUREMENT
-        tvivovar.units = createUnit("min")
+        tvivovar.units = createUnit(self.experimentInVivo.getTimeUnits().unit)
 
         self.outputExperiment.variables[tvivovar.varName] = tvivovar
         self.outputExperiment.variables[tvitrovar.varName] = tvitrovar
