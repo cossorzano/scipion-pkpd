@@ -289,7 +289,7 @@ class PKPDSample:
         for n in range(0,len(tokens)):
             ok=True
             varName = self.measurementPattern[n]
-            if tokens[n]=="NA" or tokens[n]=="ULOQ" or tokens[n]=="LLOQ":
+            if tokens[n]=="NA" or tokens[n]=="ULOQ" or tokens[n]=="LLOQ" or "LLOQ" in tokens[n]:
                 ok = (self.variableDictPtr[varName].role != PKPDVariable.ROLE_TIME)
             if ok:
                 exec("self.measurement_%s.append('%s')"%(varName,tokens[n]))
@@ -426,7 +426,7 @@ class PKPDSample:
             yPartial = []
             for x, y in izip(xs, ys):
                 if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
-                   x!= "None" and y!="None" and x!="NS" and y!="NS":
+                   x!= "None" and y!="None" and x!="NS" and y!="NS" and (not "LLOQ" in x) and (not "LLOQ" in y):
                     xPartial.append(float(x))
                     if "[" in y:
                         y=y.replace("[","").replace("]","")
