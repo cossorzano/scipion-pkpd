@@ -383,7 +383,7 @@ class PKPDSample:
             return [None, None]
         else:
             aux = getattr(self,"measurement_%s"%varName)
-            aux = [x for x in aux if x != "NA" and x!="LLOQ" and x!="ULOQ" and x!="None"]
+            aux = [x for x in aux if x != "NA" and (not x in "LLOQ") and x!="ULOQ" and x!="None" and x!="MS"]
             x = np.asarray(aux, dtype=np.double)
             return [x.min(),x.max()]
 
@@ -415,7 +415,7 @@ class PKPDSample:
                 xPartial =[]
                 yPartial = []
                 for x, y in izip(xs, ysi):
-                    if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ":
+                    if x != "NA" and (not "LLOQ" in x) and y!="ULOQ" and y != "NA" and ("LLOQ" not in y) and y!="ULOQ":
                         xPartial.append(float(x))
                         yPartial.append(float(y))
                 xl.append(np.array(xPartial))
@@ -426,7 +426,8 @@ class PKPDSample:
             yPartial = []
             for x, y in izip(xs, ys):
                 if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
-                   x!= "None" and y!="None" and x!="NS" and y!="NS" and (not "LLOQ" in x) and (not "LLOQ" in y):
+                   x!= "None" and x!="MS" and y!="None" and x!="NS" and y!="NS" and \
+                   (not "LLOQ" in x) and (not "LLOQ" in y) and y!="MS":
                     xPartial.append(float(x))
                     if "[" in y:
                         y=y.replace("[","").replace("]","")
