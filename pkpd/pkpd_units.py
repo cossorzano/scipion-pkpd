@@ -524,7 +524,7 @@ def convertUnits(x, unitsIn, unitsOut):
     return None
 
 def changeRateTo(targetUnit, amount,unit):
-    if targetUnit==PKPDUNIT.UNIT_TIME_MIN:
+    if targetUnit==PKPDUnit.UNIT_TIME_MIN:
         if unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_H:
             return (amount/60,PKPDUnit.UNIT_WEIGHTINVTIME_g_MIN)
         elif unit==PKPDUnit.UNIT_WEIGHTINVTIME_g_SEC:
@@ -865,6 +865,12 @@ def divideUnits(unitX,unitY):
     elif unitX==PKPDUnit.UNIT_VOLUMEINVTIME_L_MIN:
         if unitY==PKPDUnit.UNIT_VOLUME_L:
             return PKPDUnit.UNIT_INVTIME_MIN
+        else:
+            return PKPDUnit.UNIT_NONE
+
+    elif unitX==PKPDUnit.UNIT_VOLUMEINVTIME_L_H:
+        if unitY==PKPDUnit.UNIT_VOLUME_L:
+            return PKPDUnit.UNIT_INVTIME_H
         else:
             return PKPDUnit.UNIT_NONE
 
