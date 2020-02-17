@@ -349,7 +349,10 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
 
     def getParameterNames(self):
         retval = ['tmax']
-        retval+=['spline%d_A%d'%(self.nknots,i) for i in range(self.nknots)]
+        if self.nknots>=10:
+            retval += ['spline%d_A%02d' % (self.nknots, i) for i in range(self.nknots)]
+        else:
+            retval+=['spline%d_A%d'%(self.nknots,i) for i in range(self.nknots)]
         return retval
 
     def calculateParameterUnits(self,sample):
@@ -370,9 +373,9 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             return 0.0
         if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,self.parameters):
             self.knots = np.linspace(0, self.tmax, self.nknots+2)
-            self.parameters[1:]=np.sort(self.parameters[1:])
+            self.parameters[1:] = np.sort(self.parameters[1:])
             self.knotsY = np.append(np.insert(self.parameters[1:],0,0),1)
-            self.knotsY=np.sort(self.knotsY)
+            self.knotsY = np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
             try:
                 self.B=PchipInterpolator(knotsUnique, knotsYUnique)
@@ -1095,7 +1098,7 @@ class PKPDDose:
                 doseAmount += self.via.viaProfile.getAg(t0-self.t0-self.via.tlag)-\
                               self.via.viaProfile.getAg(t0-self.t0-self.via.tlag+dt)
             else:
-                raise Exception("getAmountReleasedAt not implemented for non-iv infusion")
+                doseAmount += self.getDoseAt(t0,dt)
         if doseAmount<0:
             doseAmount=0
         return doseAmount
@@ -1108,9 +1111,9 @@ class PKPDDose:
             if self.doseType!=PKPDDose.TYPE_INFUSION:
                 self.via.viaProfile.Amax = self.via.bioavailability*self.doseAmount
                 doseAmount += self.via.viaProfile.getAg(0.0)-\
-                              self.via.viaProfile.getAg( t0-self.t0-self.via.tlag)
+                              self.via.viaProfile.getAg(t0-self.t0-self.via.tlag)
             else:
-                raise Exception("getAmountReleasedAt not implemented for non-iv infusion")
+                doseAmount += self.getDoseAt(0,t0)
         if doseAmount<0:
             doseAmount=0
         return doseAmount
