@@ -32,7 +32,7 @@ import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
-from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
+from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit, PKPDUnit
 from pkpd.utils import find_nearest
 
 # Tested in test_worokflow_deconvolution.py
@@ -70,7 +70,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            "The description is either a bolus or an infusion as shown in the examples\n"\
                            "\nIt is important that there are two semicolons.\n"\
                            "Examples:\n"\
-                           "Infusion0; via=Intravenous; infusion; t=0.500000...0.750000 h; d=60 mg\n"\
+                           "Infusion0; via=Intravenous; infusion; t=0.500000:0.750000 h; d=60 mg/h\n"\
                            "Bolus0; via=Oral; bolus; t=0.000000 min; d=60 mg\n"\
                            "RepeatedBolus; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg")
         form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
@@ -259,7 +259,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             self.model.deltaT = self.protODE.deltaT.get()
         self.model.setXVar(self.varNameX)
         self.model.setYVar(self.varNameY)
-        Nsamples = int(60*math.ceil((self.tF.get()-self.t0.get())/self.model.deltaT))+1
+        Nsamples = int(math.ceil((self.tF.get()-self.t0.get())/self.model.deltaT))+1
+        if tvar.units == PKPDUnit.UNIT_TIME_MIN:
+            Nsamples*=60
         self.model.x = [self.t0.get()+i*self.model.deltaT for i in range(0,Nsamples)]
         self.modelList.append(self.model)
 
@@ -434,9 +436,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         limits = np.percentile(CavgArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cavg %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CavgArray)))
         limits = np.percentile(TminArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TminArray)))
+        self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit),np.mean(TminArray)))
         limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TmaxArray)))
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit)
+                                                                                         ,np.mean(TmaxArray)))
         aux = fluctuationArray[~np.isnan(fluctuationArray)]
         limits = np.percentile(aux,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(aux)*100))
