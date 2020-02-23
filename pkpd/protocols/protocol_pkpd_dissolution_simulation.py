@@ -136,7 +136,6 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.pkModel.t0=self.t0.get()
         self.pkModel.tF=self.tF.get()
         self.timeUnits=self.fittingPK.getTimeUnits().unit
-        print("timeUnits",self.timeUnits)
         if self.timeUnits==PKPDUnit.UNIT_TIME_MIN:
             self.pkModel.t0 *= 60
             self.pkModel.tF *= 60
