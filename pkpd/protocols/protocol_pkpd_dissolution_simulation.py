@@ -133,11 +133,16 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
         klass = globals()[self.pkClsName]
         self.pkModel = klass()
-        self.pkModel.t0=self.t0.get()*60
-        self.pkModel.tF=self.tF.get()*60
+        self.pkModel.t0=self.t0.get()
+        self.pkModel.tF=self.tF.get()
+        self.timeUnits=self.fittingPK.getTimeUnits().unit
+        print("timeUnits",self.timeUnits)
+        if self.timeUnits==PKPDUnit.UNIT_TIME_MIN:
+            self.pkModel.t0 *= 60
+            self.pkModel.tF *= 60
         self.pkModel.drugSource = DrugSource()
         dose = createDeltaDose(self.inputDose.get(),via=createVia("Oral; numerical"))
-        self.pkModel.drugSource.setDoses([dose], self.t0.get()*60, self.tF.get()*60)
+        self.pkModel.drugSource.setDoses([dose], self.pkModel.t0, self.pkModel.tF)
         self.pkPopulation = cls!=""
         self.pkNParams = self.pkModel.getNumberOfParameters()
 
@@ -179,8 +184,11 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         T0=0;
         TF=np.max(t)
         if self.NCAt0.get()!="" and self.NCAtF.get()!="":
-            T0=float(self.NCAt0.get())*60
-            TF=float(self.NCAtF.get())*60
+            T0=float(self.NCAt0.get())
+            TF=float(self.NCAtF.get())
+            if self.timeUnits==PKPDUnit.UNIT_TIME_MIN:
+                T0*=60
+                TF*=60
 
         for idx in range(0,t.shape[0]-1):
             if t[idx]>=T0 and t[idx]<=TF:
@@ -206,10 +214,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.MRT = self.AUMC0t/self.AUC0t
 
         print("   Cmax=%f [%s]"%(self.Cmax,strUnit(self.Cunits.unit)))
-        print("   Tmax=%f [min]"%self.Tmax)
+        print("   Tmax=%f [%s]"%(self.Tmax,strUnit(self.timeUnits)))
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
-        print("   MRT=%f [min]"%self.MRT)
+        print("   MRT=%f [%s]"%(self.MRT,strUnit(self.timeUnits)))
 
     def simulate(self, objId1, objId2, inputDose, inputN):
         import sys
@@ -273,7 +281,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             self.outputExperiment.variables["Cmax"] = Cmaxvar
             self.outputExperiment.variables["Tmax"] = Tmaxvar
 
-        t=np.arange(self.t0.get()*60,self.tF.get()*60+1,1)
+
+        t=np.arange(self.pkModel.t0,self.pkModel.tF,1)
         AUCarray = np.zeros(inputN)
         AUMCarray = np.zeros(inputN)
         MRTarray = np.zeros(inputN)
@@ -363,11 +372,11 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         limits = np.percentile(AUMCarray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
         limits = np.percentile(MRTarray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(MRTarray)))
+        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.timeUnits),np.mean(MRTarray)))
         limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CmaxArray)))
         limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(95,limits[0],limits[1],np.mean(TmaxArray)))
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(95,limits[0],limits[1],strUnit(self.timeUnits),np.mean(TmaxArray)))
         fhSummary.close()
 
         if self.addIndividuals:
