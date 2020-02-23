@@ -54,6 +54,8 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         form.addParam('inputInVivo', params.PointerParam, label="Dissolution profiles in vivo",
                       pointerClass='ProtPKPDDeconvolve, ProtPKPDDeconvolutionWagnerNelson, ProtPKPDDeconvolutionLooRiegelman, ProtPKPDDeconvolveFourier, PKPDExperiment',
                       help='Select an experiment with dissolution profiles')
+        form.addParam('limitTvitro', params.BooleanParam, label='Limit to observed tvitro', default=False,
+                      help='Limit plot to the maximum observed tvitro')
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -97,19 +99,27 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
 
         parameterNames = self.protFit.model.getParameterNames()
         vesselNames=[]
+        tvitroMax = []
         for sampleName, sample in experiment.samples.iteritems():
             vesselNames.append(sampleName)
             parameters0 = []
             for parameterName in parameterNames:
                 parameters0.append(float(sample.descriptors[parameterName]))
             allParameters.append(parameters0)
+            if 'tvitroMax' in sample.descriptors:
+                tvitroMax.append(float(sample.descriptors['tvitroMax']))
+            else:
+                tvitroMax.append(np.Inf)
         self.experimentInVitro = experiment
-        return allParameters, vesselNames
+        return allParameters, vesselNames, tvitroMax
 
-    def produceLevyPlot(self,tvivo,parameterInVitro,Avivo):
+    def produceLevyPlot(self,tvivo,parameterInVitro,Avivo,tvitroMax):
         Avivounique, tvivoUnique=uniqueFloatValues(Avivo,tvivo)
         B = InterpolatedUnivariateSpline(Avivounique, tvivoUnique, k=1)
-        tvitro = np.arange(0, 10*np.max(tvivo), 1)
+        tmax = 10*np.max(tvivo)
+        if self.limitTvitro.get():
+            tmax=np.min([tmax,tvitroMax])
+        tvitro = np.arange(0, tmax, 1)
         self.protFit.model.x=tvitro
         Avitro = self.protFit.model.forwardModel(parameterInVitro)[0]
         tvivo=[]
@@ -153,7 +163,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
             print(" ")
 
     def calculateAllLevy(self, objId1, objId2):
-        parametersInVitro, vesselNames =self.getInVitroModels()
+        parametersInVitro, vesselNames, tvitroMax =self.getInVitroModels()
         profilesInVivo, sampleNames =self.getInVivoProfiles()
 
         self.outputExperiment = PKPDExperiment()
@@ -176,10 +186,10 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
 
         i=1
         levyList = []
-        for parameterInVitro, vesselFrom in izip(parametersInVitro,vesselNames):
+        for parameterInVitro, vesselFrom, tvitroMaxi in izip(parametersInVitro,vesselNames,tvitroMax):
             for aux, sampleFrom in izip(profilesInVivo,sampleNames):
                 t, profileInVivo = aux
-                tvitro, tvivo, _ = self.produceLevyPlot(t,parameterInVitro,profileInVivo)
+                tvitro, tvivo, _ = self.produceLevyPlot(t,parameterInVitro,profileInVivo,tvitroMaxi)
                 tvitroUnique, tvivoUnique = twoWayUniqueFloatValues(tvitro, tvivo)
                 idx = np.logical_and(tvitroUnique>0,tvivoUnique>0)
                 tvitroUnique=tvitroUnique[idx]
