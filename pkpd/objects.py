@@ -2202,6 +2202,9 @@ class PKPDFitting(EMObject):
         experiment.load(self.fnExperiment.get())
         return experiment
 
+    def getTimeUnits(self):
+        return self.loadExperiment().getTimeUnits()
+
 
 class PKPDSampleSignalAnalysis:
     def __init__(self):
