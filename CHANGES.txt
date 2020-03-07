@@ -76,3 +76,6 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  January 2020.
         - Exported to PyPI
 
+ March 2020.
+ 		- Simulate dissolution added
+ 

@@ -375,6 +375,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         hello = experiment.samples['Profile'].descriptors['Hello']
         self.assertTrue(hello=="Hello")
 
+
         # Check that operations are working
         print "Operations 3 ..."
         prot = self.newProtocol(ProtPKPDOperateExperiment,
@@ -389,6 +390,20 @@ class TestDissolutionWorkflow(TestWorkflow):
         VmaxC0 = float(experiment.samples['Profile'].measurement_VmaxC[0])
         self.assertTrue(VmaxC0>80 and VmaxC0<82)
 
+
+        # Check that Simulation is working
+        prot = self.newProtocol(ProtPKPDDissolutionSimulate,
+                                modelType=3,
+                                parameters="100;0.3;1.5",
+                                timeUnits=1,
+                                resampleT=0.1,
+                                resampleTF=10)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the operations ")
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        A18 = float(experiment.samples["simulatedProfile"].measurement_A[18])
+        self.assertTrue(A18>51.4 and A18<51.7)
 
 if __name__ == "__main__":
     unittest.main()
