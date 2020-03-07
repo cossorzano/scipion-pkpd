@@ -185,6 +185,9 @@ class SamplesTreeProvider(TreeProvider):
                 'values': tuple(values)
                 }
 
+    def _sortEnabled(self):
+        return None
+
 
 class MeasurementTreeProvider(TreeProvider):
     def __init__(self, sample):
