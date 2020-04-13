@@ -45,6 +45,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
     PRM_POPULATION = 0
     PRM_USER_DEFINED = 1
+    PRM_FITTING = 2
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
@@ -52,8 +53,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDMonoCompartmentPD, ProtPKPDTwoCompartmentsBothPD, '\
                                    'ProtPKPDODERefine', help='Select a run of an ODE model')
-        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined'], default=0,
-                      help="Choose a population of parameters or your own")
+        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined','ODE Fitting'], default=0,
+                      help="Choose a population of parameters, your own parameters or a previously fitted set of measurements")
         form.addParam('inputPopulation', params.PointerParam, label="Input population", condition="paramsSource==0",
                       pointerClass='PKPDFitting', pointerCondition="isPopulation", help='It must be a fitting coming from a bootstrap sample')
         form.addParam('prmUser', params.TextParam, label="Simulation parameters", height=8, default="", condition="paramsSource==1",
@@ -61,6 +62,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            'that generated the ODE model. Example: \n'
                            'prm1, prm2, prm3, prm4\n'
                            'prmA, prmB, prmC, prmD')
+        form.addParam('inputFitting', params.PointerParam, label="Input ODE fitting", condition="paramsSource==2",
+                      pointerClass='PKPDFitting', help='It must be a fitting coming from a compartmental PK fitting')
         form.addParam('doses', params.TextParam, label="Doses", height=5, width=50,
                       default="RepeatedBolus ; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg",
                       help="Structure: [Dose Name] ; [Via] ; [Dose type] ; [time] ; [dose] \n"\
@@ -73,15 +76,17 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            "Infusion0; via=Intravenous; infusion; t=0.500000:0.750000 h; d=60 mg/h\n"\
                            "Bolus0; via=Oral; bolus; t=0.000000 min; d=60 mg\n"\
                            "RepeatedBolus; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg")
-        form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
-        form.addParam('tF', params.FloatParam, label="Final time (h)", default=24*7)
+        form.addParam('t0', params.FloatParam, label="Initial time (see help)", default=0,
+                      help="Same units as input experiment")
+        form.addParam('tF', params.FloatParam, label="Final time (see help)", default=24*7,
+                      help="Same units as input experiment")
         form.addParam('Nsimulations', params.IntParam, label="Simulation samples", default=200, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
                       help='Number of simulations')
         form.addParam('addStats', params.BooleanParam, label="Add simulation statistics", default=True, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
                       help="Mean, lower and upper confidence levels are added to the output")
         form.addParam('confidenceLevel', params.FloatParam, label="Confidence interval", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters', condition="addStats and paramsSource==0")
-        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=False, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
+        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=False, expertLevel=LEVEL_ADVANCED,
                       help="Individual simulations are added to the output")
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -217,8 +222,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             self.experiment = self.readExperiment(self.protODE.outputExperiment1.fnPKPD)
         else:
             raise Exception("Cannot find an outputExperiment in the input ODE")
-        if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
+        if self.paramsSource.get()==ProtPKPDODESimulate.PRM_POPULATION:
             self.fitting = self.readFitting(self.inputPopulation.get().fnFitting, cls="PKPDSampleFitBootstrap")
+        elif self.paramsSource.get()==ProtPKPDODESimulate.PRM_FITTING:
+            self.fitting = self.readFitting(self.inputFitting.get().fnFitting)
         else:
             if hasattr(self.protODE, "outputFitting"):
                 self.fitting = self.readFitting(self.protODE.outputFitting.fnFitting)
@@ -290,13 +297,15 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         # Process user parameters
         if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
             Nsimulations = self.Nsimulations.get()
-        else:
+        elif self.paramsSource == ProtPKPDODESimulate.PRM_USER_DEFINED:
             lines = self.prmUser.get().strip().replace('\n',';;').split(';;')
             Nsimulations = len(lines)
             prmUser = []
             for line in lines:
                 tokens = line.strip().split(',')
                 prmUser.append([float(token) for token in tokens])
+        else:
+            Nsimulations = len(self.fitting.sampleFits)
 
         # Simulate the different responses
         simulationsX = self.model.x
@@ -320,8 +329,11 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 sampleFit = self.fitting.sampleFits[nfit]
                 nprm = int(random.uniform(0,sampleFit.parameters.shape[0]))
                 parameters = sampleFit.parameters[nprm,:]
-            else:
+            elif self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
                 parameters = np.asarray(prmUser[i],np.double)
+            else:
+                parameters = self.fitting.sampleFits[i].parameters
+
             print("Simulated sample %d: %s"%(i,str(parameters)))
 
             # Prepare source and this object
@@ -417,7 +429,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             TmaxArray[i] = self.Tmax
             fluctuationArray[i] = self.fluctuation
             percentageAccumulationArray[i] = self.percentageAccumulation
-            if self.addIndividuals or self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
+            if self.addIndividuals or self.paramsSource!=ProtPKPDODESimulate.PRM_POPULATION:
                 self.addSample("Simulation_%d"%i, dosename, simulationsX, y[0])
 
         # Report NCA statistics
@@ -480,6 +492,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         self._defineSourceRelation(self.inputODE.get(), self.outputExperiment)
         if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
             self._defineSourceRelation(self.inputPopulation.get(), self.outputExperiment)
+        elif self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
+            self._defineSourceRelation(self.inputFitting.get(), self.outputExperiment)
 
     #--------------------------- INFO functions --------------------------------------------
     def _summary(self):
@@ -487,8 +501,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         msg.append("Dose: %s"%self.doses.get())
         if self.paramsSource ==  ProtPKPDODESimulate.PRM_POPULATION:
             msg.append("Number of simulations: %d"%self.Nsimulations.get())
-        else:
+        elif self.paramsSource ==  ProtPKPDODESimulate.PRM_USER_DEFINED:
             msg.append("Parameters:\n"+self.prmUser.get())
+        else:
+            msg.append("Parameters from previous fitting")
         msg.append(" ")
         self.addFileContentToMessage(msg,self._getPath("summary.txt"))
         return msg
