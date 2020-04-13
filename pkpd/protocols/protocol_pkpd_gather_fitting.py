@@ -25,23 +25,21 @@
 # **************************************************************************
 
 
-from pyworkflow.protocol.params import PointerParam, MultiPointerParam, IntParam, EnumParam
+from pyworkflow.protocol.params import PointerParam, MultiPointerParam
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment
+from pkpd.objects import PKPDExperiment, PKPDFitting
 
 
-class ProtPKPDSplitGather(ProtPKPD):
-    """ Split an experiment into small pieces, or gather these small pieces into an experiment.\n
+class ProtPKPDGatherFitting(ProtPKPD):
+    """ Gather several fittings coming from a split experiment into a single fitting.\n
         Protocol created by http://www.kinestatpharma.com
     """
-    _label = 'split/gather experiment'
+    _label = 'gather fitting'
 
     def _defineParams(self, form):
         form.addSection('Input')
-        form.addParam('splitOrGather', EnumParam, label="Operation", choices=['Split','Gather'], default=0)
-        form.addParam('inputExperiment', PointerParam, label="Experiment to split", pointerClass='PKPDExperiment', condition='splitOrGather==0')
-        form.addParam('groupSize', IntParam, label="Group size", default=5, condition='splitOrGather==0')
-        form.addParam('inputExperiments', MultiPointerParam, label="Experiments to gather", pointerClass='PKPDExperiment', condition='splitOrGather==1')
+        form.addParam('inputFittings', MultiPointerParam, label="Fittings to gather", pointerClass='PKPDFitting')
+        form.addParam('inputExperiment', PointerParam, label="Experiment this fitting is linked to", pointerClass='PKPDExperiment')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
@@ -49,30 +47,12 @@ class ProtPKPDSplitGather(ProtPKPD):
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def createSubGroup(self, g, experiment, listOfSamples):
-        newExperiment = experiment.subset(listOfSamples)
-        self.writeExperiment(newExperiment, self._getPath("experiment%05d.pkpd"%g))
-        self._defineOutputs(**{"outputExperiment%d"%g: newExperiment})
-        self._defineSourceRelation(self.inputExperiment, newExperiment)
-
     def createOutputStep(self):
-        if self.splitOrGather.get()==0:
-            experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
-            listOfSamples=[]
-            g=1
-            for sampleName in experiment.samples:
-                listOfSamples.append(sampleName)
-                if len(listOfSamples)==self.groupSize.get():
-                    self.createSubGroup(g, experiment, listOfSamples)
-                    listOfSamples=[]
-                    g+=1
-            if len(listOfSamples)!=0:
-                self.createSubGroup(g, experiment, listOfSamples)
-        else:
-            newExperiment = PKPDExperiment()
-            for ptrExperiment in self.inputExperiments:
-                newExperiment.gather(self.readExperiment(ptrExperiment.get().fnPKPD))
-            self.writeExperiment(newExperiment, self._getPath("experiment.pkpd"))
-            self._defineOutputs(outputExperiment=newExperiment)
-            for ptrExperiment in self.inputExperiments:
-                self._defineSourceRelation(ptrExperiment, newExperiment)
+        newFitting = PKPDFitting()
+        newFitting.fnExperiment.set(self.inputExperiment.get().fnPKPD)
+        for ptrFitting in self.inputFittings:
+            newFitting.gather(self.readFitting(ptrFitting.get().fnFitting))
+        self.writeExperiment(newFitting, self._getPath("fitting.pkpd"))
+        self._defineOutputs(outputFitting=newFitting)
+        for ptrFitting in self.inputFittings:
+            self._defineSourceRelation(ptrFitting, newFitting)

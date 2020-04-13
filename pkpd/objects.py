@@ -2205,6 +2205,22 @@ class PKPDFitting(EMObject):
     def getTimeUnits(self):
         return self.loadExperiment().getTimeUnits()
 
+    def gather(self, otherFitting):
+        if not self.predictor:
+            self.predictor = copy.copy(otherFitting.predictor)
+        if not self.predicted:
+            self.predicted = copy.copy(otherFitting.predicted)
+        if self.modelDescription == "":
+            self.modelDescription = otherFitting.modelDescription
+
+        if len(self.modelParameters)==0:
+            self.modelParameters = copy.copy(otherFitting.modelParameters)
+        if len(self.modelParameterUnits)==0:
+            self.modelParameterUnits = copy.copy(otherFitting.modelParameterUnits)
+
+        for fit in otherFitting.sampleFits:
+            self.sampleFits.append(copy.copy(fit))
+
 
 class PKPDSampleSignalAnalysis:
     def __init__(self):

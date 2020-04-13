@@ -64,6 +64,7 @@ from .protocol_pkpd_filter_population import ProtPKPDFilterPopulation
 from .protocol_pkpd_filter_samples import ProtPKPDFilterSamples
 from .protocol_pkpd_fit_base import ProtPKPDFitBase
 from .protocol_pkpd_fit_bootstrap import ProtPKPDFitBootstrap
+from .protocol_pkpd_gather_fitting import ProtPKPDGatherFitting
 from .protocol_pkpd_import_from_table import ProtPKPDImportFromTable
 from .protocol_pkpd_import_from_csv import *
 from .protocol_pkpd_import_from_winnonlin import ProtPKPDImportFromWinnonlin
