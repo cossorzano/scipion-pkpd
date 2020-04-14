@@ -333,6 +333,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 parameters = np.asarray(prmUser[i],np.double)
             else:
                 parameters = self.fitting.sampleFits[i].parameters
+                print("Sample name: %s"%self.fitting.sampleFits[i].sampleName)
 
             print("Simulated sample %d: %s"%(i,str(parameters)))
 

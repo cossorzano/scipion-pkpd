@@ -66,7 +66,7 @@ class Plugin(pyworkflow.em.Plugin):
     #
     @classmethod
     def defineBinaries(cls, env):
-        scipy = tryAddPipModule(env, 'scipy', '0.15')
+        scipy = tryAddPipModule(env, 'scipy', '1.4.1')
         scons = tryAddPipModule(env, 'openpyxl', '2.6.2')
 
 def tryAddPipModule(env, moduleName, *args, **kwargs):
