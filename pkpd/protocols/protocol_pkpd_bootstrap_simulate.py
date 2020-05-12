@@ -285,7 +285,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         auxSample.descriptors = {}
         auxSample.doseDictPtr = self.outputExperiment.doses
         auxSample.variableDictPtr = self.outputExperiment.variables
-        auxSample.doseList = [dosename]
+        auxSample.doseList = self.outputExperiment.doses.keys()
         auxSample.interpretDose()
         self.drugSource.setDoses(auxSample.parsedDoseList, self.t0.get()-10, self.tF.get()+10)
         self.model.drugSource = self.drugSource
