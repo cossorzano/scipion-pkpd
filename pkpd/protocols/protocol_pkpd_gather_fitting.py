@@ -39,7 +39,8 @@ class ProtPKPDGatherFitting(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputFittings', MultiPointerParam, label="Fittings to gather", pointerClass='PKPDFitting')
-        form.addParam('inputExperiment', PointerParam, label="Experiment this fitting is linked to", pointerClass='PKPDExperiment')
+        form.addParam('inputExperiment', PointerParam, label="Experiment this fitting is linked to", pointerClass='PKPDExperiment',
+                      help='Only those fittings corresponding to the same name as the samples in the experiment will be kept')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
@@ -50,8 +51,10 @@ class ProtPKPDGatherFitting(ProtPKPD):
     def createOutputStep(self):
         newFitting = PKPDFitting()
         newFitting.fnExperiment.set(self.inputExperiment.get().fnPKPD)
+        experiment = PKPDExperiment()
+        experiment.load(self.inputExperiment.get().fnPKPD)
         for ptrFitting in self.inputFittings:
-            newFitting.gather(self.readFitting(ptrFitting.get().fnFitting))
+            newFitting.gather(self.readFitting(ptrFitting.get().fnFitting), experiment)
         self.writeExperiment(newFitting, self._getPath("fitting.pkpd"))
         self._defineOutputs(outputFitting=newFitting)
         for ptrFitting in self.inputFittings:
