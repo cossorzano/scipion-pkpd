@@ -77,5 +77,11 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
         - Exported to PyPI
 
  March 2020.
- 		- Simulate dissolution added
- 
+	- Simulate dissolution added
+
+ April 2020.
+        - Gather fittings added
+
+ May 2020.
+        - Bootstrap can now take a fitting as input
+        - Gather fitting can now filter depending on the input experiment 
