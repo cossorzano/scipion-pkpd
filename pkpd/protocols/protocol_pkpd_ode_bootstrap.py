@@ -38,6 +38,9 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
 
     _label = 'ODE bootstrap'
 
+    PRM_PROTOCOL = 0
+    PRM_FITTING = 1
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
@@ -47,6 +50,10 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
                                    'ProtPKPDTwoCompartmentsClintMetabolite, ProtPKPDTwoCompartmentsUrine, '\
                                    'ProtPKPDODERefine',
                       help='Select a run of an ODE model')
+        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE protocol','ODE Fitting'], default=0,
+                      help="Choose a population of parameters, your own parameters or a previously fitted set of measurements")
+        form.addParam('inputFitting', params.PointerParam, label="Input ODE fitting", condition="paramsSource==1",
+                      pointerClass='PKPDFitting', help='It must be a fitting coming from a compartmental PK fitting')
         form.addParam('Nbootstrap', params.IntParam, label="Bootstrap samples", default=200, expertLevel=LEVEL_ADVANCED,
                       help='Number of bootstrap realizations for each sample')
         form.addParam('sampleLength', params.IntParam, label="Sample length", default=-1, expertLevel=LEVEL_ADVANCED,
@@ -95,8 +102,12 @@ class ProtPKPDODEBootstrap(ProtPKPDODEBase):
 
     def runFit(self, objId, Nbootstrap, confidenceInterval):
         self.protODE = self.inputODE.get()
-        self.experiment = self.readExperiment(self.protODE.outputExperiment.fnPKPD)
-        self.fitting = self.readFitting(self.protODE.outputFitting.fnFitting)
+        if self.paramsSource.get()==self.PRM_PROTOCOL:
+            self.experiment = self.readExperiment(self.protODE.outputExperiment.fnPKPD)
+            self.fitting = self.readFitting(self.protODE.outputFitting.fnFitting)
+        else:
+            self.fitting = self.readFitting(self.inputFitting.get().fnFitting)
+            self.experiment = self.readExperiment(self.inputFitting.get().fnExperiment)
 
         # Get the X and Y variable names
         self.varNameX = self.fitting.predictor.varName
