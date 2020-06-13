@@ -32,6 +32,7 @@ import numpy as np
 from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits, inverseUnits
 from pkpd.utils import uniqueFloatValues, excelWriteRow
 from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
+from scipy.special import lambertw, wrightomega
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -337,6 +338,102 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
 
     def getDescription(self):
         return "First and First order absorption (%s)"%self.__class__.__name__
+
+
+class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
+    """ Srihari Gopal M.D., M.H.S., An Vermeulen Ph.D., Partha Nandy Ph.D., Paulien Ravenstijn Ph.D., Isaac
+        Nuamah Ph.D., J.A. Buron Vidal M.D., Joris Berwaerts M.D., Adam Savitz M.D., Ph.D., David Hough M.D. & Mahesh
+        N. Samtani Ph.D. Practical Guidance for Dosing and Switching from Paliperidone Palmitate 1-Monthly to 3-Monthly
+        Formulation in Schizophrenia, Current Medical Research and Opinion, 2015, 31: 2043-2054.
+
+        There are two absorptions of order 1: one is slow (fraction=1-F3), the other is rapid (fraction=F3).
+        Both absorptions are saturable by the amount present in the absorption compartment so that the instantaneous
+        absorption rate depends on the amount remaining.
+        """
+    def getDescription(self):
+        return ['Maximal absorption rate slow','Amount at 50% of slow absorption rate','Hill factor',
+                'Maximal absorption rate rapid','Amount at 50% of rapid absorption rate',
+                'Fraction 3']
+
+    def getParameterNames(self):
+        return ['ka1max','kamt150','gamma','ka3max','kamt350','F3']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        Dunits = self.ptrExperiment.getDoseUnits()
+        itunits = inverseUnits(tunits)
+        self.parameterUnits = [itunits, Dunits, PKPDUnit.UNIT_NONE,
+                               itunits, Dunits, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0:
+            return 0.0
+        ka1max = self.parameters[0]
+        kamt150 = self.parameters[1]
+        gamma = self.parameters[2]
+        ka3max = self.parameters[3]
+        kamt350 = self.parameters[4]
+        F3 = self.parameters[5]
+        if gamma<0 or F3<0 or F3>1:
+            return 0.0
+
+        try:
+            A50 = kamt150
+            Ka = ka1max
+            A0 = (1-F3)*self.Amax
+            arg = math.exp(-(Ka * t - A50 * math.log(A0 * math.exp(A0 / A50))) / A50) / A50
+            Aslow = A50 * lambertw(arg)
+        except:
+            Aslow = 0.0
+
+        try:
+            A50 = kamt350
+            Ka = ka3max
+            A0 = F3*self.Amax
+            A0gamma = math.pow(A0,gamma)
+            A50gamma = math.pow(A50,gamma)
+            A0log = math.log(A0)
+            Arapid = math.exp(((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t) / A50gamma -
+                         wrightOmega(math.log(1 / A50gamma) +
+                                    (gamma * ((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t)) / A50gamma) / gamma)
+        except:
+            Arapid = 0.0
+        return Aslow+Arapid
+
+    def getEquation(self):
+        ka1max = self.parameters[0]
+        kamt150 = self.parameters[1]
+        gamma = self.parameters[2]
+        ka3max = self.parameters[3]
+        kamt350 = self.parameters[4]
+        F3 = self.parameters[5]
+
+        A50 = kamt150
+        Ka = ka1max
+        A0 = (1-F3)*self.Amax
+        C = A50 * math.log(A0 * math.exp(A0 / A50))
+        Aslow = "%f * lambertw(exp(-(%f * t - (%f)) / %f) / %f)"%(A50,Ka,C,A50,A50)
+
+        A50 = kamt350
+        Ka = ka3max
+        A0 = F3*self.Amax
+        A0gamma = math.pow(A0,gamma)
+        A50gamma = math.pow(A50,gamma)
+        A0log = math.log(A0)
+        C1 = (A0gamma + A50gamma * gamma * A0log) / gamma
+        Arapid = "exp((%f - Ka * t) / %f - "%(C1,A50gamma)
+        C2 = math.log(1 / A50gamma)
+        C3 = (A0gamma + A50gamma * gamma * A0log) / gamma
+        Arapid += "wrightOmega((%f) + (%f * (%f - (%f) * t)) / %f) / %f)"%(C2,gamma,C3,Ka,A50gamma,gamma)
+        return "D(t)=(%s)+(%s)"%(Aslow,Arapid)
+
+    def getModelEquation(self):
+        return "D(t)=kamt150 * lambertw(exp(-(ka1max * t - kamt150 * log((1-F3)*Amax * exp((1-F3)*Amax / kamt150))) / kamt150) / kamt150) "+\
+                     "exp((((F3*Amax)^gamma + kamt350^gamma*gamma*log(F3*Amax))/gamma - ka3max*t)/kamt350^gamma - wrightOmega(log(1/kamt350^gamma) + (gamma*(((F3*Amax)^gamma + kamt350^gamma*gamma*log(F3*Amax))/gamma - ka3max*t))/kamt350^gamma)/gamma)"
+
+    def getDescription(self):
+        return "First and First order absorption with saturation (%s)"%self.__class__.__name__
 
 
 class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
@@ -755,6 +852,8 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelOrderFractional()
                 elif self.via=="ev1-ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1AndOrder1()
+                elif self.via == "ev1-ev1Saturable":
+                    self.viaProfile = BiopharmaceuticsModelOrder1AndOrder1Saturable()
                 elif self.via=="spline2":
                     self.viaProfile=BiopharmaceuticsModelSpline2()
                 elif self.via=="spline3":
