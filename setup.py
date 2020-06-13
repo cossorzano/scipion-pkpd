@@ -33,5 +33,5 @@ setup(
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
     },
-    install_requires=['scipy==0.15.0','openpyxl']
+    install_requires=['scipy','openpyxl']
 )
