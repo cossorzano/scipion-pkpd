@@ -308,7 +308,10 @@ class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
                 if i-i0 > 0:
                     allMeasurements = []
                 for j in range(sheet.max_column):
-                    cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
+                    cellValue = sheet.cell(row=i + 1, column=j + 1).value
+                    if cellValue is None:
+                        continue
+                    cellValue = str(cellValue).strip()
                     if cellValue == "":
                         continue
                     if i-i0 == 0 and j >= 1:
