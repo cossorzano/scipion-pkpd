@@ -57,13 +57,16 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
                           help='Y is predicted as an exponential function of X, Y=f(X)')
             form.addParam('predicted', params.StringParam, label="Predicted variable (Y)", default=defaultPredicted,
                           help='Y is predicted as an exponential function of X, Y=f(X)')
+        form.addParam('deltaT', params.FloatParam, default=0.5, label='Step (min)', expertLevel = LEVEL_ADVANCED,
+                      help="Time step for the numerical solution of the differential equation. "
+                           "For very long simulations you may want to increase this value, beware that this results in "
+                           "less accurate solutions.")
 
         fromTo = form.addLine('Simulation length', expertLevel = LEVEL_ADVANCED,
                            help='Minimum and maximum time (in hours) and step size (in minutes). '
                                 'If minimum and maximum are not given (set to -1), they are estimated from the sample')
         fromTo.addParam('t0', params.StringParam, default="", label='Min (h)')
         fromTo.addParam('tF', params.StringParam, default="", label='Max (h)')
-        fromTo.addParam('deltaT', params.FloatParam, default=0.5, label='Step (min)')
 
         form.addParam('fitType', params.EnumParam, choices=["Linear","Logarithmic","Relative"], label="Fit mode", default=1,
                       expertLevel=LEVEL_ADVANCED,
