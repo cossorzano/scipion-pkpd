@@ -361,9 +361,9 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
     def calculateParameterUnits(self,sample):
         tunits = self.ptrExperiment.getTimeUnits().unit
         Dunits = self.ptrExperiment.getDoseUnits()
-        itunits = inverseUnits(tunits)
-        self.parameterUnits = [itunits, Dunits, PKPDUnit.UNIT_NONE,
-                               itunits, Dunits, PKPDUnit.UNIT_NONE]
+        kaUnits = divideUnits(Dunits,tunits)
+        self.parameterUnits = [kaUnits, Dunits, PKPDUnit.UNIT_NONE,
+                               kaUnits, Dunits, PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
     def getAg(self,t):
