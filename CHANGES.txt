@@ -85,3 +85,7 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  May 2020.
         - Bootstrap can now take a fitting as input
         - Gather fitting can now filter depending on the input experiment 
+
+ June 2020.
+        - Ev1-Ev1 Saturable model added
+        - Complex simulations added

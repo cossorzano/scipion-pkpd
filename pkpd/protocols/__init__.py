@@ -32,6 +32,7 @@ from .protocol_pkpd_allometric_scaling import ProtPKPDAllometricScaling
 from .protocol_pkpd_apply_allometric_scaling import ProtPKPDApplyAllometricScaling
 from .protocol_pkpd_average_sample import ProtPKPDAverageSample
 from .protocol_pkpd_bootstrap_simulate import ProtPKPDODESimulate
+from .protocol_pkpd_bootstrap_simulate2 import ProtPKPDODESimulate2
 from .protocol_pkpd_change_units import ProtPKPDChangeUnits
 from .protocol_pkpd_change_via import ProtPKPDChangeVia
 from .protocol_pkpd_compare_experiments import ProtPKPDCompareExperiments
