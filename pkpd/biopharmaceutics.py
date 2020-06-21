@@ -381,7 +381,7 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         try:
             A50 = kamt150
             Ka = ka1max
-            A0 = (1-F3)*self.Amax
+            A0 = F3*self.Amax
             arg = math.exp(-(Ka * t - A50 * math.log(A0 * math.exp(A0 / A50))) / A50) / A50
             Aslow = A50 * lambertw(arg)
         except:
@@ -390,7 +390,7 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         try:
             A50 = kamt350
             Ka = ka3max
-            A0 = F3*self.Amax
+            A0 = (1-F3)*self.Amax
             A0gamma = math.pow(A0,gamma)
             A50gamma = math.pow(A50,gamma)
             A0log = math.log(A0)
@@ -411,13 +411,13 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
 
         A50 = kamt150
         Ka = ka1max
-        A0 = (1-F3)*self.Amax
+        A0 = F3*self.Amax
         C = A50 * math.log(A0 * math.exp(A0 / A50))
         Aslow = "%f * lambertw(exp(-(%f * t - (%f)) / %f) / %f)"%(A50,Ka,C,A50,A50)
 
         A50 = kamt350
         Ka = ka3max
-        A0 = F3*self.Amax
+        A0 = (1-F3)*self.Amax
         A0gamma = math.pow(A0,gamma)
         A50gamma = math.pow(A50,gamma)
         A0log = math.log(A0)
@@ -429,8 +429,8 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         return "D(t)=(%s)+(%s)"%(Aslow,Arapid)
 
     def getModelEquation(self):
-        return "D(t)=kamt150 * lambertw(exp(-(ka1max * t - kamt150 * log((1-F3)*Amax * exp((1-F3)*Amax / kamt150))) / kamt150) / kamt150) "+\
-                     "exp((((F3*Amax)^gamma + kamt350^gamma*gamma*log(F3*Amax))/gamma - ka3max*t)/kamt350^gamma - wrightOmega(log(1/kamt350^gamma) + (gamma*(((F3*Amax)^gamma + kamt350^gamma*gamma*log(F3*Amax))/gamma - ka3max*t))/kamt350^gamma)/gamma)"
+        return "D(t)=kamt150 * lambertw(exp(-(ka1max * t - kamt150 * log(F3*Amax * exp(F3*Amax / kamt150))) / kamt150) / kamt150) "+\
+                     "exp(((((1-F3)*Amax)^gamma + kamt350^gamma*gamma*log((1-F3)*Amax))/gamma - ka3max*t)/kamt350^gamma - wrightOmega(log(1/kamt350^gamma) + (gamma*((((1-F3)*Amax)^gamma + kamt350^gamma*gamma*log((1-F3)*Amax))/gamma - ka3max*t))/kamt350^gamma)/gamma)"
 
     def getDescription(self):
         return "First and First order absorption with saturation (%s)"%self.__class__.__name__
