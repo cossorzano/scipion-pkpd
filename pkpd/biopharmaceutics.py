@@ -367,7 +367,7 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         return self.parameterUnits
 
     def getAg(self,t):
-        if t<0:
+        if t<=0:
             return 0.0
         ka1max = self.parameters[0]
         kamt150 = self.parameters[1]
@@ -1200,6 +1200,7 @@ class PKPDDose:
                 doseAmount += self.getDoseAt(t0,dt)
         if doseAmount<0:
             doseAmount=0
+        # print("t0=%f self.t0=%f self.tlag=%f self.dt=%f -> released=%f"%(t0,self.t0,self.via.tlag,dt,doseAmount))
         return doseAmount
 
     def getAmountReleasedUpTo(self, t0):
