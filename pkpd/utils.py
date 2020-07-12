@@ -149,7 +149,7 @@ def calculateAUC0t(t, C):
             if C[idx-1]>0 and C[idx]>0:
                 decrement = C[idx-1]/C[idx]
                 K = math.log(decrement)
-                B = K/dt
+                # B = K/dt
                 AUC0t[idx] = AUC0t[idx-1]+dt*(C[idx-1]-C[idx])/K
             else:
                 AUC0t[idx] = AUC0t[idx-1]
