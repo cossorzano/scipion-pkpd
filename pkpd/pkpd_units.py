@@ -746,6 +746,9 @@ def divideUnits(unitX,unitY):
         elif unitY==PKPDUnit.UNIT_CONC_ng_L:
             return PKPDUnit.UNIT_NONE
 
+        elif unitY == PKPDUnit.UNIT_VOLUME_L:
+            return PKPDUnit.UNIT_CONC_mg_L
+
         elif unitY==PKPDUnit.UNIT_CONC_g_mL:
             return PKPDUnit.UNIT_VOLUME_uL
 
@@ -767,6 +770,9 @@ def divideUnits(unitX,unitY):
             return PKPDUnit.UNIT_VOLUME_L
         elif unitY==PKPDUnit.UNIT_CONC_ng_L:
             return PKPDUnit.UNIT_NONE
+
+        elif unitY == PKPDUnit.UNIT_VOLUME_L:
+            return PKPDUnit.UNIT_CONC_ug_L
 
         elif unitY==PKPDUnit.UNIT_CONC_g_mL:
             return PKPDUnit.UNIT_VOLUME_nL
@@ -791,6 +797,9 @@ def divideUnits(unitX,unitY):
             return PKPDUnit.UNIT_VOLUME_mL
         elif unitY==PKPDUnit.UNIT_CONC_ng_L:
             return PKPDUnit.UNIT_VOLUME_L
+
+        elif unitY == PKPDUnit.UNIT_VOLUME_L:
+            return PKPDUnit.UNIT_CONC_ng_L
 
         elif unitY==PKPDUnit.UNIT_CONC_g_mL:
             return PKPDUnit.UNIT_NONE
