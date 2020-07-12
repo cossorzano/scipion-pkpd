@@ -38,9 +38,11 @@ class ProtPKPDDeconvolutionLooRiegelmanInverse(ProtPKPD):
     """ Given a profile of amount absorbed, find the central and peripheral concentrations that gave raise to it.
         This is an inverse Loo-Riegelman problem.
 
-        Reference: Humbert, H., Cabiac, M.D., Bosshardt, H. In vitro-in vivo correlation of a modified-release oral
-                   form of ketotigen: in vitro dissolution rate specification. J. Pharm Sci 1994, 83, 131-136
+        The parameters of this protocol are defined as microconstants. Remind that k10=Cl*V, k12=Clp*V, k21=Clp*Vp
+
     """
+    # Reference: Humbert, H., Cabiac, M.D., Bosshardt, H. In vitro-in vivo correlation of a modified-release oral
+    #            form of ketotifen: in vitro dissolution rate specification. J. Pharm Sci 1994, 83, 131-136
 
     _label = 'inverse Loo-Riegelman'
 
@@ -53,7 +55,7 @@ class ProtPKPDDeconvolutionLooRiegelmanInverse(ProtPKPD):
                       help='Which variable contains the time stamps.')
         form.addParam('amountVar', params.StringParam, label="Absorbed amount variable", default="A",
                       help='Which variable contains the amount absorbed.')
-        form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=0.5,
+        form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=0.1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
         form.addParam('k10', params.FloatParam, label="Elimination rate (k10)",
@@ -123,11 +125,50 @@ class ProtPKPDDeconvolutionLooRiegelmanInverse(ProtPKPD):
                 Cp[n]=0.0
         return C, Cp
 
+    def calculateConcentrations2(self,t,A):
+        k10 = float(self.k10.get())
+        k12 = float(self.k12.get())
+        k21 = float(self.k21.get())
+        V = float(self.V.get())
+        Vp = float(self.Vp.get())
+
+        C = np.zeros(t.shape)
+        Cp = np.zeros(t.shape)
+
+        # Clp = k12*V
+
+        for n in range(1,C.size):
+            DeltaA=np.abs(A[n]-A[n-1])
+            DeltaT=t[n]-t[n-1]
+
+            # Q12 = Clp*(C[n-1]-Cp[n-1])
+            # C[n]=C[n-1]+(-Cl*C[n-1]/V-Q12/V)*DeltaT+DeltaA/V
+            # Cp[n]=Cp[n-1]+Q12/Vp*DeltaT
+
+            # Q12 = Clp*(C[n-1]-Cp[n-1])
+            # C[n]=C[n-1]-k10*C[n-1]*DeltaT-Q12/V*DeltaT+DeltaA/V
+            # Cp[n]=Cp[n-1]+Q12/Vp*DeltaT
+
+            # C[n]=C[n-1]-k10*C[n-1]*DeltaT-(Clp*(C[n-1]-Cp[n-1]))/V*DeltaT+DeltaA/V
+            # Cp[n]=Cp[n-1]+(Clp*(C[n-1]-Cp[n-1]))/Vp*DeltaT
+
+            # C[n]=C[n-1]-k10*C[n-1]*DeltaT-Clp/V*C[n-1]*DeltaT+Clp/V*Cp[n-1]*DeltaT+DeltaA/V
+            # Cp[n]=Cp[n-1]+Clp/Vp*C[n-1]*DeltaT-Clp/Vp*Cp[n-1]*DeltaT
+
+            C[n]=C[n-1]-k10*C[n-1]*DeltaT-k12*C[n-1]*DeltaT+k21*Vp/V*Cp[n-1]*DeltaT+DeltaA/V
+            Cp[n]=Cp[n-1]+k12*V/Vp*C[n-1]*DeltaT-k21*Cp[n-1]*DeltaT
+
+            if C[n]<0.0:
+                C[n]=0.0
+            if Cp[n]<0.0:
+                Cp[n]=0.0
+        return C, Cp
+
     def solve(self, objId1):
         self.experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
 
         # Create output object
-        self.outputExperimet = None
+        self.outputExperiment = None
 
         timeRange = self.experiment.getRange(self.timeVar.get())
         for sampleName, sample in self.experiment.samples.iteritems():
@@ -144,10 +185,9 @@ class ProtPKPDDeconvolutionLooRiegelmanInverse(ProtPKPD):
                 A = B(t)
 
             # Find C and Cp
-            C, Cp = self.calculateConcentrations(t,A)
-            print(C, Cp)
+            C, Cp = self.calculateConcentrations2(t,A)
 
-            if self.outputExperimet is None:
+            if self.outputExperiment is None:
                 self.outputExperiment = PKPDExperiment()
                 tvar = PKPDVariable()
                 tvar.varName = "t"
