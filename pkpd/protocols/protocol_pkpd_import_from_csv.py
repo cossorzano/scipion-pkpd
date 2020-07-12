@@ -215,7 +215,9 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
         form.addParam('noHeader', params.BooleanParam, default=False, label="No header",
                       help="There is no header in the CSV (e.g., this is the case of data taken from "
                       "WebPlotDigitizer, https://apps.automeris.io/wpd). If this is the case, "
-                      "it is assumed that the columns of the CSV are in the same order as the variables are defined.")
+                      "it is assumed that the columns of the CSV are in the same order as the variables are defined."
+                      "A typical header structure is SampleName;t;Cp. Note that the column SampleName is very important, "
+                      "and it should have this name")
         form.addParam('delimiter', params.StringParam, label='CSV Delimiter', default=";", help="Delimiter between fields in the CSV")
         form.addParam('sampleNameForm', params.StringParam, default="Individual", condition="noHeader",
                       label="Sample name")
