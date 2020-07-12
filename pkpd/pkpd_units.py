@@ -300,7 +300,7 @@ class PKPDUnit:
 
 
 def convertUnits(x, unitsIn, unitsOut):
-    if unitsIn==unitsOut:
+    if unitsIn==unitsOut or unitsIn==PKPDUnit.UNIT_NONE:
         return x
 
     if unitsIn == PKPDUnit.UNIT_WEIGHT_g:
