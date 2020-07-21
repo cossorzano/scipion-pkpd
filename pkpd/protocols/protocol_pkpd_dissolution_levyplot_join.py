@@ -88,6 +88,7 @@ class ProtPKPDDissolutionLevyPlotJoin(ProtPKPD):
         newSampleSingle.addMeasurementColumn("tvivo", tvivo)
 
         self.outputExperimentSingle.samples[sampleName] = newSampleSingle
+        self.outputExperimentSingle.addLabelToSample(sampleName, "from", "individual---vesel", "meanVivo---meanVitro")
 
         self.outputExperimentSingle.write(self._getPath("experiment.pkpd"))
 
