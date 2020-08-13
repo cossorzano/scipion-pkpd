@@ -54,7 +54,7 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
                       label="Dissolution model", default=3,
                       help='Zero order: Y=K*(t-[tlag])\n' \
                            'First order: Y=Ymax*(1-exp(-beta*(t-[tlag])))\n' \
-                           'Fractional order: Y=Ymax-pow(Amax^alpha-alpha*beta*t,1/alpha))\n' \
+                           'Fractional order: Y=Ymax-pow(Ymax^alpha-alpha*beta*t,1/alpha))\n' \
                            'Weibull: Y=Ymax*(1-exp(-lambda*t^b))\n' \
                            'Double Weibull: Y=Ymax*(F1*(1-exp(-lambda1*t^b1))+(1-F1)*(1-exp(-lambda2*(t-tlag2)^b2)))\n' \
                            'Higuchi: Y=Ymax*t^0.5\n' \
@@ -123,7 +123,7 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
         Avar.varType = PKPDVariable.TYPE_NUMERIC
         Avar.role = PKPDVariable.ROLE_MEASUREMENT
         if self.AUnits.get() != "%":
-            Avar.units = createUnit(self.Aunits.get())
+            Avar.units = createUnit(self.AUnits.get())
         else:
             Avar.units = createUnit("none")
 
