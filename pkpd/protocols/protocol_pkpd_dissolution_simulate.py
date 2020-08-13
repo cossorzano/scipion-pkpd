@@ -28,7 +28,7 @@ import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.models.dissolution_models import *
 from pkpd.protocols.protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable, PKPDFitting, PKPDSampleFit
 from pkpd.pkpd_units import createUnit, strUnit
 
 # tested in test_workflow_dissolution.py
@@ -186,12 +186,50 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
         tF = self.resampleTF.get()
         deltaT = self.resampleT.get()
         t = np.arange(t0, tF + deltaT, deltaT)
+        self.model.setExperiment(self.experimentSimulated)
+        self.model.setXVar("t")
+        self.model.setYVar("A")
+        self.model.calculateParameterUnits(newSample)
         y = self.model.forwardModel(self.model.parameters, t)
         newSample.addMeasurementColumn("t", t)
         newSample.addMeasurementColumn("A", y[0])
 
         self.experimentSimulated.samples[newSample.sampleName] = newSample
-        self.experimentSimulated.write(self._getPath("experimentSimulated.pkpd"))
+        fnExperiment = self._getPath("experimentSimulated.pkpd")
+        self.experimentSimulated.write(fnExperiment)
+
+        self.fittingSimulated = PKPDFitting()
+        self.fittingSimulated.fnExperiment.set(fnExperiment)
+        self.fittingSimulated.predictor=self.experimentSimulated.variables["t"]
+        self.fittingSimulated.predicted=self.experimentSimulated.variables["A"]
+        self.fittingSimulated.modelDescription=self.model.getDescription()
+        self.fittingSimulated.modelParameters = self.model.getParameterNames()
+        self.fittingSimulated.modelParameterUnits = self.model.parameterUnits
+
+        sampleFit = PKPDSampleFit()
+        sampleFit.sampleName = newSample.sampleName
+        sampleFit.x = [t]
+        sampleFit.y = y
+        sampleFit.yp = y
+        sampleFit.yl = y
+        sampleFit.yu = y
+        sampleFit.parameters = self.model.parameters
+        sampleFit.modelEquation = self.model.getEquation()
+
+        sampleFit.R2 = -1
+        sampleFit.R2adj = -1
+        sampleFit.AIC = -1
+        sampleFit.AICc = -1
+        sampleFit.BIC = -1
+        sampleFit.significance = ["NA" for prm in sampleFit.parameters]
+        sampleFit.lowerBound = ["NA" for prm in sampleFit.parameters]
+        sampleFit.upperBound = ["NA" for prm in sampleFit.parameters]
+
+        self.fittingSimulated.sampleFits.append(sampleFit)
+
+        fnFitting = self._getPath("fittingSimulated.pkpd")
+        self.fittingSimulated.write(fnFitting)
 
     def createOutputStep(self):
         self._defineOutputs(outputExperiment=self.experimentSimulated)
+        self._defineOutputs(outputFitting=self.fittingSimulated)
