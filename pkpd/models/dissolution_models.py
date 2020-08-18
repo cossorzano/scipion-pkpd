@@ -946,7 +946,11 @@ class DissolutionSplinesGeneric(DissolutionModel):
             Vmax=self.parameters[0]
             tmax=self.parameters[1]
             coefs=self.parameters[2:]
-            toPrint="Y=(%f)*Bspline(t,%d,%f,coefs=%s)"%(Vmax,self.nknots,tmax,np.array2string(coefs,max_line_width=1000))
+            if type(coefs)==list:
+                coefsStr = np.array2string(np.asarray(coefs),max_line_width=1000)
+            else:
+                coefsStr = np.array2string(coefs, max_line_width=1000)
+            toPrint="Y=(%f)*Bspline(t,%d,%f,coefs=%s)"%(Vmax,self.nknots,tmax,coefsStr)
         return toPrint
 
     def getParameterNames(self):
