@@ -83,6 +83,9 @@ class ProtPKPDImportFromText(ProtPKPD):
                        "     ev01 (extra-vascular first order 0 and then order 1), evFractional (extra-vascular fractional order)\n"\
                        "     ev0tlag1 (extra-vascular first order 0 for a fraction F0, tlag1 and then order 1 for 1-F0)\n"\
                        "     ev1-ev1Saturable (extra-vascular first order absorption with fast and slow absorption fractions, both absorptions can be saturated\n)"\
+                       "     doubleWeibull (double Weibull\n)"\
+                       "     splineN (Spline with N nodes\n)"\
+                       "     splineXYN (SplineXY with N nodes\n)"\
                        "Optional parameters are tlag (e.g. tlag=0)\n"\
                        "   and bioavailability (e.g. bioavailability=0.8)\n"\
                        "Examples:\n"\

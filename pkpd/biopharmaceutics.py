@@ -436,6 +436,57 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         return "First and First order absorption with saturation (%s)"%self.__class__.__name__
 
 
+class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
+    def getDescription(self):
+        return ['Exponential multiplier1','Exponential power1','Fraction1',
+                'Exponential multiplier2','Exponential power2','tlag2']
+
+    def getParameterNames(self):
+        return ['lambda1','b1','F1','tlag2','lambda2','btlag2']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,
+                               PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,tunits]
+        return self.paramterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return 0.0
+        lambda1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        lambda2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+
+        t2 = t-tlag2
+        f1 = F1*math.exp(-lambda1*math.pow(t,b1))
+        if t2>0:
+            f2=(1-F1)*math.exp(-lambda2*math.pow(t-tlag2,b2))
+        else:
+            f2=0
+        return self.Amax*(1-f1-f2)
+
+    def getEquation(self):
+        lambda1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        lambda2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        return "D(t)=%f*(1-(%f)*exp(-(%f)*t^(%f))-(%f)*exp(-(%f)*(t-(%f))^(%f))"%(self.Amax,F1,lambda1,b1,1-F1,lambda2,tlag2,b2)
+
+    def getModelEquation(self):
+        return "D(t)=Amax*(1-F1*exp(-lambda1*t^b1)-(1-F1)*exp(-lambda2*(t-tlag2)^b2)"
+
+    def getDescription(self):
+        return "Double Weibull absorption (%s)"%self.__class__.__name__
+
+    def areParametersValid(self, p):
+        return np.sum(p<0)==0 and p[2]>0 and p[2]<1
+
+
 class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
     def __init__(self):
         self.nknots=0
@@ -854,6 +905,8 @@ class PKPDVia:
                     self.viaProfile=BiopharmaceuticsModelOrder1AndOrder1()
                 elif self.via == "ev1-ev1Saturable":
                     self.viaProfile = BiopharmaceuticsModelOrder1AndOrder1Saturable()
+                elif self.via == "doubleWeibull":
+                    self.viaProfile = BiopharmaceuticsModelDoubleWeibull()
                 elif self.via=="spline2":
                     self.viaProfile=BiopharmaceuticsModelSpline2()
                 elif self.via=="spline3":
