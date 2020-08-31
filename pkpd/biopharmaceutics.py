@@ -448,7 +448,7 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
         tunits = self.ptrExperiment.getTimeUnits().unit
         self.parameterUnits = [PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,
                                PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,tunits]
-        return self.paramterUnits
+        return self.parameterUnits
 
     def getAg(self,t):
         if t<=0:
