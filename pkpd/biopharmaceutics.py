@@ -442,7 +442,7 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
                 'Exponential multiplier2','Exponential power2','tlag2']
 
     def getParameterNames(self):
-        return ['lambda1','b1','F1','tlag2','lambda2','btlag2']
+        return ['lambda1','b1','F1','lambda2','b2','tlag2']
 
     def calculateParameterUnits(self,sample):
         tunits = self.ptrExperiment.getTimeUnits().unit
@@ -463,7 +463,7 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
         t2 = t-tlag2
         f1 = F1*math.exp(-lambda1*math.pow(t,b1))
         if t2>0:
-            f2=(1-F1)*math.exp(-lambda2*math.pow(t-tlag2,b2))
+            f2=(1-F1)*math.exp(-lambda2*math.pow(t2,b2))
         else:
             f2=0
         return self.Amax*(1-f1-f2)
