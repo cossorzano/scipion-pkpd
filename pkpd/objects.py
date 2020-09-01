@@ -1395,6 +1395,9 @@ class PKPDOptimizer:
             print("   Best rmse so far=%f"%rmse)
             print("      at x=%s"%str(parameters))
             print("      e=%s"%str(e))
+            # print("      yTarget=%s"%str(yTarget))
+            # print("      yTargetLog=%s"%str(yTargetLog))
+            # print("      y=%s"%str(y))
             sys.stdout.flush()
             self.bestRmse=rmse
         elif self.Nevaluations%100==0:
