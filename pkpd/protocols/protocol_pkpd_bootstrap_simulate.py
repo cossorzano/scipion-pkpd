@@ -191,9 +191,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 accumn = Cavglist[ndose]/Cavglist[ndose-1]
             else:
                 accumn = 0
-            print("Dose #%d: Cavg= %f [%s] Cmin= %f [%s] Tmin= %d [min] Cmax= %f [%s] Tmax= %d [min] Fluct= %f %% Accum(1)= %f %% Accum(n)= %f %% SSFrac(n)= %f %% AUC= %f [%s] AUMC= %f [%s]"%\
-                  (ndose+1,Cavglist[ndose], strUnit(self.Cunits.unit), Cminlist[ndose],strUnit(self.Cunits.unit), int(Tminlist[ndose]), Cmaxlist[ndose], strUnit(self.Cunits.unit),
-                   int(Tmaxlist[ndose]), fluctuation*100, Cavglist[ndose]/Cavglist[0]*100, accumn*100, Cavglist[ndose]/Cavglist[-1]*100, AUClist[ndose],strUnit(self.AUCunits),
+            print("Dose #%d: Cavg= %f [%s] Cmin= %f [%s] Tmin= %d [%s] Cmax= %f [%s] Tmax= %d [%s] Fluct= %f %% Accum(1)= %f %% Accum(n)= %f %% SSFrac(n)= %f %% AUC= %f [%s] AUMC= %f [%s]"%\
+                  (ndose+1,Cavglist[ndose], strUnit(self.Cunits.unit), Cminlist[ndose],strUnit(self.Cunits.unit), int(Tminlist[ndose]), strUnit(self.experiment.getTimeUnits().unit), Cmaxlist[ndose], strUnit(self.Cunits.unit),
+                   int(Tmaxlist[ndose]), strUnit(self.experiment.getTimeUnits().unit), fluctuation*100, Cavglist[ndose]/Cavglist[0]*100, accumn*100, Cavglist[ndose]/Cavglist[-1]*100, AUClist[ndose],strUnit(self.AUCunits),
                    AUMClist[ndose],strUnit(self.AUMCunits)))
 
         self.AUC0t = float(AUClist[-1])
@@ -209,12 +209,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
-        print("   MRT=%f [min]"%self.MRT)
+        print("   MRT=%f [%s]"%(self.MRT,strUnit(self.experiment.getTimeUnits().unit)))
         print("   Cmax=%f [%s]"%(self.Cmax,strUnit(self.Cunits.unit)))
         print("   Cmin=%f [%s]"%(self.Cmin,strUnit(self.Cunits.unit)))
         print("   Cavg=%f [%s]"%(self.Cavg,strUnit(self.Cunits.unit)))
-        print("   Tmax=%f [min]"%self.Tmax)
-        print("   Tmin=%f [min]"%self.Tmin)
+        print("   Tmax=%f [%s]"%(self.Tmax,strUnit(self.experiment.getTimeUnits().unit)))
+        print("   Tmin=%f [%s]"%(self.Tmin,strUnit(self.experiment.getTimeUnits().unit)))
 
     def runSimulate(self, objId, Nsimulations, confidenceInterval, doses):
         self.protODE = self.inputODE.get()
@@ -443,7 +443,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         limits = np.percentile(AUMCarray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
         limits = np.percentile(MRTarray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(MRTarray)))
+        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit),np.mean(MRTarray)))
         limits = np.percentile(CminArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CminArray)))
         limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
