@@ -140,6 +140,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 tperiodF =  np.max(t)-1
             idx0 = find_nearest(t,tperiod0)
             idxF = find_nearest(t,tperiodF)
+            if idxF>=len(t)-1:
+                idxF=len(t)-2
 
             AUC0t = 0
             AUMC0t = 0
@@ -267,8 +269,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         self.model.setXVar(self.varNameX)
         self.model.setYVar(self.varNameY)
         Nsamples = int(math.ceil((self.tF.get()-self.t0.get())/self.model.deltaT))+1
-        if tvar.units == PKPDUnit.UNIT_TIME_MIN:
-            Nsamples*=60
+        # if tvar.units == PKPDUnit.UNIT_TIME_MIN:
+        #     Nsamples*=60
         self.model.x = [self.t0.get()+i*self.model.deltaT for i in range(0,Nsamples)]
         self.modelList.append(self.model)
 
