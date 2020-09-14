@@ -395,7 +395,7 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
             A50gamma = math.pow(A50,gamma)
             A0log = math.log(A0)
             Arapid = math.exp(((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t) / A50gamma -
-                         wrightOmega(math.log(1 / A50gamma) +
+                         wrightomega(math.log(1 / A50gamma) +
                                     (gamma * ((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t)) / A50gamma) / gamma)
         except:
             Arapid = 0.0
