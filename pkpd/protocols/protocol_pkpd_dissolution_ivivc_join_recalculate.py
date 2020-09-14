@@ -266,7 +266,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.experimentsInVitro = []
         idx=1
         for ptrProt in self.inputIVIVCs:
-            parametersInVitro, vesselNames = ptrProt.get().getInVitroModels()
+            parametersInVitro, vesselNames, tvitroMax = ptrProt.get().getInVitroModels()
             profilesInVivo, sampleNames = ptrProt.get().getInVivoProfiles()
             self.parametersInVitro.append(parametersInVitro)
             self.vesselNames.append(vesselNames)
