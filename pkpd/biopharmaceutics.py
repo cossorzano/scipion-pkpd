@@ -367,7 +367,7 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
         return self.parameterUnits
 
     def getAg(self,t):
-        if t<=0:
+        if t<0:
             return 0.0
         ka1max = self.parameters[0]
         kamt150 = self.parameters[1]
@@ -399,7 +399,10 @@ class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
                                     (gamma * ((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t)) / A50gamma) / gamma)
         except:
             Arapid = 0.0
-        return Aslow+Arapid
+        retval = Aslow+Arapid
+        if np.iscomplexobj(retval):
+            retval = np.real(retval)
+        return retval
 
     def getEquation(self):
         ka1max = self.parameters[0]
