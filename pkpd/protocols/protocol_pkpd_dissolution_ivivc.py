@@ -178,8 +178,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         idx = np.isnan(self.residualsBackward)
         self.residualsBackward[idx] = self.AdissolUnique[idx]
 
-        errorForward = np.mean(self.residualsForward ** 2)
-        errorBackward = np.mean(self.residualsBackward ** 2)
+        errorForward = np.sqrt(np.mean(self.residualsForward ** 2))
+        errorBackward = np.sqrt(np.mean(self.residualsBackward ** 2))
         if errorForward > errorBackward:
             self.residuals = self.residualsForward
         else:
@@ -241,7 +241,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return np.asarray(tokens,dtype=np.float64)
 
     def produceAdissol(self,parameterInVitro,tmax):
-        tvitro = np.arange(0,tmax+1,1)
+        deltaT=np.min((tmax+1)/1000,1.0)
+        tvitro = np.arange(0,tmax+1,deltaT)
         if self.removeInVitroTlag:
             i=0
             for prmName in self.protFit.model.getParameterNames():
@@ -551,9 +552,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             retval.append("Time scaling: power transformation (tvivo=k*tvitro^alpha)")
         elif self.timeScale.get()==5:
             retval.append("Time scaling: delayed power transformation (tvivo=k*(tvitro-t0)^alpha)")
-        if self.responseScale.get()==0:
-            retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
+        if self.responseScale.get() == 0:
+            retval.append("Response scaling: none")
         elif self.responseScale.get()==1:
+            retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
+        elif self.responseScale.get()==2:
             retval.append("Response scaling: Fabs(t)=A*Adissol(t)+B")
         self.addFileContentToMessage(retval,self._getPath("summary.txt"))
         return retval
