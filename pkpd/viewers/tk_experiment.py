@@ -547,9 +547,12 @@ class ExperimentWindow(gui.Window):
 
             samples = [self.experiment.samples[k] for k in sampleKeys]
             for s in samples:
-                if not s.sampleName in self.plotDict:
+                if not s.sampleName in self.plotDict or not doShow:
                     x, y = self.getPlotValues(s)
-                    ax.plot(x, y, label=s.sampleName)
+                    label = s.sampleName
+                    if not doShow:
+                        label+=" "+self.getTimeVarName()+" vs "+self.getMeasureVarName()
+                    ax.plot(x, y, label=label)
                     self.plotDict[s.sampleName] = True
             leg = ax.legend()
             if leg:
