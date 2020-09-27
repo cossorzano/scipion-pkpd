@@ -241,7 +241,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return np.asarray(tokens,dtype=np.float64)
 
     def produceAdissol(self,parameterInVitro,tmax):
-        deltaT=np.min((tmax+1)/1000,1.0)
+        deltaT=np.min([(tmax+1)/1000,1.0])
         tvitro = np.arange(0,tmax+1,deltaT)
         if self.removeInVitroTlag:
             i=0
@@ -490,11 +490,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         elif self.timeScale.get() == 5:
             timeStr = "k*(t-t0)^alpha"
         if self.responseScale.get() == 0:
-            eqStr = "Fabs(%s)=Adissol(t)" % timeStr
+            eqStr = "Fabs(t)=Adissol(%s)" % timeStr
         elif self.responseScale.get() == 1:
-            eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
+            eqStr = "Fabs(t)=A*Adissol(%s)" % timeStr
         elif self.responseScale.get() == 2:
-            eqStr = "Fabs(%s)=A*Adissol(t)+B" % timeStr
+            eqStr = "Fabs(t)=A*Adissol(%s)+B" % timeStr
         self.doublePrint(fh,"IVIVC equation: %s"%eqStr)
         fh.close()
 
@@ -543,15 +543,15 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if self.timeScale.get()==0:
             retval.append("Time scaling: none")
         elif self.timeScale.get()==1:
-            retval.append("Time scaling: t0 (tvivo=tvitro-t0)")
+            retval.append("Time scaling: t0 (tvitro=tvivo-t0)")
         elif self.timeScale.get()==2:
-            retval.append("Time scaling: linear transformation (tvivo=k*tvitro)")
+            retval.append("Time scaling: linear transformation (tvitro=k*tvivo)")
         elif self.timeScale.get()==3:
-            retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-t0))")
+            retval.append("Time scaling: affine transformation (tvitro=k*(tvivo-t0))")
         elif self.timeScale.get()==4:
-            retval.append("Time scaling: power transformation (tvivo=k*tvitro^alpha)")
+            retval.append("Time scaling: power transformation (tvitro=k*tvivo^alpha)")
         elif self.timeScale.get()==5:
-            retval.append("Time scaling: delayed power transformation (tvivo=k*(tvitro-t0)^alpha)")
+            retval.append("Time scaling: delayed power transformation (tvitro=k*(tvivo-t0)^alpha)")
         if self.responseScale.get() == 0:
             retval.append("Response scaling: none")
         elif self.responseScale.get()==1:
