@@ -1162,6 +1162,9 @@ class PKPDDose:
         excelWriteRow(outStr,wb,row)
         return row+1
 
+    def __str__(self):
+        return self.getDoseString2()
+
     def getDoseString(self):
         if self.doseType == PKPDDose.TYPE_BOLUS:
             doseString = "bolus; t=%f" % self.t0
