@@ -326,17 +326,13 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             else:
                 raise Exception("Cannot find %s in the scaling keys"%sampleFitVivo.sampleName)
             nfit = int(random.uniform(0, len(self.allTimeScalings[keyToUse])))
-            A = self.dissolutionModel.forwardModel(dissolutionPrm, t)[0]
-
-            tvitroUnique, AdissolUnique = uniqueFloatValues(t, A)
-            Bdissol = InterpolatedUnivariateSpline(tvitroUnique, AdissolUnique, k=1)
 
             tvitroLevy, tvivoLevy = self.allTimeScalings[keyToUse][nfit]
             tvivoLevyUnique, tvitroLevyUnique = uniqueFloatValues(tvivoLevy, tvitroLevy)
             BLevy = InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique, k=1)
 
             tvitro = np.asarray(BLevy(t), dtype=np.float64)
-            A = np.asarray(Bdissol(tvitro), dtype=np.float64)
+            A = self.dissolutionModel.forwardModel(dissolutionPrm, tvitro)[0]
 
             if self.conversionType.get()==0:
                 # In vitro-in vivo correlation
