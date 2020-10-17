@@ -39,10 +39,8 @@ from pkpd.utils import parseOperation, uniqueFloatValues
 
 
 class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
-    """ Join several IVIVCs into a single one. The strategy is to compute the average of all the plots involved in the
-        IVIVC process: 1) tvivo -> tvitro; 2) tvitro -> Adissol; 3) Adissol->FabsPredicted. The plot tvivo-Fabs comes
-        after the IVIVC process, while the plot tvivo-FabsOrig is the observed one in the input files. These two
-        plots need not be exactly the same. """
+    """ Join several IVIVCs into a single one. Look for a single time transformation and response transformation
+        such that all input pairs of in vitro and in vivo profiles are satisfied simultaneously."""
 
     _label = 'dissol ivivc join recalculate'
 
@@ -91,6 +89,11 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.tvivoUnique = tvivoUnique
         self.tvitroUnique = tvitroUnique
 
+        # Recover variables
+        for prm in self.coeffTimeList+self.coeffResponseList:
+            if not prm.startswith("tvivo") and not prm.startswith("tvitro"):
+                exec("%s=self.prm_%s" % (prm, prm)) # These are not spline parameters
+
         # Forward error
         if self.parsedTimeOperation is None:
             # Splines for time
@@ -137,6 +140,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             i = 0
             for prm in self.coeffTimeList:
                 exec ("%s=%f" % (prm, x[i]))
+                exec ("self.prm_%s=%f" % (prm, x[i]))
                 i += 1
             i0 = i
             tvivoXUnique = None
@@ -152,6 +156,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             i = i0
             for prm in self.coeffResponseList:
                 exec ("%s=%f" % (prm, x[i]))
+                exec ("self.prm_%s=%f" % (prm, x[i]))
                 i += 1
             adissolXUnique0 = None
             fabsXUnique0 = None
@@ -407,4 +412,3 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabsSingle)
             self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabs)
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabs)
-
