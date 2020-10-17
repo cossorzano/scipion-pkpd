@@ -89,3 +89,8 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  June 2020.
         - Ev1-Ev1 Saturable model added
         - Complex simulations added
+
+October 2020.
+	- Three compartments PK model added
+
+

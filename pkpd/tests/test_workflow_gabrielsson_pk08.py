@@ -62,8 +62,8 @@ class TestGabrielssonPK08Workflow(TestWorkflow):
         self.assertIsNotNone(protChangeTimeUnit.outputExperiment.fnPKPD, "There was a problem with changing units")
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
-        # Fit a two-compartmentx model with intravenous absorption to a set of measurements
-        print "Fitting a two-compartmentx model (intravenous)..."
+        # Fit a two-compartments model with intravenous absorption to a set of measurements
+        print "Fitting a two-compartments model (intravenous)..."
         protPKPDIVTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - iv two-compartments',
                                                      globalSearch=False,
@@ -87,6 +87,39 @@ class TestGabrielssonPK08Workflow(TestWorkflow):
         fitting.load(protPKPDIVTwoCompartments.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
         self.assertTrue(fitting.sampleFits[0].AIC<-70)
+
+        # Fit a three-compartments model with intravenous absorption to a set of measurements
+        print
+        "Fitting a three-compartments model (intravenous)..."
+        protPKPDIVThreeCompartments = self.newProtocol(ProtPKPDThreeCompartments,
+                                                     objLabel='pkpd - iv three-compartments',
+                                                     globalSearch=False,
+                                                     bounds='(0.0, 0.2); (0.0, 115.0); (0.0, 1.4); (0.0, 115.0); (0.0, 0.4); (0.0, 115.0)')
+        protPKPDIVThreeCompartments.inputExperiment.set(protChangeTimeUnit.outputExperiment)
+        self.launchProtocol(protPKPDIVThreeCompartments)
+        self.assertIsNotNone(protPKPDIVThreeCompartments.outputExperiment.fnPKPD,
+                             "There was a problem with the three-compartmental model ")
+        self.assertIsNotNone(protPKPDIVThreeCompartments.outputFitting.fnFitting,
+                             "There was a problem with the three-compartmental model ")
+        self.validateFiles('protPKPDIVThreeCompartments', protPKPDIVThreeCompartments)
+        experiment = PKPDExperiment()
+        experiment.load(protPKPDIVThreeCompartments.outputExperiment.fnPKPD)
+        Cl = float(experiment.samples['Individual'].descriptors['Cl'])
+        Clpa = float(experiment.samples['Individual'].descriptors['Clpa'])
+        Clpb = float(experiment.samples['Individual'].descriptors['Clpb'])
+        V = float(experiment.samples['Individual'].descriptors['V'])
+        Vpa = float(experiment.samples['Individual'].descriptors['Vpa'])
+        Vpb = float(experiment.samples['Individual'].descriptors['Vpb'])
+        self.assertTrue(Cl > 0.099 and Cl < 0.12)
+        self.assertTrue(Clpa > 1.33 and Clpa < 1.43)
+        self.assertTrue(Clpb > 0.17 and Clpb < 0.27)
+        self.assertTrue(V > 40 and V < 60)
+        self.assertTrue(Vpa > 26 and Vpa < 36)
+        self.assertTrue(Vpb > 36 and Vpb < 46)
+        fitting = PKPDFitting()
+        fitting.load(protPKPDIVThreeCompartments.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2 > 0.99)
+        self.assertTrue(fitting.sampleFits[0].AIC < -80)
 
 if __name__ == "__main__":
     unittest.main()
