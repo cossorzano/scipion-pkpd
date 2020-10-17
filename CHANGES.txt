@@ -90,6 +90,11 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
         - Ev1-Ev1 Saturable model added
         - Complex simulations added
 
+ October 2020.
+	- Three compartments added
+	- Extravascular Order 1 with 4 absorption vias added
+
+
 October 2020.
 	- Three compartments PK model added
 

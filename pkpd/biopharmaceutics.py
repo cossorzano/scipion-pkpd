@@ -489,6 +489,61 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
     def areParametersValid(self, p):
         return np.sum(p<0)==0 and p[2]>0 and p[2]<1
 
+class BiopharmaceuticsModelOrder1Multiple4(BiopharmaceuticsModel):
+    """ Br J Clin Pharmacol. 2013 Dec;76(6):868-79. doi: 10.1111/bcp.12118.
+        Determination of the pharmacokinetics of glycopyrronium in the lung using a population pharmacokinetic
+        modelling approach. Christian Bartels 1, Michael Looby, Romain Sechaud, Guenther Kaiser
+
+        There are 4 entry vias:
+        - F1, Order1: F1*(1-exp(-Ka1*t))
+        - (1-F1), Remaining:
+            - Slow: (1-F1)*Fslow*(1-exp(-Kaslow*t))
+            - Medium: (1-F1)*Fmed*(1-exp(-Kamed*t))
+            - Fast: (1-F1)*(1-Fmed-Fslow)
+    """
+    def getDescription(self):
+        return ['Fraction 1','Absorption rate 1','Fraction medium','Absorption rate medium','Fraction slow',
+                'Absorption rate slow']
+
+    def getParameterNames(self):
+        return ['F1','Ka1','Fmed','Kamed','Fslow','Kaslow']
+
+    def calculateParameterUnits(self,sample):
+        Kunits = inverseUnits(self.ptrExperiment.getTimeUnits().unit)
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, Kunits, PKPDUnit.UNIT_NONE, Kunits, PKPDUnit.UNIT_NONE, Kunits]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0:
+            return 0.0
+        F1 = self.parameters[0]
+        Ka1 = self.parameters[1]
+        Fmed = self.parameters[2]
+        Kamed = self.parameters[3]
+        Fslow = self.parameters[4]
+        Kaslow = self.parameters[5]
+        via1 = F1*math.exp(-Ka1*t)
+        viafast = (1-F1)*(1-Fmed-Fslow)
+        viamed = (1-F1)*Fmed*math.exp(-Kamed*t)
+        viaslow = (1-F1)*Fslow*math.exp(-Kaslow*t)
+        return self.Amax*(via1 + viafast + viamed + viaslow)
+
+    def getEquation(self):
+        F1 = self.parameters[0]
+        Ka1 = self.parameters[1]
+        Fmed = self.parameters[2]
+        Kamed = self.parameters[3]
+        Fslow = self.parameters[4]
+        Kaslow = self.parameters[5]
+        return "D(t)=(%f)*(%f*(1-exp(-%f*t)) + (1-%f)*(1-%f*exp(-%f*t)-%f*exp(-%f*t)))"%\
+                  (self.Amax,F1,Ka1,F1,Fmed,Kamed,Fslow,Kaslow)
+
+    def getModelEquation(self):
+        return "D(t)=F1*(1-exp(-Ka1*t)) + (1-F1)*(1-Fmed*exp(-Kamed*t)-Fslow*exp(-Kaslow*t))"
+
+    def getDescription(self):
+        return "Multiple first order absorption (%s)"%self.__class__.__name__
+
 
 class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
     def __init__(self):
@@ -902,6 +957,8 @@ class PKPDVia:
                     self.viaProfile = BiopharmaceuticsModelOrder01Tlag1()
                 elif self.via=="ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1()
+                elif self.via == "ev1x4":
+                    self.viaProfile = BiopharmaceuticsModelOrder1Multiple4()
                 elif self.via=="evFractional":
                     self.viaProfile=BiopharmaceuticsModelOrderFractional()
                 elif self.via=="ev1-ev1":
