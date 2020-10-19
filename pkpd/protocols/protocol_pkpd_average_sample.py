@@ -40,6 +40,9 @@ class ProtPKPDAverageSample(ProtPKPD):
         Protocol created by http://www.kinestatpharma.com\n """
     _label = 'average sample'
 
+    MODE_MEAN = 0
+    MODE_MEDIAN = 1
+
     #--------------------------- DEFINE param functions --------------------------------------------
 
     def _defineParams(self, form):
@@ -47,6 +50,8 @@ class ProtPKPDAverageSample(ProtPKPD):
         form.addParam('inputExperiment', params.PointerParam, label="Input experiment",
                       pointerClass='PKPDExperiment',
                       help='Select an experiment with samples')
+        form.addParam('mode', params.EnumParam, label='Aggregation mode', choices=['Mean','Median'],
+                      default=self.MODE_MEAN)
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling. This is only valid when the label to compare is a measurement.')
@@ -115,7 +120,10 @@ class ProtPKPDAverageSample(ProtPKPD):
                     observations[ti].append(y[i])
             for ti in observations:
                 if len(observations[ti])>0:
-                    observations[ti]=np.mean(observations[ti])
+                    if self.mode.get()==self.MODE_MEAN:
+                        observations[ti]=np.mean(observations[ti])
+                    else:
+                        observations[ti] = np.median(observations[ti])
                 else:
                     observations[ti]=np.nan
 
