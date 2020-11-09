@@ -249,16 +249,21 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
     def addSample(self, set, sampleName, individualFrom, vesselFrom, optimum, R):
+        # Remove NANs
+        idx = np.isnan(self.tvitroReinterpolated)
+        idx = np.logical_or(idx,np.isnan(self.AdissolReinterpolated))
+        idx = np.logical_or(idx,np.isnan(self.FabsPredicted))
+
         newSampleFabs = PKPDSample()
         newSampleFabs.sampleName = sampleName
         newSampleFabs.variableDictPtr = self.outputExperimentFabsSingle.variables
         newSampleFabs.descriptors = {}
-        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated)
-        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
-        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique)
-        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
+        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated[~idx])
+        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated[~idx])
+        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique[~idx])
+        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted[~idx])
         if set==1:
-            newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique)
+            newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique[~idx])
         if set==1:
             outputExperiment = self.outputExperimentFabs
         else:
@@ -411,10 +416,13 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0 = self.getAxes(optimum.x)
         i=1
         for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax, vesselName, sampleName in self.allPairs:
-            self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
-            R = ProtPKPDDissolutionIVIVCSplines.calculateR(self)
-            self.addSample(1, "ivivc_%d"%i, sampleName, vesselName, optimum.x, R)
-            i+=1
+            try:
+                self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
+                R = ProtPKPDDissolutionIVIVCSplines.calculateR(self)
+                self.addSample(1, "ivivc_%d"%i, sampleName, vesselName, optimum.x, R)
+                i+=1
+            except:
+                pass
         self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
         self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
 
