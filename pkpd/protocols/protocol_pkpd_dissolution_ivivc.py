@@ -165,8 +165,12 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
 
     def guaranteeMonotonicity(self):
-            self.FabsPredicted = np.clip(smoothPchip(self.FabsUnique, self.FabsPredicted),0,100)
-            self.AdissolPredicted = np.clip(smoothPchip(self.AdissolUnique, self.AdissolPredicted),0,100)
+        idx = np.isnan(self.FabsUnique)
+        idx = np.logical_or(idx,np.isnan(self.FabsPredicted))
+        self.FabsPredicted[~idx] = np.clip(smoothPchip(self.FabsUnique[~idx], self.FabsPredicted[~idx]),0,100)
+        idx = np.isnan(self.AdissolUnique)
+        idx = np.logical_or(idx,np.isnan(self.AdissolPredicted))
+        self.AdissolPredicted[~idx] = np.clip(smoothPchip(self.AdissolUnique[~idx], self.AdissolPredicted[~idx]),0,100)
 
     def calculateIndividualError(self, x, tvitroUnique, tvivoUnique):
         self.guaranteeMonotonicity()
