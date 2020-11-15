@@ -91,7 +91,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
 
         # Recover variables
         for prm in self.coeffTimeList+self.coeffResponseList:
-            if not prm.startswith("tvivo") and not prm.startswith("tvitro"):
+            if not prm.startswith("tvivo") and not prm.startswith("tvitro") and not prm.startswith('adissol') and not prm.startswith('fabs'):
                 exec("%s=self.prm_%s" % (prm, prm)) # These are not spline parameters
 
         # Forward error
