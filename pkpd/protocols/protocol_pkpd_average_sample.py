@@ -107,17 +107,35 @@ class ProtPKPDAverageSample(ProtPKPD):
                                                    self.experiment.groups)
 
         for mvarName in mvarNames:
+            allt = {}
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
+                t, _ = sample.getXYValues(tvarName,mvarName)
+                t=t[0] # [[...]] -> [...]
+                for i in range(len(t)):
+                    ti = float(t[i])
+                    if not ti in allt:
+                        allt[ti] = True
+            allt = sorted(allt.keys())
+
             observations={}
+            for ti in allt:
+                observations[ti] = []
+
             for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
                 print("%s participates in the average"%sampleName)
                 t, y = sample.getXYValues(tvarName,mvarName)
                 t=t[0] # [array]
                 y=y[0] # [array]
-                for i in range(len(t)):
-                    ti = float(t[i])
-                    if not ti in observations.keys():
-                        observations[ti]=[]
-                    observations[ti].append(y[i])
+                tUnique, yUnique = uniqueFloatValues(t,y)
+                B = InterpolatedUnivariateSpline(tUnique, yUnique, k=1)
+
+                mint = np.min(t)
+                maxt = np.max(t)
+
+                for ti in allt:
+                    if ti>=mint and ti<=maxt:
+                        observations[ti].append(B(ti))
+
             for ti in observations:
                 if len(observations[ti])>0:
                     if self.mode.get()==self.MODE_MEAN:
