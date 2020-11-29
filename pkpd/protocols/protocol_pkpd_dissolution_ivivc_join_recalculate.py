@@ -262,8 +262,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated[~idx])
         newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique[~idx])
         newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted[~idx])
-        if set==1:
-            newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique[~idx])
+        newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique[~idx])
         if set==1:
             outputExperiment = self.outputExperimentFabs
         else:
