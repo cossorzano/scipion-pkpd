@@ -45,7 +45,7 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
                       label="Allow lag", default=False,
                       help='Allow lag time before starting dissolution (t-tlag)')
         form.addParam('modelType', params.EnumParam, choices=["Zero order", "First order", "Fractional", "Weibull",
-                                                              "Double Weibull", "Higuchi",
+                                                              "Double Weibull", "Triple Weibull", "Higuchi",
                                                               "Korsmeyer-Peppas", "Hixson-Crowell", "Hopfenberg",
                                                               "Hill",
                                                               "Makoid-Banakar",
@@ -57,6 +57,7 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
                            'Fractional order: Y=Ymax-pow(Ymax^alpha-alpha*beta*t,1/alpha))\n' \
                            'Weibull: Y=Ymax*(1-exp(-lambda*t^b))\n' \
                            'Double Weibull: Y=Ymax*(F1*(1-exp(-lambda1*t^b1))+(1-F1)*(1-exp(-lambda2*(t-tlag2)^b2)))\n' \
+                           'Triple Weibull: Y=Ymax*(F1*(1-exp(-lambda1*t^b1))+F2*(1-exp(-lambda2*(t-tlag2)^b2))+(1-F1-F2)*(1-exp(-lambda3*(t-tlag3)^b3)))\n' \
                            'Higuchi: Y=Ymax*t^0.5\n' \
                            'Korsmeyer-Peppas: Y=Ymax*t^m\n' \
                            'Hixson-Crowell: Y=Ymax*(1-(1-K*t)^3)\n'
@@ -71,6 +72,7 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
                            'Fractional order: [tlag]; Ymax;beta;alpha\n'
                            'Weibull: [tlag]; Ymax;lambda;b\n'
                            'Double Weibull: [tlag]; Ymax; lambda1; b1; F1; tlag2; lambda2; b2\n'
+                           'Triple Weibull: [tlag]; Ymax; lambda1; b1; F1; tlag2; lambda2; b2; F2; tlag3; lambda3; b3\n'
                            'Higuchi: [tlag]; Ymax\n'
                            'Korsmeyer-Peppas: [tlag]; Ymax; m\n'
                            'Hixson-Crowell: [tlag]; Ymax; K\n'
@@ -144,34 +146,36 @@ class ProtPKPDDissolutionSimulate(ProtPKPD):
         elif self.modelType.get() == 4:
             self.model = DissolutionDoubleWeibull()
         elif self.modelType.get() == 5:
-            self.model = DissolutionHiguchi()
+            self.model = DissolutionTripleWeibull()
         elif self.modelType.get() == 6:
-            self.model = DissolutionKorsmeyer()
+            self.model = DissolutionHiguchi()
         elif self.modelType.get() == 7:
-            self.model = DissolutionHixson()
+            self.model = DissolutionKorsmeyer()
         elif self.modelType.get() == 8:
-            self.model = DissolutionHopfenberg()
+            self.model = DissolutionHixson()
         elif self.modelType.get() == 9:
-            self.model = DissolutionHill()
+            self.model = DissolutionHopfenberg()
         elif self.modelType.get() == 10:
-            self.model = DissolutionMakoidBanakar()
+            self.model = DissolutionHill()
         elif self.modelType.get() == 11:
-            self.model = DissolutionSplines2()
+            self.model = DissolutionMakoidBanakar()
         elif self.modelType.get() == 12:
-            self.model = DissolutionSplines3()
+            self.model = DissolutionSplines2()
         elif self.modelType.get() == 13:
-            self.model = DissolutionSplines4()
+            self.model = DissolutionSplines3()
         elif self.modelType.get() == 14:
-            self.model = DissolutionSplines5()
+            self.model = DissolutionSplines4()
         elif self.modelType.get() == 15:
-            self.model = DissolutionSplines6()
+            self.model = DissolutionSplines5()
         elif self.modelType.get() == 16:
-            self.model = DissolutionSplines7()
+            self.model = DissolutionSplines6()
         elif self.modelType.get() == 17:
-            self.model = DissolutionSplines8()
+            self.model = DissolutionSplines7()
         elif self.modelType.get() == 18:
-            self.model = DissolutionSplines9()
+            self.model = DissolutionSplines8()
         elif self.modelType.get() == 19:
+            self.model = DissolutionSplines9()
+        elif self.modelType.get() == 20:
             self.model = DissolutionSplines10()
         self.model.allowTlag = self.allowTlag.get()
         self.model.parameters = [float(x) for x in self.parameters.get().split(';')]
