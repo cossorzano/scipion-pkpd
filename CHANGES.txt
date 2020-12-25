@@ -95,6 +95,9 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
 	- Extravascular Order 1 with 4 absorption vias added
 	- Average sample protocol can now calculate the median of the input samples
 
+December 2020.
+	- Triple Weibull added as absorption and dissolution
+
 
 October 2020.
 	- Three compartments PK model added

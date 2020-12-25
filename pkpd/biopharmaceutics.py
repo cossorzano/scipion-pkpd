@@ -489,6 +489,73 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
     def areParametersValid(self, p):
         return np.sum(p<0)==0 and p[2]>0 and p[2]<1
 
+class BiopharmaceuticsModelTripleWeibull(BiopharmaceuticsModel):
+    def getDescription(self):
+        return ['Time1 63%','Exponential power1','Fraction1',
+                'Time2 63%','Exponential power2','tlag2', 'Fraction2',
+                'Time3 63%','Exponential power3','tlag3']
+
+
+    def getParameterNames(self):
+        return ['td1','b1','F1','td2','b2','tlag2','F2','td3','b3','tlag3']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [tunits,PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,
+                               tunits,PKPDUnit.UNIT_NONE,tunits, PKPDUnit.UNIT_NONE,
+                               tunits,PKPDUnit.UNIT_NONE,tunits]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return 0.0
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        F2 = self.parameters[6]
+        td3 = self.parameters[7]
+        b3 = self.parameters[8]
+        tlag3 = self.parameters[9]
+
+        f1 = F1*math.exp(-math.pow(t/td1,b1))
+        t2 = t-tlag2
+        if t2>0:
+            f2=F2*math.exp(-math.pow(t2/td2,b2))
+        else:
+            f2=0
+        t3 = t-tlag3
+        if t3>0:
+            f3=(1-F1-F2)*math.exp(-math.pow(t3/td3,b3))
+        else:
+            f3=0
+        return self.Amax*(f1+f2+f3)
+
+    def getEquation(self):
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        F2 = self.parameters[6]
+        td3 = self.parameters[7]
+        b3 = self.parameters[8]
+        tlag3 = self.parameters[9]
+        return "D(t)=%f*(1-(%f)*exp(-(t/%f)^(%f))-(%f)*exp(-((t-%f)/%f)^(%f)-(%f)*exp(-((t-%f)/%f)^(%f)))"%\
+               (self.Amax,F1,td1,b1,F2,tlag2,td2,b2,1-F1-F2,tlag3,td3,b3)
+
+    def getModelEquation(self):
+        return "D(t)=Amax*(1-F1*exp(-(t/td1)^b1)-F2*exp(-((t-tlag2)/td2)^b2)-(1-F1-F2)*exp(-((t-tlag3)/td3)^b3))"
+
+    def getDescription(self):
+        return "Triple Weibull absorption (%s)"%self.__class__.__name__
+
+    def areParametersValid(self, p):
+        return np.sum(p<0)==0 and p[2]>0 and p[2]<1 and p[6]>0 and p[6]<1
+
 class BiopharmaceuticsModelOrder1Multiple4(BiopharmaceuticsModel):
     """ Br J Clin Pharmacol. 2013 Dec;76(6):868-79. doi: 10.1111/bcp.12118.
         Determination of the pharmacokinetics of glycopyrronium in the lung using a population pharmacokinetic
@@ -967,6 +1034,8 @@ class PKPDVia:
                     self.viaProfile = BiopharmaceuticsModelOrder1AndOrder1Saturable()
                 elif self.via == "doubleWeibull":
                     self.viaProfile = BiopharmaceuticsModelDoubleWeibull()
+                elif self.via == "tripleWeibull":
+                    self.viaProfile = BiopharmaceuticsModelTripleWeibull()
                 elif self.via=="spline2":
                     self.viaProfile=BiopharmaceuticsModelSpline2()
                 elif self.via=="spline3":
