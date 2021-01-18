@@ -2,3 +2,6 @@ include *.txt
 include *.rst
 include *.pkpd
 include LICENSE
+
+# Incluye pkpd data tests
+include pkpd/data/*
