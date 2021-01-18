@@ -154,7 +154,7 @@ class ProtPKPDDissolutionIVIVCSplines(ProtPKPDDissolutionIVIVCGeneric):
         return coeffResponseList
 
     def calculateAllIvIvC(self, objId1, objId2):
-        self.parametersInVitro, self.vesselNames=self.getInVitroModels()
+        self.parametersInVitro, self.vesselNames,_=self.getInVitroModels()
         self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
         self.createOutputExperiments(set=1)

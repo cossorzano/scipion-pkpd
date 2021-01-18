@@ -77,7 +77,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-65)
 
         # Fit a two-compartmentx model with intravenous absorption to a set of measurements
-        print("Fitting a two-compartmentx model (intravenous)...")
+        print("Fitting a two-compartments model (intravenous)...")
         protODERefine = self.newProtocol(ProtPKPDODERefine,
                                                      objLabel='pkpd - ode refinement')
         protODERefine.inputODE.set(protPKPDIVTwoCompartments)

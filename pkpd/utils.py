@@ -60,7 +60,7 @@ def parseRange(auxString):
 
 def find_nearest(array,value):
     idx = np.searchsorted(array, value, side="left")
-    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
+    if idx > 0 and (idx >= len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
         return idx-1
     else:
         return idx
@@ -159,7 +159,7 @@ def calculateAUC0t(t, C):
             if C[idx-1]>0 and C[idx]>0:
                 decrement = C[idx-1]/C[idx]
                 K = math.log(decrement)
-                B = K/dt
+                # B = K/dt
                 AUC0t[idx] = AUC0t[idx-1]+dt*(C[idx-1]-C[idx])/K
             else:
                 AUC0t[idx] = AUC0t[idx-1]
@@ -252,12 +252,20 @@ def excelAdjustColumnWidths(workbook, sheetName=""):
         length = max(len(as_text(cell.value)) for cell in column_cells)
         sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
 
-def computeXYmean(XYlist, Nxsteps=300):
-    xmin = 1e38
-    xmax = -1e38
+def computeXYmean(XYlist, Nxsteps=300, common=False):
+    xmin = None
+    xmax = None
     for x,_ in XYlist:
-        xmin = min(xmin, np.min(x))
-        xmax = max(xmax, np.max(x))
+        if xmin is None:
+            xmin=np.min(x)
+            xmax=np.max(x)
+        else:
+            if common:
+                xmin = max(xmin, np.min(x))
+                xmax = min(xmax, np.max(x))
+            else:
+                xmin = min(xmin, np.min(x))
+                xmax = max(xmax, np.max(x))
 
     dataDict = {}  # key will be x values
     xrange = np.arange(xmin, xmax, (xmax - xmin) / Nxsteps)

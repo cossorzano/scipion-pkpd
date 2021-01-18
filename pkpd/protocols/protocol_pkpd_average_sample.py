@@ -40,6 +40,9 @@ class ProtPKPDAverageSample(ProtPKPD):
         Protocol created by http://www.kinestatpharma.com\n """
     _label = 'average sample'
 
+    MODE_MEAN = 0
+    MODE_MEDIAN = 1
+
     #--------------------------- DEFINE param functions --------------------------------------------
 
     def _defineParams(self, form):
@@ -47,6 +50,8 @@ class ProtPKPDAverageSample(ProtPKPD):
         form.addParam('inputExperiment', params.PointerParam, label="Input experiment",
                       pointerClass='PKPDExperiment',
                       help='Select an experiment with samples')
+        form.addParam('mode', params.EnumParam, label='Aggregation mode', choices=['Mean','Median'],
+                      default=self.MODE_MEAN)
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling. This is only valid when the label to compare is a measurement.')
@@ -71,23 +76,23 @@ class ProtPKPDAverageSample(ProtPKPD):
         if self.condition.get()!="":
             self.experiment.general["title"]+=" Condition: %s"%self.condition.get()
         self.experiment.general["comment"]=copy.copy(experiment.general["comment"])
-        for key, value in experiment.general.items():
+        for key, value in experiment.general.iteritems():
             if not (key in self.experiment.general):
                 self.experiment.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in experiment.variables.items():
+        for key, value in experiment.variables.iteritems():
             if not (key in self.experiment.variables):
                 self.experiment.variables[key] = copy.copy(value)
 
         # Vias
-        for key, value in experiment.vias.items():
+        for key, value in experiment.vias.iteritems():
             if not (key in self.experiment.vias):
                 self.experiment.vias[key] = copy.copy(value)
 
         # Doses
         doseName = None
-        for key, value in experiment.doses.items():
+        for key, value in experiment.doses.iteritems():
             dose = copy.copy(value)
             self.experiment.doses[dose.doseName] = dose
             doseName = dose.doseName
@@ -102,20 +107,42 @@ class ProtPKPDAverageSample(ProtPKPD):
                                                    self.experiment.groups)
 
         for mvarName in mvarNames:
+            allt = {}
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
+                t, _ = sample.getXYValues(tvarName,mvarName)
+                t=t[0] # [[...]] -> [...]
+                for i in range(len(t)):
+                    ti = float(t[i])
+                    if not ti in allt:
+                        allt[ti] = True
+            allt = sorted(allt.keys())
+
             observations={}
             for sampleName, sample in experiment.getSubGroup(self.condition.get()).items():
+                for ti in allt:
+                    observations[ti] = []
+
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
                 print("%s participates in the average"%sampleName)
                 t, y = sample.getXYValues(tvarName,mvarName)
                 t=t[0] # [array]
                 y=y[0] # [array]
-                for i in range(len(t)):
-                    ti = float(t[i])
-                    if not ti in observations.keys():
-                        observations[ti]=[]
-                    observations[ti].append(y[i])
+                tUnique, yUnique = uniqueFloatValues(t,y)
+                B = InterpolatedUnivariateSpline(tUnique, yUnique, k=1)
+
+                mint = np.min(t)
+                maxt = np.max(t)
+
+                for ti in allt:
+                    if ti>=mint and ti<=maxt:
+                        observations[ti].append(B(ti))
+
             for ti in observations:
                 if len(observations[ti])>0:
-                    observations[ti]=np.mean(observations[ti])
+                    if self.mode.get()==self.MODE_MEAN:
+                        observations[ti]=np.mean(observations[ti])
+                    else:
+                        observations[ti] = np.median(observations[ti])
                 else:
                     observations[ti]=np.nan
 

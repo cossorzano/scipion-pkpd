@@ -112,7 +112,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         sample.descriptors["AUC0t"] = self.AUC0t
         sample.descriptors["AUMC0t"] = self.AUMC0t
 
-    def runAnalysis(self,objId,xvarName):
+    def runAnalysis(self,objId, xvarName):
         self.outputExperiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
 
         tvarName = None
@@ -127,7 +127,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
 
         self.Cunits = self.outputExperiment.variables[xvarName].units
         self.AUCunits = multiplyUnits(tvar.units.unit, self.Cunits.unit)
@@ -149,7 +149,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         MRTvar.varName = "MRT"
         MRTvar.varType = PKPDVariable.TYPE_NUMERIC
         MRTvar.role = PKPDVariable.ROLE_LABEL
-        MRTvar.units = createUnit("min")
+        MRTvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
 
         Cmaxvar = PKPDVariable()
         Cmaxvar.varName = "Cmax"
@@ -161,7 +161,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         Tmaxvar.varName = "Tmax"
         Tmaxvar.varType = PKPDVariable.TYPE_NUMERIC
         Tmaxvar.role = PKPDVariable.ROLE_LABEL
-        Tmaxvar.units = createUnit("min")
+        Tmaxvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
 
         self.outputExperiment.variables["AUC0t"] = AUCvar
         self.outputExperiment.variables["AUMC0t"] = AUMCvar

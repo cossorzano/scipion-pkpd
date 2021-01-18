@@ -82,6 +82,11 @@ class ProtPKPDImportFromText(ProtPKPD):
                        "Valid ViaTypes are: iv (intravenous), ev0 (extra-vascular order 0), ev1 (extra-vascular order 1), \n"\
                        "     ev01 (extra-vascular first order 0 and then order 1), evFractional (extra-vascular fractional order)\n"\
                        "     ev0tlag1 (extra-vascular first order 0 for a fraction F0, tlag1 and then order 1 for 1-F0)\n"\
+                       "     ev1-ev1Saturable (extra-vascular first order absorption with fast and slow absorption fractions, both absorptions can be saturated\n)"\
+                       "     doubleWeibull (double Weibull\n)"\
+                       "     tripleWeibull (triple Weibull\n)"\
+                       "     splineN (Spline with N nodes\n)"\
+                       "     splineXYN (SplineXY with N nodes\n)"\
                        "Optional parameters are tlag (e.g. tlag=0)\n"\
                        "   and bioavailability (e.g. bioavailability=0.8)\n"\
                        "Examples:\n"\
@@ -214,7 +219,9 @@ class ProtPKPDImportFromCSV(ProtPKPDImportFromText):
         form.addParam('noHeader', params.BooleanParam, default=False, label="No header",
                       help="There is no header in the CSV (e.g., this is the case of data taken from "
                       "WebPlotDigitizer, https://apps.automeris.io/wpd). If this is the case, "
-                      "it is assumed that the columns of the CSV are in the same order as the variables are defined.")
+                      "it is assumed that the columns of the CSV are in the same order as the variables are defined."
+                      "A typical header structure is SampleName;t;Cp. Note that the column SampleName is very important, "
+                      "and it should have this name")
         form.addParam('delimiter', params.StringParam, label='CSV Delimiter', default=";", help="Delimiter between fields in the CSV")
         form.addParam('sampleNameForm', params.StringParam, default="Individual", condition="noHeader",
                       label="Sample name")
@@ -308,7 +315,10 @@ class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
                 if i-i0 > 0:
                     allMeasurements = []
                 for j in range(sheet.max_column):
-                    cellValue = str(sheet.cell(row=i + 1, column=j + 1).value).strip()
+                    cellValue = sheet.cell(row=i + 1, column=j + 1).value
+                    if cellValue is None:
+                        continue
+                    cellValue = str(cellValue).strip()
                     if cellValue == "":
                         continue
                     if i-i0 == 0 and j >= 1:

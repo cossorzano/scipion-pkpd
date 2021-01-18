@@ -42,7 +42,7 @@ class ProtPKPDDeconvolutionLooRiegelman(ProtPKPD):
 
         The formula is Fabs(t)=(Cp(t)+Cperipheral(t)+K10*AUC0t(t))/(K10*AUC0inf)
         where K10=Cl/V and
-        Cperipheral(t_n)=k12*Delta Cp*Delta t/2+k12/k21 * Cp(t_n-1)(1-exp(-k21*Delta t)+Cperipheral(t_n-1)*exp(-k21*Delta t)
+        Cperipheral(t_n)=k12*Delta Cp*Delta t/2+k12/k21 * Cp(t_n-1)(1-exp(-k21*Delta t))+Cperipheral(t_n-1)*exp(-k21*Delta t)
 
         In this implementation it is assumed that AUC0inf is the last AUC0t observed,
         meaning that Cp(t) has almost vanished in the last samples.
@@ -105,7 +105,7 @@ class ProtPKPDDeconvolutionLooRiegelman(ProtPKPD):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
         Avar = PKPDVariable()
         Avar.varName = "A"

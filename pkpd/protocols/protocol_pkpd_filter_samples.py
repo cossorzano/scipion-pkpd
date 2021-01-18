@@ -94,6 +94,10 @@ class ProtPKPDFilterSamples(ProtPKPD):
                         value = sample.descriptors[key]
                         if value=="NA":
                             conditionPython="False"
+                        elif value == "NS":
+                            conditionPython = "False"
+                        elif value == "":
+                            conditionPython = "False"
                         else:
                             if filterType!="rmNA":
                                 if variable.varType == PKPDVariable.TYPE_NUMERIC:

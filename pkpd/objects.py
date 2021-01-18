@@ -39,6 +39,7 @@ from pyworkflow.plugin import PluginInfo
 
 from .pkpd_units import (PKPDUnit, convertUnits, changeRateToMinutes,
                         changeRateToWeight)
+from .pkpd_units import PKPDUnit, convertUnits, changeRateTo, changeRateToWeight
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pwem.objects import *
@@ -226,17 +227,27 @@ class PKPDSample:
     def getSampleName(self):
         return self.sampleName
 
+    def getTimeVariable(self):
+        for varName in self.variableDictPtr:
+            if self.variableDictPtr[varName].isTime():
+                return varName
+
+    def getTimeUnits(self):
+        timeName = self.getTimeVariable()
+        return self.variableDictPtr[timeName].units
+
+
     def interpretDose(self):
         self.parsedDoseList = []
         firstUnit = None
         for doseName in sorted(self.doseList):
             dose = copy.copy(self.doseDictPtr[doseName])
             dose.doseAmount = self.evaluateExpression(dose.doseAmount)
-            dose.changeTimeUnitsToMinutes()
+            dose.changeTimeUnitsTo(self.getTimeUnits().unit)
             dose.prepare()
 
             if dose.doseType == PKPDDose.TYPE_INFUSION:
-                dose.doseAmount, dose.dunits.unit = changeRateToMinutes(dose.doseAmount, dose.dunits.unit)
+                dose.doseAmount, dose.dunits.unit = changeRateTo(self.getTimeUnits().unit, dose.doseAmount, dose.dunits.unit)
 
             if firstUnit==None:
                 firstUnit = dose.dunits.unit
@@ -289,7 +300,7 @@ class PKPDSample:
         for n in range(0,len(tokens)):
             ok=True
             varName = self.measurementPattern[n]
-            if tokens[n]=="NA" or tokens[n]=="ULOQ" or tokens[n]=="LLOQ":
+            if tokens[n]=="NA" or tokens[n]=="ULOQ" or tokens[n]=="LLOQ" or "LLOQ" in tokens[n]:
                 ok = (self.variableDictPtr[varName].role != PKPDVariable.ROLE_TIME)
             if ok:
                 exec("self.measurement_%s.append('%s')"%(varName,tokens[n]))
@@ -371,7 +382,7 @@ class PKPDSample:
                     try:
                         toPrint.append(float(aux[i]))
                     except:
-                        if isinstance(aux[i], str):
+                        if isinstance(aux[i],basestring):
                             toPrint.append(aux[i])
                         else:
                             toPrint.append("")
@@ -383,7 +394,7 @@ class PKPDSample:
             return [None, None]
         else:
             aux = getattr(self,"measurement_%s"%varName)
-            aux = [x for x in aux if x != "NA" and x!="LLOQ" and x!="ULOQ" and x!="None"]
+            aux = [x for x in aux if x != "NA" and (not x in "LLOQ") and x!="ULOQ" and x!="None" and x!="MS"]
             x = np.asarray(aux, dtype=np.double)
             return [x.min(),x.max()]
 
@@ -415,7 +426,7 @@ class PKPDSample:
                 xPartial =[]
                 yPartial = []
                 for x, y in izip(xs, ysi):
-                    if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ":
+                    if x != "NA" and (not "LLOQ" in x) and y!="ULOQ" and y != "NA" and ("LLOQ" not in y) and y!="ULOQ":
                         xPartial.append(float(x))
                         yPartial.append(float(y))
                 xl.append(np.array(xPartial))
@@ -426,7 +437,8 @@ class PKPDSample:
             yPartial = []
             for x, y in izip(xs, ys):
                 if x != "NA" and x!="LLOQ" and y!="ULOQ" and y != "NA" and y!= "LLOQ" and y!="ULOQ" and \
-                   x!= "None" and y!="None":
+                   x!= "None" and x!="MS" and y!="None" and x!="NS" and y!="NS" and \
+                   (not "LLOQ" in x) and (not "LLOQ" in y) and y!="MS" and y!="NRE" and y!="NR":
                     xPartial.append(float(x))
                     if "[" in y:
                         y=y.replace("[","").replace("]","")
@@ -441,7 +453,7 @@ class PKPDSample:
     def substituteValuesInExpression(self, expression, prefix=""):
         expressionPython = copy.copy(expression)
         if self.descriptors is not None:
-            for key, variable in self.variableDictPtr.items():
+            for key, variable in self.variableDictPtr.iteritems():
                 if key in self.descriptors:
                     value = self.descriptors[key]
                     if value=="NA" or value=="LLOQ" or value=="ULOQ":
@@ -666,7 +678,7 @@ class PKPDExperiment(EMObject):
 
     def _printToStream(self,fh):
         fh.write("[EXPERIMENT] ===========================\n")
-        for key, value in self.general.items():
+        for key, value in self.general.iteritems():
             fh.write("%s = %s\n"%(key,value))
         fh.write("\n")
 
@@ -706,7 +718,7 @@ class PKPDExperiment(EMObject):
 
         currentRow = 1
         excelWriteRow("EXPERIMENT",wb,currentRow,bold=True); excelFillCells(wb,currentRow); currentRow+=1
-        for key, value in self.general.items():
+        for key, value in self.general.iteritems():
             excelWriteRow([key,value],wb,currentRow); currentRow+=1
         currentRow+=1
 
@@ -746,7 +758,7 @@ class PKPDExperiment(EMObject):
     def getRange(self,varName):
         vmin = None
         vmax = None
-        for key, value in self.samples.items():
+        for key, value in self.samples.iteritems():
             vmini, vmaxi = value.getRange(varName)
             if vmin==None or vmini<vmin:
                 vmin = vmini
@@ -756,14 +768,14 @@ class PKPDExperiment(EMObject):
 
     def sampleSummary(self):
         summary=[]
-        for varName, var in self.variables.items():
+        for varName, var in self.variables.iteritems():
             if var.role == PKPDVariable.ROLE_LABEL:
                 toAdd = varName+": "
                 if var.varType==PKPDVariable.TYPE_NUMERIC:
                     listOfValues=[]
                 else:
                     listOfValues={}
-                for sampleName, sample in self.samples.items():
+                for sampleName, sample in self.samples.iteritems():
                     value = sample.descriptors[varName]
                     if var.varType==PKPDVariable.TYPE_NUMERIC:
                         listOfValues.append(float(value))
@@ -786,7 +798,7 @@ class PKPDExperiment(EMObject):
 
     def getXYMeanValues(self,varNameX,varNameY):
         XYlist = []
-        for sampleName, sample in self.samples.items():
+        for sampleName, sample in self.samples.iteritems():
             xValues, yValues = sample.getXYValues(varNameX,varNameY)
             XYlist.append((xValues,yValues))
         return computeXYmean(XYlist)
@@ -866,21 +878,21 @@ class PKPDExperiment(EMObject):
         if condition=="":
             return self.samples
         samplesSubGroup = {}
-        for sampleName, sample in self.samples.items():
+        for sampleName, sample in self.samples.iteritems():
             if sample.evaluateExpression(condition):
                 samplesSubGroup[sampleName] = sample
         return samplesSubGroup
 
     def getSubGroupLabels(self,condition,labelName):
         subgroupLabels = []
-        for sampleName, sample in self.samples.items():
+        for sampleName, sample in self.samples.iteritems():
             if condition!="" and sample.evaluateExpression(condition) or condition=="":
                 subgroupLabels.append(sample.descriptors[labelName])
         return subgroupLabels
 
     def getNonBolusDoses(self):
         nonBolusList = []
-        for sampleName, sample in self.samples.items():
+        for sampleName, sample in self.samples.iteritems():
             sample.interpretDose()
             if not sample.isDoseABolus():
                 nonBolusList.append(sampleName)
@@ -901,6 +913,10 @@ class PKPDExperiment(EMObject):
             if self.variables[varName].isTime():
                 return varName
 
+    def getTimeUnits(self):
+        timeName = self.getTimeVariable()
+        return self.variables[timeName].units
+
     def getMeasurementVariables(self):
         retval=[]
         for varName in self.variables:
@@ -912,18 +928,18 @@ class PKPDExperiment(EMObject):
         newExperiment = PKPDExperiment()
 
         # General
-        for key, value in self.general.items():
+        for key, value in self.general.iteritems():
             if not (key in newExperiment.general):
                 newExperiment.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in self.variables.items():
+        for key, value in self.variables.iteritems():
             if not (key in newExperiment.variables):
                 newExperiment.variables[key] = copy.copy(value)
 
         # Doses
         viasSubset = []
-        for key, value in self.doses.items():
+        for key, value in self.doses.iteritems():
             dose = copy.copy(value)
             newExperiment.doses[dose.doseName] = dose
             viasSubset.append(dose.via.viaName)
@@ -936,7 +952,7 @@ class PKPDExperiment(EMObject):
         newExperiment.groups = {}
         for sampleName in listOfSampleNames:
             sample = copy.copy(self.samples[sampleName])
-            for groupName, group in self.groups.items():
+            for groupName, group in self.groups.iteritems():
                 if sampleName in group.sampleList:
                     if not groupName in newExperiment.groups.keys():
                         newExperiment.groups[groupName]=PKPDGroup(groupName)
@@ -946,27 +962,27 @@ class PKPDExperiment(EMObject):
 
     def gather(self, otherExperiment):
         # General
-        for key, value in otherExperiment.general.items():
+        for key, value in otherExperiment.general.iteritems():
             if not (key in self.general):
                 self.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in otherExperiment.variables.items():
+        for key, value in otherExperiment.variables.iteritems():
             if not (key in self.variables):
                 self.variables[key] = copy.copy(value)
 
         # Doses
-        for key, value in otherExperiment.doses.items():
+        for key, value in otherExperiment.doses.iteritems():
             if not (key in self.doses):
                 self.doses[key] = copy.copy(value)
 
         # Vias
-        for key, value in otherExperiment.vias.items():
+        for key, value in otherExperiment.vias.iteritems():
             if key not in self.vias:
                 self.vias[key] = copy.copy(value)
 
         # Samples
-        for key, value in otherExperiment.samples.items():
+        for key, value in otherExperiment.samples.iteritems():
             if key not in self.samples:
                 self.addSample(copy.copy(value))
 
@@ -1390,6 +1406,9 @@ class PKPDOptimizer:
             print("   Best rmse so far=%f"%rmse)
             print("      at x=%s"%str(parameters))
             print("      e=%s"%str(e))
+            # print("      yTarget=%s"%str(yTarget))
+            # print("      yTargetLog=%s"%str(yTargetLog))
+            # print("      y=%s"%str(y))
             sys.stdout.flush()
             self.bestRmse=rmse
         elif self.Nevaluations%100==0:
@@ -2197,6 +2216,30 @@ class PKPDFitting(EMObject):
         experiment.load(self.fnExperiment.get())
         return experiment
 
+    def getTimeUnits(self):
+        return self.loadExperiment().getTimeUnits()
+
+    def gather(self, otherFitting, experiment=None):
+        if not self.predictor:
+            self.predictor = copy.copy(otherFitting.predictor)
+        if not self.predicted:
+            self.predicted = copy.copy(otherFitting.predicted)
+        if self.modelDescription == "":
+            self.modelDescription = otherFitting.modelDescription
+
+        if len(self.modelParameters)==0:
+            self.modelParameters = copy.copy(otherFitting.modelParameters)
+        if len(self.modelParameterUnits)==0:
+            self.modelParameterUnits = copy.copy(otherFitting.modelParameterUnits)
+
+        for fit in otherFitting.sampleFits:
+            add = True
+            if experiment is not None:
+                if not fit.sampleName in experiment.samples:
+                    add=False
+            if add:
+                self.sampleFits.append(copy.copy(fit))
+
 
 class PKPDSampleSignalAnalysis:
     def __init__(self):
@@ -2416,7 +2459,7 @@ class PKPDAllometricScale(EMObject):
         fh.write("\n")
         fh.write("[DATA] =========================================\n")
         fh.write("%s= %s\n"%(self.predictor,str(self.X)))
-        for varName, y in self.Y.items():
+        for varName, y in self.Y.iteritems():
             fh.write("%s= %s\n"%(varName,str(y)))
 
     def load(self,fnScale):
@@ -2610,9 +2653,12 @@ class PKPDDataSet:
         self._datasetDict[name] = self
         self.folder = folder
         import pkg_resources
-        package = PluginInfo('scipion-pkpd')._name
+        from pyworkflow.install.plugin_funcs import PluginInfo
+        package = PluginInfo('scipion-pkpd', 'scipion-pkpd',
+                             remote=False).pipName
         dist = pkg_resources.get_distribution(package).location
-        self.path = join(dist, 'pkpd', 'data', 'test', folder)
+        self.path = join(dist, 'pkpd',
+                         'data', 'test', folder)
         self.filesDict = files
         self.url = url
 
@@ -2623,14 +2669,6 @@ class PKPDDataSet:
 
     def getPath(self):
         return self.path
-
-    @classmethod
-    def getScipionPath(cls, *paths):
-        return os.path.join(pw.Config.SCIPION_HOME, *paths)
-
-    @classmethod
-    def getScipionScript(cls):
-        return cls.getScipionPath('scipion')
 
     @classmethod
     def getDataSet(cls, name):
@@ -2645,7 +2683,7 @@ class PKPDDataSet:
 
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, cls.getScipionScript(), folder, url))
+                       % (pw.PYTHON, pw.getScipionScript(), folder, url))
             print(">>>> %s" % command)
             os.system(command)
         return cls._datasetDict[name]

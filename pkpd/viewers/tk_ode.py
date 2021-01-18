@@ -63,6 +63,9 @@ class SamplesTreeProvider(TreeProvider):
                 'values': tuple(values)
                 }
 
+    def _sortEnabled(self):
+        return None
+
 
 class MinMaxSlider(tk.Frame):
     """

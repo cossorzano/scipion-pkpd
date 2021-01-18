@@ -214,6 +214,7 @@ class PKPDChooseVariableWizard(Wizard):
                                                'Cperipheral']),
                 (ProtPKPDTwoCompartmentsBothPD, ['predictor', 'predicted',
                                                  'Cperipheral', 'E']),
+                (ProtPKPDThreeCompartments, ['predictor', 'predicted']),
                 (ProtPKPDMonoCompartmentUrine, ['predicted']),
                 (ProtPKPDSimulateGenericPD, ['predictor']),
                 ]
@@ -485,6 +486,7 @@ class PKPDODEWizard(Wizard):
                 (ProtPKPDTwoCompartmentsClint, ['bounds']),
                 (ProtPKPDTwoCompartmentsClintMetabolite, ['bounds']),
                 (ProtPKPDTwoCompartmentsAutoinduction, ['bounds']),
+                (ProtPKPDThreeCompartments, ['bounds']),
                 (ProtPKPDGenericFit, ['bounds'])]
 
     _nonODE = [ProtPKPDGenericFit]

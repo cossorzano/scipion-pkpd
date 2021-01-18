@@ -169,8 +169,12 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
             self.doublePrint(fh,"%s: median=%f; 95%% Confidence interval=[%f,%f]"%(msg,p[1],p[0],p[2]))
 
     def guaranteeMonotonicity(self):
-            self.FabsPredicted = np.clip(smoothPchip(self.FabsUnique, self.FabsPredicted),0,100)
-            self.AdissolPredicted = np.clip(smoothPchip(self.AdissolUnique, self.AdissolPredicted),0,100)
+        idx = np.isnan(self.FabsUnique)
+        idx = np.logical_or(idx,np.isnan(self.FabsPredicted))
+        self.FabsPredicted[~idx] = np.clip(smoothPchip(self.FabsUnique[~idx], self.FabsPredicted[~idx]),0,100)
+        idx = np.isnan(self.AdissolUnique)
+        idx = np.logical_or(idx,np.isnan(self.AdissolPredicted))
+        self.AdissolPredicted[~idx] = np.clip(smoothPchip(self.AdissolUnique[~idx], self.AdissolPredicted[~idx]),0,100)
 
     def calculateIndividualError(self, x, tvitroUnique, tvivoUnique):
         self.guaranteeMonotonicity()
@@ -182,8 +186,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         idx = np.isnan(self.residualsBackward)
         self.residualsBackward[idx] = self.AdissolUnique[idx]
 
-        errorForward = np.mean(self.residualsForward ** 2)
-        errorBackward = np.mean(self.residualsBackward ** 2)
+        errorForward = np.sqrt(np.mean(self.residualsForward ** 2))
+        errorBackward = np.sqrt(np.mean(self.residualsBackward ** 2))
         if errorForward > errorBackward:
             self.residuals = self.residualsForward
         else:
@@ -245,7 +249,8 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return np.asarray(tokens,dtype=np.float64)
 
     def produceAdissol(self,parameterInVitro,tmax):
-        tvitro = np.arange(0,tmax+1,1)
+        deltaT=np.min([(tmax+1)/1000,1.0])
+        tvitro = np.arange(0,tmax+1,deltaT)
         if self.removeInVitroTlag:
             i=0
             for prmName in self.protFit.model.getParameterNames():
@@ -261,28 +266,28 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         tvitroVar.varName = "tvitro"
         tvitroVar.varType = PKPDVariable.TYPE_NUMERIC
         tvitroVar.role = PKPDVariable.ROLE_TIME
-        tvitroVar.units = createUnit("min")
+        tvitroVar.units = createUnit(self.experimentInVitro.getTimeUnits().unit)
         tvitroVar.comment = "tvitro"
 
         tvivoVar = PKPDVariable()
         tvivoVar.varName = "tvivo"
         tvivoVar.varType = PKPDVariable.TYPE_NUMERIC
         tvivoVar.role = PKPDVariable.ROLE_TIME
-        tvivoVar.units = createUnit("min")
+        tvivoVar.units = createUnit(self.experimentInVivo.getTimeUnits().unit)
         tvivoVar.comment = "tvivo"
 
         tvitroReinterpolatedVar = PKPDVariable()
         tvitroReinterpolatedVar.varName = "tvitroReinterpolated"
         tvitroReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
         tvitroReinterpolatedVar.role = PKPDVariable.ROLE_TIME
-        tvitroReinterpolatedVar.units = createUnit("min")
+        tvitroReinterpolatedVar.units = createUnit(self.experimentInVitro.getTimeUnits().unit)
         tvitroReinterpolatedVar.comment = "tvitro reinterpolated"
 
         tvivoReinterpolatedVar = PKPDVariable()
         tvivoReinterpolatedVar.varName = "tvivoReinterpolated"
         tvivoReinterpolatedVar.varType = PKPDVariable.TYPE_NUMERIC
         tvivoReinterpolatedVar.role = PKPDVariable.ROLE_TIME
-        tvivoReinterpolatedVar.units = createUnit("min")
+        tvivoReinterpolatedVar.units = createUnit(self.experimentInVivo.getTimeUnits().unit)
         tvivoReinterpolatedVar.comment = "tvivo reinterpolated"
 
         AdissolVar = PKPDVariable()
@@ -364,7 +369,7 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return R
 
     def calculateAllIvIvC(self, objId1, objId2):
-        self.parametersInVitro, self.vesselNames=self.getInVitroModels()
+        self.parametersInVitro, self.vesselNames, _=self.getInVitroModels()
         self.profilesInVivo, self.sampleNames=self.getInVivoProfiles()
 
         self.createOutputExperiments(set=1)
@@ -493,11 +498,11 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         elif self.timeScale.get() == 5:
             timeStr = "k*(t-t0)^alpha"
         if self.responseScale.get() == 0:
-            eqStr = "Fabs(%s)=Adissol(t)" % timeStr
+            eqStr = "Fabs(t)=Adissol(%s)" % timeStr
         elif self.responseScale.get() == 1:
-            eqStr = "Fabs(%s)=A*Adissol(t)" % timeStr
+            eqStr = "Fabs(t)=A*Adissol(%s)" % timeStr
         elif self.responseScale.get() == 2:
-            eqStr = "Fabs(%s)=A*Adissol(t)+B" % timeStr
+            eqStr = "Fabs(t)=A*Adissol(%s)+B" % timeStr
         self.doublePrint(fh,"IVIVC equation: %s"%eqStr)
         fh.close()
 
@@ -546,18 +551,20 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         if self.timeScale.get()==0:
             retval.append("Time scaling: none")
         elif self.timeScale.get()==1:
-            retval.append("Time scaling: t0 (tvivo=tvitro-t0)")
+            retval.append("Time scaling: t0 (tvitro=tvivo-t0)")
         elif self.timeScale.get()==2:
-            retval.append("Time scaling: linear transformation (tvivo=k*tvitro)")
+            retval.append("Time scaling: linear transformation (tvitro=k*tvivo)")
         elif self.timeScale.get()==3:
-            retval.append("Time scaling: affine transformation (tvivo=k*(tvitro-t0))")
+            retval.append("Time scaling: affine transformation (tvitro=k*(tvivo-t0))")
         elif self.timeScale.get()==4:
-            retval.append("Time scaling: power transformation (tvivo=k*tvitro^alpha)")
+            retval.append("Time scaling: power transformation (tvitro=k*tvivo^alpha)")
         elif self.timeScale.get()==5:
-            retval.append("Time scaling: delayed power transformation (tvivo=k*(tvitro-t0)^alpha)")
-        if self.responseScale.get()==0:
-            retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
+            retval.append("Time scaling: delayed power transformation (tvitro=k*(tvivo-t0)^alpha)")
+        if self.responseScale.get() == 0:
+            retval.append("Response scaling: none")
         elif self.responseScale.get()==1:
+            retval.append("Response scaling: Fabs(t)=A*Adissol(t)")
+        elif self.responseScale.get()==2:
             retval.append("Response scaling: Fabs(t)=A*Adissol(t)+B")
         self.addFileContentToMessage(retval,self._getPath("summary.txt"))
         return retval

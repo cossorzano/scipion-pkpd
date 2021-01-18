@@ -190,6 +190,9 @@ class SamplesTreeProvider(TreeProvider):
                 'values': tuple(values)
                 }
 
+    def _sortEnabled(self):
+        return None
+
 
 class MeasurementTreeProvider(TreeProvider):
     def __init__(self, sample):
@@ -319,13 +322,19 @@ class ExperimentWindow(gui.Window):
         lfGeneral = addTab('General')
         self._addLabel(lfGeneral, 'Title', 0, 0)
         self._titleVar = tk.StringVar()
-        self._titleVar.set(self.experiment.general['title'])
+        if 'title' in self.experiment.general:
+            self._titleVar.set(self.experiment.general['title'])
+        else:
+            self._titleVar.set("")
         titleEntry = tk.Entry(lfGeneral, width=26, textvariable=self._titleVar,
                               bg='white')
         titleEntry.grid(row=0, column=1, sticky='nw', padx=5, pady=(5, 0))
         self._addLabel(lfGeneral, 'Comment', 1, 0)
         commentText = gui.text.Text(lfGeneral, width=30, height=3, bg='white')
-        commentText.setText(self.experiment.general['comment'])
+        if 'comment' in self.experiment.general:
+            commentText.setText(self.experiment.general['comment'])
+        else:
+            commentText.setText("")
         commentText.grid(row=1, column=1, sticky='nw', padx=5, pady=(5, 0))
         self._commentText = commentText
 
@@ -543,9 +552,12 @@ class ExperimentWindow(gui.Window):
 
             samples = [self.experiment.samples[k] for k in sampleKeys]
             for s in samples:
-                if not s.sampleName in self.plotDict:
+                if not s.sampleName in self.plotDict or not doShow:
                     x, y = self.getPlotValues(s)
-                    ax.plot(x, y, label=s.sampleName)
+                    label = s.sampleName
+                    if not doShow:
+                        label+=" "+self.getTimeVarName()+" vs "+self.getMeasureVarName()
+                    ax.plot(x, y, label=label)
                     self.plotDict[s.sampleName] = True
             leg = ax.legend()
             if leg:

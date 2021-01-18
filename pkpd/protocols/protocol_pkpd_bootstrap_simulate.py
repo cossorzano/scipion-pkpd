@@ -32,7 +32,7 @@ import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_ode_base import ProtPKPDODEBase
-from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
+from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit, PKPDUnit
 from pkpd.utils import find_nearest
 
 # Tested in test_worokflow_deconvolution.py
@@ -45,6 +45,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
     PRM_POPULATION = 0
     PRM_USER_DEFINED = 1
+    PRM_FITTING = 2
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
@@ -52,8 +53,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDMonoCompartmentPD, ProtPKPDTwoCompartmentsBothPD, '\
                                    'ProtPKPDODERefine', help='Select a run of an ODE model')
-        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined'], default=0,
-                      help="Choose a population of parameters or your own")
+        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined','ODE Fitting'], default=0,
+                      help="Choose a population of parameters, your own parameters or a previously fitted set of measurements")
         form.addParam('inputPopulation', params.PointerParam, label="Input population", condition="paramsSource==0",
                       pointerClass='PKPDFitting', pointerCondition="isPopulation", help='It must be a fitting coming from a bootstrap sample')
         form.addParam('prmUser', params.TextParam, label="Simulation parameters", height=8, default="", condition="paramsSource==1",
@@ -61,6 +62,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            'that generated the ODE model. Example: \n'
                            'prm1, prm2, prm3, prm4\n'
                            'prmA, prmB, prmC, prmD')
+        form.addParam('inputFitting', params.PointerParam, label="Input ODE fitting", condition="paramsSource==2",
+                      pointerClass='PKPDFitting', help='It must be a fitting coming from a compartmental PK fitting')
         form.addParam('doses', params.TextParam, label="Doses", height=5, width=50,
                       default="RepeatedBolus ; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg",
                       help="Structure: [Dose Name] ; [Via] ; [Dose type] ; [time] ; [dose] \n"\
@@ -70,18 +73,20 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            "The description is either a bolus or an infusion as shown in the examples\n"\
                            "\nIt is important that there are two semicolons.\n"\
                            "Examples:\n"\
-                           "Infusion0; via=Intravenous; infusion; t=0.500000...0.750000 h; d=60 mg\n"\
+                           "Infusion0; via=Intravenous; infusion; t=0.500000:0.750000 h; d=60 mg/h\n"\
                            "Bolus0; via=Oral; bolus; t=0.000000 min; d=60 mg\n"\
                            "RepeatedBolus; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg")
-        form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
-        form.addParam('tF', params.FloatParam, label="Final time (h)", default=24*7)
+        form.addParam('t0', params.FloatParam, label="Initial time (see help)", default=0,
+                      help="Same units as input experiment")
+        form.addParam('tF', params.FloatParam, label="Final time (see help)", default=24*7,
+                      help="Same units as input experiment")
         form.addParam('Nsimulations', params.IntParam, label="Simulation samples", default=200, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
                       help='Number of simulations')
         form.addParam('addStats', params.BooleanParam, label="Add simulation statistics", default=True, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
                       help="Mean, lower and upper confidence levels are added to the output")
         form.addParam('confidenceLevel', params.FloatParam, label="Confidence interval", default=95, expertLevel=LEVEL_ADVANCED,
                       help='Confidence interval for the fitted parameters', condition="addStats and paramsSource==0")
-        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=False, condition="paramsSource==0", expertLevel=LEVEL_ADVANCED,
+        form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=False, expertLevel=LEVEL_ADVANCED,
                       help="Individual simulations are added to the output")
 
     #--------------------------- INSERT steps functions --------------------------------------------
@@ -135,6 +140,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 tperiodF =  np.max(t)-1
             idx0 = find_nearest(t,tperiod0)
             idxF = find_nearest(t,tperiodF)
+            if idxF>=len(t)-1:
+                idxF=len(t)-2
 
             AUC0t = 0
             AUMC0t = 0
@@ -184,9 +191,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 accumn = Cavglist[ndose]/Cavglist[ndose-1]
             else:
                 accumn = 0
-            print("Dose #%d: Cavg= %f [%s] Cmin= %f [%s] Tmin= %d [min] Cmax= %f [%s] Tmax= %d [min] Fluct= %f %% Accum(1)= %f %% Accum(n)= %f %% SSFrac(n)= %f %% AUC= %f [%s] AUMC= %f [%s]"%\
-                  (ndose+1,Cavglist[ndose], strUnit(self.Cunits.unit), Cminlist[ndose],strUnit(self.Cunits.unit), int(Tminlist[ndose]), Cmaxlist[ndose], strUnit(self.Cunits.unit),
-                   int(Tmaxlist[ndose]), fluctuation*100, Cavglist[ndose]/Cavglist[0]*100, accumn*100, Cavglist[ndose]/Cavglist[-1]*100, AUClist[ndose],strUnit(self.AUCunits),
+            print("Dose #%d: Cavg= %f [%s] Cmin= %f [%s] Tmin= %d [%s] Cmax= %f [%s] Tmax= %d [%s] Fluct= %f %% Accum(1)= %f %% Accum(n)= %f %% SSFrac(n)= %f %% AUC= %f [%s] AUMC= %f [%s]"%\
+                  (ndose+1,Cavglist[ndose], strUnit(self.Cunits.unit), Cminlist[ndose],strUnit(self.Cunits.unit), int(Tminlist[ndose]), strUnit(self.experiment.getTimeUnits().unit), Cmaxlist[ndose], strUnit(self.Cunits.unit),
+                   int(Tmaxlist[ndose]), strUnit(self.experiment.getTimeUnits().unit), fluctuation*100, Cavglist[ndose]/Cavglist[0]*100, accumn*100, Cavglist[ndose]/Cavglist[-1]*100, AUClist[ndose],strUnit(self.AUCunits),
                    AUMClist[ndose],strUnit(self.AUMCunits)))
 
         self.AUC0t = float(AUClist[-1])
@@ -202,12 +209,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
-        print("   MRT=%f [min]"%self.MRT)
+        print("   MRT=%f [%s]"%(self.MRT,strUnit(self.experiment.getTimeUnits().unit)))
         print("   Cmax=%f [%s]"%(self.Cmax,strUnit(self.Cunits.unit)))
         print("   Cmin=%f [%s]"%(self.Cmin,strUnit(self.Cunits.unit)))
         print("   Cavg=%f [%s]"%(self.Cavg,strUnit(self.Cunits.unit)))
-        print("   Tmax=%f [min]"%self.Tmax)
-        print("   Tmin=%f [min]"%self.Tmin)
+        print("   Tmax=%f [%s]"%(self.Tmax,strUnit(self.experiment.getTimeUnits().unit)))
+        print("   Tmin=%f [%s]"%(self.Tmin,strUnit(self.experiment.getTimeUnits().unit)))
 
     def runSimulate(self, objId, Nsimulations, confidenceInterval, doses):
         self.protODE = self.inputODE.get()
@@ -217,8 +224,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             self.experiment = self.readExperiment(self.protODE.outputExperiment1.fnPKPD)
         else:
             raise Exception("Cannot find an outputExperiment in the input ODE")
-        if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
+        if self.paramsSource.get()==ProtPKPDODESimulate.PRM_POPULATION:
             self.fitting = self.readFitting(self.inputPopulation.get().fnFitting, cls="PKPDSampleFitBootstrap")
+        elif self.paramsSource.get()==ProtPKPDODESimulate.PRM_FITTING:
+            self.fitting = self.readFitting(self.inputFitting.get().fnFitting)
         else:
             if hasattr(self.protODE, "outputFitting"):
                 self.fitting = self.readFitting(self.protODE.outputFitting.fnFitting)
@@ -240,7 +249,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
         self.outputExperiment.variables[self.varNameX] = tvar
         if type(self.fitting.predicted)!=list:
@@ -259,7 +268,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             self.model.deltaT = self.protODE.deltaT.get()
         self.model.setXVar(self.varNameX)
         self.model.setYVar(self.varNameY)
-        Nsamples = int(60*math.ceil((self.tF.get()-self.t0.get())/self.model.deltaT))+1
+        Nsamples = int(math.ceil((self.tF.get()-self.t0.get())/self.model.deltaT))+1
+        # if tvar.units == PKPDUnit.UNIT_TIME_MIN:
+        #     Nsamples*=60
         self.model.x = [self.t0.get()+i*self.model.deltaT for i in range(0,Nsamples)]
         self.modelList.append(self.model)
 
@@ -276,7 +287,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         auxSample.descriptors = {}
         auxSample.doseDictPtr = self.outputExperiment.doses
         auxSample.variableDictPtr = self.outputExperiment.variables
-        auxSample.doseList = [dosename]
+        auxSample.doseList = self.outputExperiment.doses.keys()
         auxSample.interpretDose()
         self.drugSource.setDoses(auxSample.parsedDoseList, self.t0.get()-10, self.tF.get()+10)
         self.model.drugSource = self.drugSource
@@ -288,13 +299,15 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         # Process user parameters
         if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
             Nsimulations = self.Nsimulations.get()
-        else:
+        elif self.paramsSource == ProtPKPDODESimulate.PRM_USER_DEFINED:
             lines = self.prmUser.get().strip().replace('\n',';;').split(';;')
             Nsimulations = len(lines)
             prmUser = []
             for line in lines:
                 tokens = line.strip().split(',')
                 prmUser.append([float(token) for token in tokens])
+        else:
+            Nsimulations = len(self.fitting.sampleFits)
 
         # Simulate the different responses
         simulationsX = self.model.x
@@ -318,8 +331,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 sampleFit = self.fitting.sampleFits[nfit]
                 nprm = int(random.uniform(0,sampleFit.parameters.shape[0]))
                 parameters = sampleFit.parameters[nprm,:]
-            else:
+            elif self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
                 parameters = np.asarray(prmUser[i],np.double)
+            else:
+                parameters = self.fitting.sampleFits[i].parameters
+                print("Sample name: %s"%self.fitting.sampleFits[i].sampleName)
+
             print("Simulated sample %d: %s"%(i,str(parameters)))
 
             # Prepare source and this object
@@ -358,7 +375,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     MRTvar.varName = "MRT"
                     MRTvar.varType = PKPDVariable.TYPE_NUMERIC
                     MRTvar.role = PKPDVariable.ROLE_LABEL
-                    MRTvar.units = createUnit("min")
+                    MRTvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cmaxvar = PKPDVariable()
                     Cmaxvar.varName = "Cmax"
@@ -370,7 +387,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     Tmaxvar.varName = "Tmax"
                     Tmaxvar.varType = PKPDVariable.TYPE_NUMERIC
                     Tmaxvar.role = PKPDVariable.ROLE_LABEL
-                    Tmaxvar.units = createUnit("min")
+                    Tmaxvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cminvar = PKPDVariable()
                     Cminvar.varName = "Cmin"
@@ -382,7 +399,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     Tminvar.varName = "Tmin"
                     Tminvar.varType = PKPDVariable.TYPE_NUMERIC
                     Tminvar.role = PKPDVariable.ROLE_LABEL
-                    Tminvar.units = createUnit("min")
+                    Tminvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
                     Cavgvar = PKPDVariable()
                     Cavgvar.varName = "Cavg"
@@ -415,7 +432,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             TmaxArray[i] = self.Tmax
             fluctuationArray[i] = self.fluctuation
             percentageAccumulationArray[i] = self.percentageAccumulation
-            if self.addIndividuals or self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
+            if self.addIndividuals or self.paramsSource!=ProtPKPDODESimulate.PRM_POPULATION:
                 self.addSample("Simulation_%d"%i, dosename, simulationsX, y[0])
 
         # Report NCA statistics
@@ -426,7 +443,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         limits = np.percentile(AUMCarray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"AUMC %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.AUMCunits),np.mean(AUMCarray)))
         limits = np.percentile(MRTarray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(MRTarray)))
+        self.doublePrint(fhSummary,"MRT %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit),np.mean(MRTarray)))
         limits = np.percentile(CminArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CminArray)))
         limits = np.percentile(CmaxArray,[alpha_2,100-alpha_2])
@@ -434,9 +451,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         limits = np.percentile(CavgArray,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Cavg %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.Cunits.unit),np.mean(CavgArray)))
         limits = np.percentile(TminArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TminArray)))
+        self.doublePrint(fhSummary,"Tmin %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit),np.mean(TminArray)))
         limits = np.percentile(TmaxArray,[alpha_2,100-alpha_2])
-        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [min] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],np.mean(TmaxArray)))
+        self.doublePrint(fhSummary,"Tmax %f%% confidence interval=[%f,%f] [%s] mean=%f"%(self.confidenceLevel.get(),limits[0],limits[1],strUnit(self.experiment.getTimeUnits().unit)
+                                                                                         ,np.mean(TmaxArray)))
         aux = fluctuationArray[~np.isnan(fluctuationArray)]
         limits = np.percentile(aux,[alpha_2,100-alpha_2])
         self.doublePrint(fhSummary,"Fluctuation %f%% confidence interval=[%f,%f] [%%] mean=%f"%(self.confidenceLevel.get(),limits[0]*100,limits[1]*100,np.mean(aux)*100))
@@ -477,6 +495,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         self._defineSourceRelation(self.inputODE.get(), self.outputExperiment)
         if self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
             self._defineSourceRelation(self.inputPopulation.get(), self.outputExperiment)
+        elif self.paramsSource==ProtPKPDODESimulate.PRM_POPULATION:
+            self._defineSourceRelation(self.inputFitting.get(), self.outputExperiment)
 
     #--------------------------- INFO functions --------------------------------------------
     def _summary(self):
@@ -484,8 +504,10 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         msg.append("Dose: %s"%self.doses.get())
         if self.paramsSource ==  ProtPKPDODESimulate.PRM_POPULATION:
             msg.append("Number of simulations: %d"%self.Nsimulations.get())
-        else:
+        elif self.paramsSource ==  ProtPKPDODESimulate.PRM_USER_DEFINED:
             msg.append("Parameters:\n"+self.prmUser.get())
+        else:
+            msg.append("Parameters from previous fitting")
         msg.append(" ")
         self.addFileContentToMessage(msg,self._getPath("summary.txt"))
         return msg

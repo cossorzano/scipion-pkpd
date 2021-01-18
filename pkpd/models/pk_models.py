@@ -325,7 +325,7 @@ class PK_Monocompartment(PKPDODEModel):
         return ['Cl','V']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName)
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -512,7 +512,7 @@ class PK_Twocompartments(PKPDODEModel):
         return ['Cl','V','Clp','Vp']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName)
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -670,7 +670,7 @@ class PK_TwocompartmentsClint(PKPDODEModel):
         return ['Vmax','Km','V','Clp','Vp']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName)
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -789,7 +789,7 @@ class PK_TwocompartmentsClintMetabolite(PKPDODEModel):
         return ['Vmax','Km','V','Clp','Vp','Clm','Vm']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -927,7 +927,7 @@ class PK_TwocompartmentsAutoinduction(PKPDODEModel):
         return ['E0', 'a', 'kout', 'V','Clp','Vp']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName)
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -1040,7 +1040,7 @@ class PK_MonocompartmentUrine(PKPDODEModel):
         return ['Cl','V','fe']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -1142,7 +1142,7 @@ class PK_MonocompartmentLinkPD(PKPDODEModel):
         return ['Cl','V','Clp','Vp','E0','a','b','Cbm']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Eunits = self.experiment.getVarUnits(self.yName[1])
         Vunits = divideUnits(self.Dunits,yunits)
@@ -1223,7 +1223,7 @@ class PK_MonocompartmentPD(PKPDODEModel):
         return ['Cl','V','E0','a','b','Cbm']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Eunits = self.experiment.getVarUnits(self.yName[1])
         Vunits = divideUnits(self.Dunits,yunits)
@@ -1292,7 +1292,7 @@ class PK_TwocompartmentsUrine(PKPDODEModel):
         return ['Cl','V','Clp','Vp','fe']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -1369,7 +1369,7 @@ class PK_TwocompartmentsBoth(PK_Twocompartments):
         return "Two-compartmental model both (%s)"%self.__class__.__name__
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Vunits = divideUnits(self.Dunits,yunits)
         Clunits = divideUnits(Vunits,xunits)
@@ -1429,7 +1429,7 @@ class PK_TwocompartmentsBothPD(PKPDODEModel):
         return ['Cl','V','Clp','Vp','E0','a','b','Cpm']
 
     def calculateParameterUnits(self,sample):
-        xunits = unitFromString("min")
+        xunits = self.experiment.getVarUnits(self.xName)
         yunits = self.experiment.getVarUnits(self.yName[0])
         Eunits = self.experiment.getVarUnits(self.yName[1])
         Vunits = divideUnits(self.Dunits,yunits)
@@ -1457,3 +1457,172 @@ class PK_TwocompartmentsBothPD(PKPDODEModel):
     def areParametersValid(self, p):
         return np.sum(p[0:4]<0)==0
 
+class PK_Threecompartments(PKPDODEModel):
+    def F(self, t, y):
+        Cl=self.parameters[0]
+        V=self.parameters[1]
+        Clpa=self.parameters[2]
+        Vpa=self.parameters[3]
+        Clpb=self.parameters[4]
+        Vpb=self.parameters[5]
+        C=y[0]
+        Cpa=y[1]
+        Cpb=y[2]
+
+        Q12a = Clpa * (C-Cpa)
+        Q12b = Clpb * (C-Cpb)
+        return np.array([-(Cl*C + Q12a + Q12b)/V, Q12a/Vpa, Q12b/Vpb],np.double)
+
+    def G(self, t, dD):
+        V=self.parameters[1]
+        return np.array([dD/V,0.0,0.0],np.double)
+
+    def getResponseDimension(self):
+        return 1
+
+    def getStateDimension(self):
+        return 3
+
+    def getDescription(self):
+        return "Three-compartments model (%s)"%self.__class__.__name__
+
+    def getModelEquation(self):
+        return "dC/dt = -Cl/V * C - Clpa/V * (C-Cpa) - Clpb/V * (C-Cpb) + 1/V * dD/dt and dCpa/dt = Clpa/Vpa * (C-Cpa) and  dCpb/dt = Clpb/Vpb * (C-Cpb)"
+
+    def getEquation(self):
+        Cl=self.parameters[0]
+        V=self.parameters[1]
+        Clpa=self.parameters[2]
+        Vpa=self.parameters[3]
+        Clpb=self.parameters[4]
+        Vpb=self.parameters[5]
+        return "dC/dt = -(%f)/(%f) * C - (%f)/(%f) * (C-Cpa) - (%f)/(%f) * (C-Cpb) + 1/(%f) * dD/dt and dCpa/dt = (%f)/(%f) * (C-Cpa) and dCpb/dt = (%f)/(%f) * (C-Cpb)"%\
+               (Cl,V,Clpa,V,Clpb,V,V,Clpa,Vpa,Clpb,Vpb)
+
+    def getParameterNames(self):
+        return ['Cl','V','Clpa','Vpa','Clpb','Vpb']
+
+    def calculateParameterUnits(self,sample):
+        xunits = self.experiment.getVarUnits(self.xName)
+        yunits = self.experiment.getVarUnits(self.yName)
+        Vunits = divideUnits(self.Dunits,yunits)
+        Clunits = divideUnits(Vunits,xunits)
+        self.parameterUnits = [Clunits,Vunits,Clunits,Vunits,Clunits,Vunits,Clunits,Vunits]
+        return self.parameterUnits
+
+    def areParametersSignificant(self, lowerBound, upperBound):
+        retval=[]
+        # Cl
+        ClLower = lowerBound[0]
+        ClUpper = upperBound[0]
+        if ClLower<0 and ClUpper>0:
+            retval.append("Suspicious, Cl looks like a constant")
+        elif ClLower<0:
+            retval.append("Suspicious, Cl may be unstable")
+        elif ClLower>0:
+            retval.append("True")
+        else:
+            retval.append("NA")
+
+        # V
+        VLower = lowerBound[1]
+        VUpper = upperBound[1]
+        if VLower<0 and VUpper>0:
+            retval.append("Suspicious, V looks like 0")
+        elif VUpper<0:
+            retval.append("Suspicious, V seems to be negative")
+        else:
+            retval.append("True")
+
+        # Clpa
+        ClLower = lowerBound[2]
+        ClUpper = upperBound[2]
+        if ClLower<0 and ClUpper>0:
+            retval.append("Suspicious, Clpa looks like a constant")
+        elif ClLower<0:
+            retval.append("Suspicious, Clpa may be unstable")
+        elif ClLower>0:
+            retval.append("True")
+        else:
+            retval.append("NA")
+
+        # Vpa
+        VLower = lowerBound[3]
+        VUpper = upperBound[3]
+        if VLower<0 and VUpper>0:
+            retval.append("Suspicious, Vpa looks like 0")
+        elif VUpper<0:
+            retval.append("Suspicious, Vpa seems to be negative")
+        else:
+            retval.append("True")
+
+        # Clpb
+        ClLower = lowerBound[4]
+        ClUpper = upperBound[4]
+        if ClLower<0 and ClUpper>0:
+            retval.append("Suspicious, Clpb looks like a constant")
+        elif ClLower<0:
+            retval.append("Suspicious, Clpb may be unstable")
+        elif ClLower>0:
+            retval.append("True")
+        else:
+            retval.append("NA")
+
+        # Vpb
+        VLower = lowerBound[5]
+        VUpper = upperBound[5]
+        if VLower<0 and VUpper>0:
+            retval.append("Suspicious, Vpb looks like 0")
+        elif VUpper<0:
+            retval.append("Suspicious, Vpb seems to be negative")
+        else:
+            retval.append("True")
+
+        return retval
+
+    def areParametersValid(self, p):
+        return np.sum(p[0:1]<0)==0
+
+    def printOtherParameterization(self):
+        Cl=self.parameters[0]
+        V=self.parameters[1]
+        Clpa=self.parameters[2]
+        Vpa=self.parameters[3]
+        Clpb=self.parameters[4]
+        Vpb=self.parameters[5]
+        print(" ")
+        print("Model parameterization ===========")
+        print("The three compartment model (excluding the source) has been estimated according to the homogeneous equations:")
+        print("This is called the physiological parameterization")
+        print("dC/dt = -Cl/V * C - Clpa/V * (C-Cpa) - Clpb/V * (C-Cpb) and dCpa/dt = Clpa/Vp * (C-Cpa) and dCpb/dt = Clpb/Vp * (C-Cpb)")
+        print("where:")
+        print("C is the concentration in the central compartment")
+        print("Cpa is the concentration in the peripheral compartment A (connected to the central)")
+        print("Cpb is the concentration in the peripheral compartment B (connected to the central)")
+        print("with parameters:")
+        print("Cl=%f (%s) (Clearance from central compartment)"%(Cl,PKPDUnit.codeToString(self.parameterUnits[0])))
+        print("V=%f (%s) (Apparent volume of distribution in the central compartment)"%(V,PKPDUnit.codeToString(self.parameterUnits[1])))
+        print("Clpa=%f (%s) (Clearance from the central to the peripheral compartment and viceversa)"%(Clpa,PKPDUnit.codeToString(self.parameterUnits[2])))
+        print("Vpa=%f (%s) (Apparent volume of distribution in the peripheral compartment)"%(Vpa,PKPDUnit.codeToString(self.parameterUnits[3])))
+        print("Clpb=%f (%s) (Clearance from the central to the peripheral compartment and viceversa)"%(Clpb,PKPDUnit.codeToString(self.parameterUnits[2])))
+        print("Vpb=%f (%s) (Apparent volume of distribution in the peripheral compartment)"%(Vpb,PKPDUnit.codeToString(self.parameterUnits[3])))
+        print(" ")
+        print("An alternative formulation is given by its microconstants formulation:")
+        print("dA/dt = -k10 * A - k12a * A + k21a * Apa - k12b * A + k21b * Apb and dApa/dt = k12a * A - k21a * Apa and dApb/dt = k12b * A - k21b * Apb")
+        print("where:")
+        print("A is the amount of drug in the central compartment (A=C*V)")
+        print("Apa is the amount of drug in the peripheral compartment A (Apa=Cpa*Vpa)")
+        print("Apb is the amount of drug in the peripheral compartment A (Apb=Cpb*Vpb)")
+        print("with parameters:")
+        k12a=Clpa/V
+        k21a=Clpa/Vpa
+        k12b=Clpb/V
+        k21b=Clpb/Vpb
+        k10=Cl/V
+        kunits = divideUnits(self.parameterUnits[0],self.parameterUnits[1])
+        print("k10=%f (%s) (Elimination from central compartment, k10=Cl/V)"%(k10,PKPDUnit.codeToString(kunits)))
+        print("k12a=%f (%s) (Transfer from central to peripheral A compartment, k12a=Clpa/V)"%(k12a,PKPDUnit.codeToString(kunits)))
+        print("k21a=%f (%s) (Transfer from peripheral A to central compartment, k21a=Clpa/Vpa)"%(k21a,PKPDUnit.codeToString(kunits)))
+        print("k12b=%f (%s) (Transfer from central to peripheral B compartment, k12b=Clpb/V)"%(k12b,PKPDUnit.codeToString(kunits)))
+        print("k21b=%f (%s) (Transfer from peripheral B to central compartment, k21b=Clpb/Vpb)"%(k21b,PKPDUnit.codeToString(kunits)))
+        print(" ")

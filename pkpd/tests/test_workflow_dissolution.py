@@ -157,7 +157,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         protWeibull = copy.copy(prot)
 
 
-        # Fit a Higuchi dissolution
+        # Fit a Double Weibull dissolution
         print("Fitting Double Weibull model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution double Weibull',
@@ -172,11 +172,26 @@ class TestDissolutionWorkflow(TestWorkflow):
         fitting.load(prot.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.999)
 
+        # Fit a Triple Weibull dissolution
+        print("Fitting Triple Weibull model ...")
+        prot = self.newProtocol(ProtPKPDDissolutionFit,
+                                objLabel='pkpd - fit dissolution triple Weibull',
+                                globalSearch=True, modelType=5)
+        prot.inputExperiment.set(protImport.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
+        self.assertIsNotNone(prot.outputFitting.fnFitting, "There was a problem with the dissolution model ")
+        self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
+
+        fitting = PKPDFitting()
+        fitting.load(prot.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2>0.999)
+
         # Fit a Higuchi dissolution
         print("Fitting Higuchi model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Higuchi',
-                                globalSearch=True, modelType=5)
+                                globalSearch=True, modelType=6)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -196,7 +211,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Korsmeyer-Peppas model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Korsmeyer-Peppas',
-                                globalSearch=True, modelType=6)
+                                globalSearch=True, modelType=7)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -218,7 +233,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Hixson-Crowell model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hixson-Crowell',
-                                globalSearch=True, modelType=7)
+                                globalSearch=True, modelType=8)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -240,7 +255,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Hopfenberg model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hopfenberg',
-                                globalSearch=True, modelType=8)
+                                globalSearch=True, modelType=9)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -264,7 +279,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Hill model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hill',
-                                globalSearch=True, modelType=9)
+                                globalSearch=True, modelType=10)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -287,7 +302,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Makoid Banakar model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Makoid Banakar',
-                                globalSearch=True, modelType=10)
+                                globalSearch=True, modelType=11)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -310,7 +325,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         print("Fitting Spline model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Spline',
-                                globalSearch=True, modelType=11)
+                                globalSearch=True, modelType=12)
         prot.inputExperiment.set(protImport.outputExperiment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the dissolution model ")
@@ -372,6 +387,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         hello = experiment.samples['Profile'].descriptors['Hello']
         self.assertTrue(hello=="Hello")
 
+
         # Check that operations are working
         print("Operations 3 ...")
         prot = self.newProtocol(ProtPKPDOperateExperiment,
@@ -386,6 +402,20 @@ class TestDissolutionWorkflow(TestWorkflow):
         VmaxC0 = float(experiment.samples['Profile'].measurement_VmaxC[0])
         self.assertTrue(VmaxC0>80 and VmaxC0<82)
 
+
+        # Check that Simulation is working
+        prot = self.newProtocol(ProtPKPDDissolutionSimulate,
+                                modelType=3,
+                                parameters="100;0.3;1.5",
+                                timeUnits=1,
+                                resampleT=0.1,
+                                resampleTF=10)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the operations ")
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        A18 = float(experiment.samples["simulatedProfile"].measurement_A[18])
+        self.assertTrue(A18>51.4 and A18<51.7)
 
 if __name__ == "__main__":
     unittest.main()

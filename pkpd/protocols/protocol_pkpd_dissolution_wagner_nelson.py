@@ -88,7 +88,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit("min")
+        tvar.units = createUnit(self.experiment.getTimeUnits().unit)
 
         Avar = PKPDVariable()
         Avar.varName = "A"

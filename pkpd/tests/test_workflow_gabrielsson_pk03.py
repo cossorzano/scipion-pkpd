@@ -158,7 +158,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         Rin = float(experiment.samples['Individual'].descriptors['Oral_Rin'])
         t0 = float(experiment.samples['Individual'].descriptors['Oral_t0'])
         self.assertTrue(Cl>0.73 and Cl<0.76)
-        self.assertTrue(V>32 and V<36)
+        self.assertTrue(V>32 and V<37)
         self.assertTrue(Ka>0.00045 and Ka<0.0055)
         self.assertTrue(tlag>20 and tlag<30)
         self.assertTrue(Rin>0.05 and Rin<0.06)
@@ -168,6 +168,40 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.975)
         self.assertTrue(fitting.sampleFits[0].AIC<-25)
 
+        # Change via to ev1
+        print "Change via to ev1x4"
+        protChangeVia1x4 = self.newProtocol(ProtPKPDChangeVia,
+                                          objLabel='pkpd - change via ev1x4',
+                                          viaName='Oral', newViaType="ev1x4", tlag="", bioavailability=1.0)
+        protChangeVia1x4.inputExperiment.set(protChangeCpUnit.outputExperiment)
+        self.launchProtocol(protChangeVia1x4)
+        self.assertIsNotNone(protChangeVia1x4.outputExperiment.fnPKPD, "There was a problem with changing via")
+        self.validateFiles('protChangeVia1x4', protChangeVia1x4)
+
+        # Fit a monocompartmental model with 1st order absorption
+        print "Fitting monocompartmental model with 1st order..."
+        protEV1x4MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
+                                                  objLabel='pkpd - ev1 monocompartment',
+                                                  bounds='(10.0, 30.0); (0.2, 0.5); (0.0, 0.01); (0.0, 1.0); (0.0, 0.01); (0.0, 1.0); (0.0, 0.01); (0.8, 1.2); (100.0, 150.0)')
+        protEV1x4MonoCompartment.inputExperiment.set(protChangeVia1x4.outputExperiment)
+        self.launchProtocol(protEV1x4MonoCompartment)
+        self.assertIsNotNone(protEV1x4MonoCompartment.outputExperiment.fnPKPD, "There was a problem with the monocompartmental model ")
+        self.assertIsNotNone(protEV1x4MonoCompartment.outputFitting.fnFitting, "There was a problem with the monocompartmental model ")
+        self.validateFiles('protEV1x4MonoCompartment', protEV1x4MonoCompartment)
+        experiment = PKPDExperiment()
+        experiment.load(protEV1x4MonoCompartment.outputExperiment.fnPKPD)
+        Cl = float(experiment.samples['Individual'].descriptors['Cl'])
+        V = float(experiment.samples['Individual'].descriptors['V'])
+        Ka1 = float(experiment.samples['Individual'].descriptors['Oral_Ka1'])
+        tlag = float(experiment.samples['Individual'].descriptors['Oral_tlag'])
+        self.assertTrue(Cl>0.75 and Cl<1.1)
+        self.assertTrue(V>91 and V<125) # Gabrielsson p 521, Solution I: FV=98.7 L
+        self.assertTrue(Ka1>0.0075 and Ka1<0.0085) # Gabrielsson p 521, Solution I: ka=0.418 1/h=0.007 1/min
+        self.assertTrue(tlag>20 and tlag<30) # Gabrielsson p 521, Solution I: tlag=0.39h=23.4 min
+        fitting = PKPDFitting()
+        fitting.load(protEV1MonoCompartment.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2>0.92)
+        self.assertTrue(fitting.sampleFits[0].AIC<-5)
 
 if __name__ == "__main__":
     unittest.main()

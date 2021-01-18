@@ -76,3 +76,30 @@ May, 2019. Dissolution and In-vitro In-vivo correlations module developed:
  January 2020.
         - Exported to PyPI
 
+ March 2020.
+	- Simulate dissolution added
+
+ April 2020.
+        - Gather fittings added
+
+ May 2020.
+        - Bootstrap can now take a fitting as input
+        - Gather fitting can now filter depending on the input experiment 
+
+ June 2020.
+        - Ev1-Ev1 Saturable model added
+        - Complex simulations added
+
+ October 2020.
+	- Three compartments added
+	- Extravascular Order 1 with 4 absorption vias added
+	- Average sample protocol can now calculate the median of the input samples
+
+December 2020.
+	- Triple Weibull added as absorption and dissolution
+
+
+October 2020.
+	- Three compartments PK model added
+
+

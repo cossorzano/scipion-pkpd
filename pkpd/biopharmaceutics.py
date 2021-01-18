@@ -29,9 +29,10 @@ Biopharmaceutics: Drug sources and how they dissolve
 import copy
 import math
 import numpy as np
-from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits
+from .pkpd_units import PKPDUnit, changeRateToWeight, divideUnits, inverseUnits
 from pkpd.utils import uniqueFloatValues, excelWriteRow
-from scipy.interpolate import PchipInterpolator
+from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
+from scipy.special import lambertw, wrightomega
 
 class BiopharmaceuticsModel:
     def __init__(self):
@@ -131,7 +132,12 @@ class BiopharmaceuticsModelOrder01(BiopharmaceuticsModel):
         return ['Rin','t0','Ka']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN, PKPDUnit.UNIT_TIME_MIN, PKPDUnit.UNIT_INVTIME_MIN]
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        if tunits == PKPDUnit.UNIT_TIME_MIN:
+            rateUnits = PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN
+        else:
+            rateUnits = PKPDUnit.UNIT_WEIGHTINVTIME_mg_H
+        self.parameterUnits = [rateUnits, tunits, inverseUnits(tunits)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -167,8 +173,8 @@ class BiopharmaceuticsModelOrder01Tlag1(BiopharmaceuticsModel):
 
     def calculateParameterUnits(self,sample):
         dUnits = self.getDoseUnits()
-        self.parameterUnits = [PKPDUnit.UNIT_NONE, divideUnits(dUnits,PKPDUnit.UNIT_TIME_MIN), PKPDUnit.UNIT_TIME_MIN,
-                               PKPDUnit.UNIT_INVTIME_MIN]
+        tUnits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, divideUnits(dUnits,tUnits), tUnits, inverseUnits(tUnits)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -207,7 +213,7 @@ class BiopharmaceuticsModelOrder1(BiopharmaceuticsModel):
         return ['Ka']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN]
+        self.parameterUnits = [inverseUnits(self.ptrExperiment.getTimeUnits().unit)]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -273,7 +279,7 @@ class BiopharmaceuticsModelImmediateAndOrder1(BiopharmaceuticsModel):
         return ['Ka','F']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_NONE]
+        self.parameterUnits = [inverseUnits(self.ptrExperiment.getTimeUnits().unit),PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -303,7 +309,8 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
         return ['Ka1','Ka2','tlag12','F1']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_INVTIME_MIN,PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [inverseUnits(tunits),inverseUnits(tunits),tunits,PKPDUnit.UNIT_NONE]
         return self.parameterUnits
 
     def getAg(self,t):
@@ -333,6 +340,278 @@ class BiopharmaceuticsModelOrder1AndOrder1(BiopharmaceuticsModel):
         return "First and First order absorption (%s)"%self.__class__.__name__
 
 
+class BiopharmaceuticsModelOrder1AndOrder1Saturable(BiopharmaceuticsModel):
+    """ Srihari Gopal M.D., M.H.S., An Vermeulen Ph.D., Partha Nandy Ph.D., Paulien Ravenstijn Ph.D., Isaac
+        Nuamah Ph.D., J.A. Buron Vidal M.D., Joris Berwaerts M.D., Adam Savitz M.D., Ph.D., David Hough M.D. & Mahesh
+        N. Samtani Ph.D. Practical Guidance for Dosing and Switching from Paliperidone Palmitate 1-Monthly to 3-Monthly
+        Formulation in Schizophrenia, Current Medical Research and Opinion, 2015, 31: 2043-2054.
+
+        There are two absorptions of order 1: one is slow (fraction=1-F3), the other is rapid (fraction=F3).
+        Both absorptions are saturable by the amount present in the absorption compartment so that the instantaneous
+        absorption rate depends on the amount remaining.
+        """
+    def getDescription(self):
+        return ['Maximal absorption rate slow','Amount at 50% of slow absorption rate','Hill factor',
+                'Maximal absorption rate rapid','Amount at 50% of rapid absorption rate',
+                'Fraction 3']
+
+    def getParameterNames(self):
+        return ['ka1max','kamt150','gamma','ka3max','kamt350','F3']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        Dunits = self.ptrExperiment.getDoseUnits()
+        kaUnits = divideUnits(Dunits,tunits)
+        self.parameterUnits = [kaUnits, Dunits, PKPDUnit.UNIT_NONE,
+                               kaUnits, Dunits, PKPDUnit.UNIT_NONE]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0:
+            return 0.0
+        ka1max = self.parameters[0]
+        kamt150 = self.parameters[1]
+        gamma = self.parameters[2]
+        ka3max = self.parameters[3]
+        kamt350 = self.parameters[4]
+        F3 = self.parameters[5]
+        if gamma<0 or F3<0 or F3>1:
+            return 0.0
+
+        try:
+            A50 = kamt150
+            Ka = ka1max
+            A0 = F3*self.Amax
+            arg = math.exp(-(Ka * t - A50 * math.log(A0 * math.exp(A0 / A50))) / A50) / A50
+            Aslow = A50 * lambertw(arg)
+        except:
+            Aslow = 0.0
+
+        try:
+            A50 = kamt350
+            Ka = ka3max
+            A0 = (1-F3)*self.Amax
+            A0gamma = math.pow(A0,gamma)
+            A50gamma = math.pow(A50,gamma)
+            A0log = math.log(A0)
+            Arapid = math.exp(((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t) / A50gamma -
+                         wrightomega(math.log(1 / A50gamma) +
+                                    (gamma * ((A0gamma + A50gamma * gamma * A0log) / gamma - Ka * t)) / A50gamma) / gamma)
+        except:
+            Arapid = 0.0
+        retval = Aslow+Arapid
+        if np.iscomplexobj(retval):
+            retval = np.real(retval)
+        return retval
+
+    def getEquation(self):
+        ka1max = self.parameters[0]
+        kamt150 = self.parameters[1]
+        gamma = self.parameters[2]
+        ka3max = self.parameters[3]
+        kamt350 = self.parameters[4]
+        F3 = self.parameters[5]
+
+        A50 = kamt150
+        Ka = ka1max
+        A0 = F3*self.Amax
+        C = A50 * math.log(A0 * math.exp(A0 / A50))
+        Aslow = "%f * lambertw(exp(-(%f * t - (%f)) / %f) / %f)"%(A50,Ka,C,A50,A50)
+
+        A50 = kamt350
+        Ka = ka3max
+        A0 = (1-F3)*self.Amax
+        A0gamma = math.pow(A0,gamma)
+        A50gamma = math.pow(A50,gamma)
+        A0log = math.log(A0)
+        C1 = (A0gamma + A50gamma * gamma * A0log) / gamma
+        Arapid = "exp((%f - Ka * t) / %f - "%(C1,A50gamma)
+        C2 = math.log(1 / A50gamma)
+        C3 = (A0gamma + A50gamma * gamma * A0log) / gamma
+        Arapid += "wrightOmega((%f) + (%f * (%f - (%f) * t)) / %f) / %f)"%(C2,gamma,C3,Ka,A50gamma,gamma)
+        return "D(t)=(%s)+(%s)"%(Aslow,Arapid)
+
+    def getModelEquation(self):
+        return "D(t)=kamt150 * lambertw(exp(-(ka1max * t - kamt150 * log(F3*Amax * exp(F3*Amax / kamt150))) / kamt150) / kamt150) "+\
+                     "exp(((((1-F3)*Amax)^gamma + kamt350^gamma*gamma*log((1-F3)*Amax))/gamma - ka3max*t)/kamt350^gamma - wrightOmega(log(1/kamt350^gamma) + (gamma*((((1-F3)*Amax)^gamma + kamt350^gamma*gamma*log((1-F3)*Amax))/gamma - ka3max*t))/kamt350^gamma)/gamma)"
+
+    def getDescription(self):
+        return "First and First order absorption with saturation (%s)"%self.__class__.__name__
+
+
+class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
+    def getDescription(self):
+        return ['Time1 63%','Exponential power1','Fraction1',
+                'Time2 63%','Exponential power2','tlag2']
+
+    def getParameterNames(self):
+        return ['td1','b1','F1','td2','b2','tlag2']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [tunits,PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,
+                               tunits,PKPDUnit.UNIT_NONE,tunits]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return 0.0
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+
+        t2 = t-tlag2
+        f1 = F1*math.exp(-math.pow(t/td1,b1))
+        if t2>0:
+            f2=(1-F1)*math.exp(-math.pow(t2/td2,b2))
+        else:
+            f2=0
+        return self.Amax*(f1+f2)
+
+    def getEquation(self):
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        return "D(t)=%f*(1-(%f)*exp(-(t/%f)^(%f))-(%f)*exp(-((t-%f)/%f)^(%f))"%(self.Amax,F1,td1,b1,1-F1,tlag2,td2,b2)
+
+    def getModelEquation(self):
+        return "D(t)=Amax*(1-F1*exp(-(t/td1)^b1)-(1-F1)*exp(-((t-tlag2)/td2)^b2)"
+
+    def getDescription(self):
+        return "Double Weibull absorption (%s)"%self.__class__.__name__
+
+    def areParametersValid(self, p):
+        return np.sum(p<0)==0 and p[2]>0 and p[2]<1
+
+class BiopharmaceuticsModelTripleWeibull(BiopharmaceuticsModel):
+    def getDescription(self):
+        return ['Time1 63%','Exponential power1','Fraction1',
+                'Time2 63%','Exponential power2','tlag2', 'Fraction2',
+                'Time3 63%','Exponential power3','tlag3']
+
+
+    def getParameterNames(self):
+        return ['td1','b1','F1','td2','b2','tlag2','F2','td3','b3','tlag3']
+
+    def calculateParameterUnits(self,sample):
+        tunits = self.ptrExperiment.getTimeUnits().unit
+        self.parameterUnits = [tunits,PKPDUnit.UNIT_NONE,PKPDUnit.UNIT_NONE,
+                               tunits,PKPDUnit.UNIT_NONE,tunits, PKPDUnit.UNIT_NONE,
+                               tunits,PKPDUnit.UNIT_NONE,tunits]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<=0:
+            return 0.0
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        F2 = self.parameters[6]
+        td3 = self.parameters[7]
+        b3 = self.parameters[8]
+        tlag3 = self.parameters[9]
+
+        f1 = F1*math.exp(-math.pow(t/td1,b1))
+        t2 = t-tlag2
+        if t2>0:
+            f2=F2*math.exp(-math.pow(t2/td2,b2))
+        else:
+            f2=0
+        t3 = t-tlag3
+        if t3>0:
+            f3=(1-F1-F2)*math.exp(-math.pow(t3/td3,b3))
+        else:
+            f3=0
+        return self.Amax*(f1+f2+f3)
+
+    def getEquation(self):
+        td1 = self.parameters[0]
+        b1 = self.parameters[1]
+        F1 = self.parameters[2]
+        td2 = self.parameters[3]
+        b2 = self.parameters[4]
+        tlag2 = self.parameters[5]
+        F2 = self.parameters[6]
+        td3 = self.parameters[7]
+        b3 = self.parameters[8]
+        tlag3 = self.parameters[9]
+        return "D(t)=%f*(1-(%f)*exp(-(t/%f)^(%f))-(%f)*exp(-((t-%f)/%f)^(%f)-(%f)*exp(-((t-%f)/%f)^(%f)))"%\
+               (self.Amax,F1,td1,b1,F2,tlag2,td2,b2,1-F1-F2,tlag3,td3,b3)
+
+    def getModelEquation(self):
+        return "D(t)=Amax*(1-F1*exp(-(t/td1)^b1)-F2*exp(-((t-tlag2)/td2)^b2)-(1-F1-F2)*exp(-((t-tlag3)/td3)^b3))"
+
+    def getDescription(self):
+        return "Triple Weibull absorption (%s)"%self.__class__.__name__
+
+    def areParametersValid(self, p):
+        return np.sum(p<0)==0 and p[2]>0 and p[2]<1 and p[6]>0 and p[6]<1
+
+class BiopharmaceuticsModelOrder1Multiple4(BiopharmaceuticsModel):
+    """ Br J Clin Pharmacol. 2013 Dec;76(6):868-79. doi: 10.1111/bcp.12118.
+        Determination of the pharmacokinetics of glycopyrronium in the lung using a population pharmacokinetic
+        modelling approach. Christian Bartels 1, Michael Looby, Romain Sechaud, Guenther Kaiser
+
+        There are 4 entry vias:
+        - F1, Order1: F1*(1-exp(-Ka1*t))
+        - (1-F1), Remaining:
+            - Slow: (1-F1)*Fslow*(1-exp(-Kaslow*t))
+            - Medium: (1-F1)*Fmed*(1-exp(-Kamed*t))
+            - Fast: (1-F1)*(1-Fmed-Fslow)
+    """
+    def getDescription(self):
+        return ['Fraction 1','Absorption rate 1','Fraction medium','Absorption rate medium','Fraction slow',
+                'Absorption rate slow']
+
+    def getParameterNames(self):
+        return ['F1','Ka1','Fmed','Kamed','Fslow','Kaslow']
+
+    def calculateParameterUnits(self,sample):
+        Kunits = inverseUnits(self.ptrExperiment.getTimeUnits().unit)
+        self.parameterUnits = [PKPDUnit.UNIT_NONE, Kunits, PKPDUnit.UNIT_NONE, Kunits, PKPDUnit.UNIT_NONE, Kunits]
+        return self.parameterUnits
+
+    def getAg(self,t):
+        if t<0:
+            return 0.0
+        F1 = self.parameters[0]
+        Ka1 = self.parameters[1]
+        Fmed = self.parameters[2]
+        Kamed = self.parameters[3]
+        Fslow = self.parameters[4]
+        Kaslow = self.parameters[5]
+        via1 = F1*math.exp(-Ka1*t)
+        viafast = (1-F1)*(1-Fmed-Fslow)
+        viamed = (1-F1)*Fmed*math.exp(-Kamed*t)
+        viaslow = (1-F1)*Fslow*math.exp(-Kaslow*t)
+        return self.Amax*(via1 + viafast + viamed + viaslow)
+
+    def getEquation(self):
+        F1 = self.parameters[0]
+        Ka1 = self.parameters[1]
+        Fmed = self.parameters[2]
+        Kamed = self.parameters[3]
+        Fslow = self.parameters[4]
+        Kaslow = self.parameters[5]
+        return "D(t)=(%f)*(%f*(1-exp(-%f*t)) + (1-%f)*(1-%f*exp(-%f*t)-%f*exp(-%f*t)))"%\
+                  (self.Amax,F1,Ka1,F1,Fmed,Kamed,Fslow,Kaslow)
+
+    def getModelEquation(self):
+        return "D(t)=F1*(1-exp(-Ka1*t)) + (1-F1)*(1-Fmed*exp(-Kamed*t)-Fslow*exp(-Kaslow*t))"
+
+    def getDescription(self):
+        return "Multiple first order absorption (%s)"%self.__class__.__name__
+
+
 class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
     def __init__(self):
         self.nknots=0
@@ -343,11 +622,14 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
 
     def getParameterNames(self):
         retval = ['tmax']
-        retval+=['spline%d_A%d'%(self.nknots,i) for i in range(self.nknots)]
+        if self.nknots>=10:
+            retval += ['spline%d_A%02d' % (self.nknots, i) for i in range(self.nknots)]
+        else:
+            retval+=['spline%d_A%d'%(self.nknots,i) for i in range(self.nknots)]
         return retval
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
+        self.parameterUnits = [self.ptrExperiment.getTimeUnits().unit]
         self.parameterUnits += [PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
@@ -364,9 +646,9 @@ class BiopharmaceuticsModelSplineGeneric(BiopharmaceuticsModel):
             return 0.0
         if self.parametersPrepared is None or not np.array_equal(self.parametersPrepared,self.parameters):
             self.knots = np.linspace(0, self.tmax, self.nknots+2)
-            self.parameters[1:]=np.sort(self.parameters[1:])
+            self.parameters[1:] = np.sort(self.parameters[1:])
             self.knotsY = np.append(np.insert(self.parameters[1:],0,0),1)
-            self.knotsY=np.sort(self.knotsY)
+            self.knotsY = np.sort(self.knotsY)
             knotsUnique, knotsYUnique=uniqueFloatValues(self.knots, self.knotsY)
             try:
                 self.B=PchipInterpolator(knotsUnique, knotsYUnique)
@@ -509,8 +791,8 @@ class BiopharmaceuticsModelSplineXYGeneric(BiopharmaceuticsModel):
         return retval
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_TIME_MIN]
-        self.parameterUnits += [PKPDUnit.UNIT_TIME_MIN,PKPDUnit.UNIT_NONE]*(self.nknots)
+        self.parameterUnits = [self.ptrExperiment.getTimeUnits().unit]
+        self.parameterUnits += [self.ptrExperiment.getTimeUnits().unit,PKPDUnit.UNIT_NONE]*(self.nknots)
         return self.parameterUnits
 
     def rearrange(self,parameters):
@@ -669,7 +951,10 @@ class PKPDVia:
         # Default values
         self.tlag = 0
         self.bioavailability = 1
-        self.tunits = PKPDUnit("min")
+        if self.ptrExperiment is not None:
+            self.tunits = self.ptrExperiment.getTimeUnits()
+        else:
+            self.tunits = PKPDUnit("min")
 
         # Get name
         currentToken = 0
@@ -700,7 +985,7 @@ class PKPDVia:
                 optionalTokens=optionalTokens.split()[0]
                 self.paramsToOptimize.append(optionalTokens)
                 if optionalTokens=="tlag":
-                    self.paramsUnitsToOptimize.append(PKPDUnit.UNIT_TIME_MIN)
+                    self.paramsUnitsToOptimize.append(self.tunits.unit)
                 elif optionalTokens=="bioavailability":
                     self.paramsUnitsToOptimize.append(PKPDUnit.UNIT_NONE)
             currentToken+=1
@@ -739,10 +1024,18 @@ class PKPDVia:
                     self.viaProfile = BiopharmaceuticsModelOrder01Tlag1()
                 elif self.via=="ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1()
+                elif self.via == "ev1x4":
+                    self.viaProfile = BiopharmaceuticsModelOrder1Multiple4()
                 elif self.via=="evFractional":
                     self.viaProfile=BiopharmaceuticsModelOrderFractional()
                 elif self.via=="ev1-ev1":
                     self.viaProfile=BiopharmaceuticsModelOrder1AndOrder1()
+                elif self.via == "ev1-ev1Saturable":
+                    self.viaProfile = BiopharmaceuticsModelOrder1AndOrder1Saturable()
+                elif self.via == "doubleWeibull":
+                    self.viaProfile = BiopharmaceuticsModelDoubleWeibull()
+                elif self.via == "tripleWeibull":
+                    self.viaProfile = BiopharmaceuticsModelTripleWeibull()
                 elif self.via=="spline2":
                     self.viaProfile=BiopharmaceuticsModelSpline2()
                 elif self.via=="spline3":
@@ -998,6 +1291,9 @@ class PKPDDose:
         excelWriteRow(outStr,wb,row)
         return row+1
 
+    def __str__(self):
+        return self.getDoseString2()
+
     def getDoseString(self):
         if self.doseType == PKPDDose.TYPE_BOLUS:
             doseString = "bolus; t=%f" % self.t0
@@ -1016,27 +1312,45 @@ class PKPDDose:
                                     self.dunits._toString())
         return outStr
 
-    def changeTimeUnitsToMinutes(self):
-        if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
-            pass
-        elif self.tunits.unit==PKPDUnit.UNIT_TIME_H:
-            if self.doseType == PKPDDose.TYPE_BOLUS:
-                self.t0 *= 60
-            elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
-                self.t0 *= 60
-                self.tF *= 60
-                self.every *= 60
-            elif self.doseType == PKPDDose.TYPE_INFUSION:
-                self.t0 *= 60
-                self.tF *= 60
+    def changeTimeUnitsTo(self, targetUnit):
+        if targetUnit==PKPDUnit.UNIT_TIME_MIN:
+            if self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
+                pass
+            elif self.tunits.unit==PKPDUnit.UNIT_TIME_H:
+                if self.doseType == PKPDDose.TYPE_BOLUS:
+                    self.t0 *= 60
+                elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
+                    self.t0 *= 60
+                    self.tF *= 60
+                    self.every *= 60
+                elif self.doseType == PKPDDose.TYPE_INFUSION:
+                    self.t0 *= 60
+                    self.tF *= 60
+            else:
+                raise Exception("Time for doses must be hours or minutes")
+        elif targetUnit==PKPDUnit.UNIT_TIME_H:
+            if self.tunits.unit==PKPDUnit.UNIT_TIME_H:
+                pass
+            elif self.tunits.unit==PKPDUnit.UNIT_TIME_MIN:
+                if self.doseType == PKPDDose.TYPE_BOLUS:
+                    self.t0 /= 60
+                elif self.doseType == PKPDDose.TYPE_REPEATED_BOLUS:
+                    self.t0 /= 60
+                    self.tF /= 60
+                    self.every /= 60
+                elif self.doseType == PKPDDose.TYPE_INFUSION:
+                    self.t0 /= 60
+                    self.tF /= 60
+            else:
+                raise Exception("Time for doses must be hours or minutes")
         else:
-            raise Exception("Time for doses must be hours or minutes")
+            raise Exception("Target time unit must be hours or minutes")
 
     def prepare(self):
         self.via.prepare()
 
     def getDoseAt(self,t0,dt=0.5):
-        """Dose between t0<=t<t0+dt, t0 is in minutes"""
+        """Dose between t0<=t<t0+dt, t0 is in the units of the dose"""
         t0-=self.via.tlag
         t1=t0+dt-self.via.tlag
         if self.doseType == PKPDDose.TYPE_BOLUS:
@@ -1068,9 +1382,10 @@ class PKPDDose:
                 doseAmount += self.via.viaProfile.getAg(t0-self.t0-self.via.tlag)-\
                               self.via.viaProfile.getAg(t0-self.t0-self.via.tlag+dt)
             else:
-                raise Exception("getAmountReleasedAt not implemented for non-iv infusion")
+                doseAmount += self.getDoseAt(t0,dt)
         if doseAmount<0:
             doseAmount=0
+        # print("t0=%f self.t0=%f self.tlag=%f self.dt=%f -> released=%f"%(t0,self.t0,self.via.tlag,dt,doseAmount))
         return doseAmount
 
     def getAmountReleasedUpTo(self, t0):
@@ -1081,9 +1396,9 @@ class PKPDDose:
             if self.doseType!=PKPDDose.TYPE_INFUSION:
                 self.via.viaProfile.Amax = self.via.bioavailability*self.doseAmount
                 doseAmount += self.via.viaProfile.getAg(0.0)-\
-                              self.via.viaProfile.getAg( t0-self.t0-self.via.tlag)
+                              self.via.viaProfile.getAg(t0-self.t0-self.via.tlag)
             else:
-                raise Exception("getAmountReleasedAt not implemented for non-iv infusion")
+                doseAmount += self.getDoseAt(0,t0)
         if doseAmount<0:
             doseAmount=0
         return doseAmount

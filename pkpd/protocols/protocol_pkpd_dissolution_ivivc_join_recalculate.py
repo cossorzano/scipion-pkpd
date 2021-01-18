@@ -41,10 +41,8 @@ from pkpd.utils import parseOperation, uniqueFloatValues
 
 
 class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
-    """ Join several IVIVCs into a single one. The strategy is to compute the average of all the plots involved in the
-        IVIVC process: 1) tvivo -> tvitro; 2) tvitro -> Adissol; 3) Adissol->FabsPredicted. The plot tvivo-Fabs comes
-        after the IVIVC process, while the plot tvivo-FabsOrig is the observed one in the input files. These two
-        plots need not be exactly the same. """
+    """ Join several IVIVCs into a single one. Look for a single time transformation and response transformation
+        such that all input pairs of in vitro and in vivo profiles are satisfied simultaneously."""
 
     _label = 'dissol ivivc join recalculate'
 
@@ -93,6 +91,11 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.tvivoUnique = tvivoUnique
         self.tvitroUnique = tvitroUnique
 
+        # Recover variables
+        for prm in self.coeffTimeList+self.coeffResponseList:
+            if not prm.startswith("tvivo") and not prm.startswith("tvitro") and not prm.startswith('adissol') and not prm.startswith('fabs'):
+                exec("%s=self.prm_%s" % (prm, prm)) # These are not spline parameters
+
         # Forward error
         if self.parsedTimeOperation is None:
             # Splines for time
@@ -139,6 +142,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             i = 0
             for prm in self.coeffTimeList:
                 exec ("%s=%f" % (prm, x[i]))
+                exec ("self.prm_%s=%f" % (prm, x[i]))
                 i += 1
             i0 = i
             tvivoXUnique = None
@@ -154,6 +158,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             i = i0
             for prm in self.coeffResponseList:
                 exec ("%s=%f" % (prm, x[i]))
+                exec ("self.prm_%s=%f" % (prm, x[i]))
                 i += 1
             adissolXUnique0 = None
             fabsXUnique0 = None
@@ -245,19 +250,40 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         outputExperiment.addParameterToSample(sampleName, "R", PKPDUnit.UNIT_NONE, "IVIV Correlation coefficient", R)
         outputExperiment.addLabelToSample(sampleName, "from", "individual---vesel", "%s---%s"%(individualFrom,vesselFrom))
 
-    def addSample(self, outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R, addFabs=False):
+    def addSample(self, set, sampleName, individualFrom, vesselFrom, optimum, R):
+        # Remove NANs
+        idx = np.isnan(self.tvitroReinterpolated)
+        idx = np.logical_or(idx,np.isnan(self.AdissolReinterpolated))
+        idx = np.logical_or(idx,np.isnan(self.FabsPredicted))
+
         newSampleFabs = PKPDSample()
         newSampleFabs.sampleName = sampleName
         newSampleFabs.variableDictPtr = self.outputExperimentFabsSingle.variables
         newSampleFabs.descriptors = {}
-        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated)
-        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated)
-        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique)
-        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted)
-        if addFabs:
-            newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique)
+        newSampleFabs.addMeasurementColumn("tvitroReinterpolated", self.tvitroReinterpolated[~idx])
+        newSampleFabs.addMeasurementColumn("AdissolReinterpolated", self.AdissolReinterpolated[~idx])
+        newSampleFabs.addMeasurementColumn("tvivo", self.tvivoUnique[~idx])
+        newSampleFabs.addMeasurementColumn("FabsPredicted", self.FabsPredicted[~idx])
+        newSampleFabs.addMeasurementColumn("Fabs", self.FabsUnique[~idx])
+        if set==1:
+            outputExperiment = self.outputExperimentFabs
+        else:
+            outputExperiment = self.outputExperimentFabsSingle
         outputExperiment.samples[sampleName] = newSampleFabs
         self.addParametersToExperiment(outputExperiment, sampleName, individualFrom, vesselFrom, optimum, R)
+
+        if set==1:
+            newSampleAdissol = PKPDSample()
+            newSampleAdissol.sampleName = sampleName
+            newSampleAdissol.variableDictPtr = self.outputExperimentAdissol.variables
+            newSampleAdissol.descriptors = {}
+            newSampleAdissol.addMeasurementColumn("tvivoReinterpolated", self.tvivoReinterpolated)
+            newSampleAdissol.addMeasurementColumn("FabsReinterpolated", self.FabsReinterpolated)
+            newSampleAdissol.addMeasurementColumn("tvitro", self.tvitroUnique)
+            newSampleAdissol.addMeasurementColumn("AdissolPredicted", self.AdissolPredicted)
+            newSampleAdissol.addMeasurementColumn("Adissol",self.AdissolUnique)
+            self.outputExperimentAdissol.samples[sampleName] = newSampleAdissol
+            self.addParametersToExperiment(self.outputExperimentAdissol, sampleName, individualFrom, vesselFrom, optimum, R)
 
     def calculateAllIvIvC(self):
         # Get the PK and dissolution profiles from the input
@@ -268,7 +294,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.experimentsInVitro = []
         idx=1
         for ptrProt in self.inputIVIVCs:
-            parametersInVitro, vesselNames = ptrProt.get().getInVitroModels()
+            parametersInVitro, vesselNames, tvitroMax = ptrProt.get().getInVitroModels()
             profilesInVivo, sampleNames = ptrProt.get().getInVivoProfiles()
             self.parametersInVitro.append(parametersInVitro)
             self.vesselNames.append(vesselNames)
@@ -378,7 +404,7 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         self.goalFunction(optimum.x)
         R = self.calculateR()
 
-        self.addSample(self.outputExperimentFabsSingle, "ivivc_all", "allSamples", "allVessels", optimum.x, R)
+        self.addSample(2, "ivivc_all", "allSamples", "allVessels", optimum.x, R)
         self.outputExperimentFabsSingle.write(self._getPath("experimentFabsSingle.pkpd"))
 
         fh = open(self._getPath("summary.txt"), "w")
@@ -391,11 +417,15 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
         tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0 = self.getAxes(optimum.x)
         i=1
         for tvivoUnique, tvitroUnique, FabsUnique, AdissolUnique, BAdissol, BFabs, tvitroMin, tvitroMax, tvivoMin, tvivoMax, AdissolMax, FabsMax, vesselName, sampleName in self.allPairs:
-            self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
-            R = ProtPKPDDissolutionIVIVCSplines.calculateR(self)
-            self.addSample(self.outputExperimentFabs, "ivivc_%d"%i, sampleName, vesselName, optimum.x, R, True)
-            i+=1
+            try:
+                self.predict(tvivoUnique, tvitroUnique, tvivoXUnique, tvitroXUnique, adissolXUnique0, fabsXUnique0, FabsUnique, AdissolUnique, tvivoMin, tvivoMax)
+                R = ProtPKPDDissolutionIVIVCSplines.calculateR(self)
+                self.addSample(1, "ivivc_%d"%i, sampleName, vesselName, optimum.x, R)
+                i+=1
+            except:
+                pass
         self.outputExperimentFabs.write(self._getPath("experimentFabs.pkpd"))
+        self.outputExperimentAdissol.write(self._getPath("experimentAdissol.pkpd"))
 
     def printFormulas(self, fh):
         self.doublePrint(fh, "Time scale: %s" % self.getTimeMsg())
@@ -404,9 +434,11 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
     def createOutputStep(self):
         self._defineOutputs(outputExperimentFabsSingle=self.outputExperimentFabsSingle)
         self._defineOutputs(outputExperimentFabs=self.outputExperimentFabs)
+        self._defineOutputs(outputExperimentAdissol=self.outputExperimentAdissol)
         for ptrProt in self.inputIVIVCs:
             self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabsSingle)
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabsSingle)
             self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentFabs)
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabs)
-
+            self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentAdissol)
+            self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentAdissol)
