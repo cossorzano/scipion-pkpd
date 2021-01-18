@@ -23,14 +23,16 @@
 # *  e-mail address 'jmdelarosa@cnb.csic.es'
 # *
 # **************************************************************************
-
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers import EmPlotter
 
 from pkpd.protocols import ProtPKPDParticleSize
 
