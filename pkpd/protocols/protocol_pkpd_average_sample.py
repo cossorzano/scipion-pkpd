@@ -76,23 +76,23 @@ class ProtPKPDAverageSample(ProtPKPD):
         if self.condition.get()!="":
             self.experiment.general["title"]+=" Condition: %s"%self.condition.get()
         self.experiment.general["comment"]=copy.copy(experiment.general["comment"])
-        for key, value in experiment.general.iteritems():
+        for key, value in experiment.general.items():
             if not (key in self.experiment.general):
                 self.experiment.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in experiment.variables.iteritems():
+        for key, value in experiment.variables.items():
             if not (key in self.experiment.variables):
                 self.experiment.variables[key] = copy.copy(value)
 
         # Vias
-        for key, value in experiment.vias.iteritems():
+        for key, value in experiment.vias.items():
             if not (key in self.experiment.vias):
                 self.experiment.vias[key] = copy.copy(value)
 
         # Doses
         doseName = None
-        for key, value in experiment.doses.iteritems():
+        for key, value in experiment.doses.items():
             dose = copy.copy(value)
             self.experiment.doses[dose.doseName] = dose
             doseName = dose.doseName
@@ -108,7 +108,7 @@ class ProtPKPDAverageSample(ProtPKPD):
 
         for mvarName in mvarNames:
             allt = {}
-            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).items():
                 t, _ = sample.getXYValues(tvarName,mvarName)
                 t=t[0] # [[...]] -> [...]
                 for i in range(len(t)):
@@ -122,7 +122,7 @@ class ProtPKPDAverageSample(ProtPKPD):
                 for ti in allt:
                     observations[ti] = []
 
-            for sampleName, sample in experiment.getSubGroup(self.condition.get()).iteritems():
+            for sampleName, sample in experiment.getSubGroup(self.condition.get()).items():
                 print("%s participates in the average"%sampleName)
                 t, y = sample.getXYValues(tvarName,mvarName)
                 t=t[0] # [array]

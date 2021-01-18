@@ -169,7 +169,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-25)
 
         # Change via to ev1
-        print "Change via to ev1x4"
+        print("Change via to ev1x4")
         protChangeVia1x4 = self.newProtocol(ProtPKPDChangeVia,
                                           objLabel='pkpd - change via ev1x4',
                                           viaName='Oral', newViaType="ev1x4", tlag="", bioavailability=1.0)
@@ -179,7 +179,7 @@ class TestGabrielssonPK03Workflow(TestWorkflow):
         self.validateFiles('protChangeVia1x4', protChangeVia1x4)
 
         # Fit a monocompartmental model with 1st order absorption
-        print "Fitting monocompartmental model with 1st order..."
+        print("Fitting monocompartmental model with 1st order...")
         protEV1x4MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(10.0, 30.0); (0.2, 0.5); (0.0, 0.01); (0.0, 1.0); (0.0, 0.01); (0.0, 1.0); (0.0, 0.01); (0.8, 1.2); (100.0, 150.0)')

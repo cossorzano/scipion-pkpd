@@ -104,7 +104,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         vesselNames=[]
         for sampleName, sample in experiment.samples.items():
             tvitroMax = []
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             vesselNames.append(sampleName)
             parameters0 = []
             for parameterName in parameterNames:
