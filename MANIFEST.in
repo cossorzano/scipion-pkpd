@@ -4,4 +4,6 @@ include *.pkpd
 include LICENSE
 
 # Incluye pkpd data tests
-recursive-include data *.pkpd
+recursive-include pkpd *.pkpd
+recursive-include pkpd *.csv
+recursive-include pkpd *.xlsx

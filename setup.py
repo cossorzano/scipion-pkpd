@@ -34,6 +34,7 @@ setup(
     author_email='info@kinestat.com',  # Optional
     keywords='pkpd',  # Optional
     packages=find_packages(),
+    include_package_data=True,
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
     },
