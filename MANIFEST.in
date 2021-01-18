@@ -4,4 +4,4 @@ include *.pkpd
 include LICENSE
 
 # Incluye pkpd data tests
-include pkpd/data
+include pkpd/data/test/*.*
