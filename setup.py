@@ -35,7 +35,7 @@ setup(
     keywords='pkpd',  # Optional
     packages=find_packages(),
     package_data={  # Optional
-       'pkpd': ['protocols.conf'],
+       'pkpd': ['data/*.*', 'protocols.conf'],
     },
     project_urls={  # Optional
         'Bug Reports': 'https://github.com/cossorzano/scipion-pkpd/issues',
