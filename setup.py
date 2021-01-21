@@ -11,6 +11,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+from pkpd import __version__
+
 here = path.abspath(path.dirname(__file__))
 
 # Load requirements.txt
@@ -26,7 +28,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='scipion-pkpd',  # Required
-    version='1.0.1',  # Required
+    version=__version__,  # Required
     description='scipion-pkpd.',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/cossorzano/scipion-pkpd',  # Optional

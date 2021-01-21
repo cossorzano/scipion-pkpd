@@ -38,6 +38,7 @@ from .constants import *
 
 _references = ['']
 _logo = ''
+__version__ = '1.0.1'
 
 
 class Plugin(em.Plugin):
