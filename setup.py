@@ -43,7 +43,6 @@ setup(
         'Bug Reports': 'https://github.com/cossorzano/scipion-pkpd/issues',
         'Source': 'https://github.com/cossorzano/scipion-pkpd',
     },
-    install_requires=[requirements],
     entry_points={
         'pyworkflow.plugin': 'pkpd = pkpd'
     },
