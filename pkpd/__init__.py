@@ -66,7 +66,7 @@ class Plugin(em.Plugin):
     #
     @classmethod
     def defineBinaries(cls, env):
-        return
+        pass
         # scipy = tryAddPipModule(env, 'scipy', '1.4.1')
         # scons = tryAddPipModule(env, 'openpyxl', '2.6.2')
 
