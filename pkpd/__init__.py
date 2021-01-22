@@ -65,11 +65,9 @@ class Plugin(em.Plugin):
     # def isVersionActive(cls):
     #     return cls.getActiveVersion().startswith(V1_0_0)
     #
-    # @classmethod
-    # def defineBinaries(cls, env):
-    #     return
-    #     # scipy = tryAddPipModule(env, 'scipy', '1.4.1')
-    #     # scons = tryAddPipModule(env, 'openpyxl', '2.6.2')
+    @classmethod
+    def defineBinaries(cls, env):
+        pass
 
 # def tryAddPipModule(env, moduleName, *args, **kwargs):
 #     """ To try to add certain pipModule.
