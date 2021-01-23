@@ -4,9 +4,7 @@ scipion-pkpd
 
 This plugin allows to use cryoSPARC2 programs within the Scipion framework
 
-.. important::
-
-    You will need to use `Scipion 3.0.0 <https://scipion-em.github.io/docs/release-3.0.0/docs/scipion-modes/how-to-install.html>`_ to run the plugin protocols.
+You will need to use `Scipion 3.0.0 <https://scipion-em.github.io/docs/release-3.0.0/docs/scipion-modes/how-to-install.html>`_ to run the plugin protocols.
 
 
 **Plugin Versions**
