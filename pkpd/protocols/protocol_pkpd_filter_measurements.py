@@ -116,7 +116,9 @@ class ProtPKPDFilterMeasurements(ProtPKPD):
                 okToAddTimePoint = True
                 conditionPython = copy.copy(condition)
                 for i in range(0,Nvar):
-                    exec("aux=sample.measurement_%s[%d]"%(sample.measurementPattern[i],n))
+                    ldict = {}
+                    exec("aux=sample.measurement_%s[%d]"%(sample.measurementPattern[i],n),locals(),ldict)
+                    aux = ldict['aux']
                     if filterType=="rmNA":
                         if aux=="NA" or aux=="None":
                             okToAddTimePoint = False
