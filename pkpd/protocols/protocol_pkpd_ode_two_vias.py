@@ -246,6 +246,10 @@ class ProtPKPDODETwoVias(ProtPKPD,PKPDModelBase2):
         self.prot1.setConfidenceInterval(self.lower1,self.upper1)
         self.prot2.setConfidenceInterval(self.lower2,self.upper2)
 
+    def setConfidenceIntervalNA(self):
+        self.prot1.setConfidenceIntervalNA()
+        self.prot2.setConfidenceIntervalNA()
+
     def forwardModel(self, parameters, x=None):
         self.setParameters(parameters)
         self.yp1 = self.prot1.forwardModel(self.parameters1,x)
@@ -387,6 +391,15 @@ class ProtPKPDODETwoVias(ProtPKPD,PKPDModelBase2):
                 # Set the variables back to the experiments
                 self.updateUnderlyingExperiments(sample2name)
 
+                parameterNames1 = self.prot1.getParameterNames()
+                parameterNames2 = self.prot2.getParameterNames()
+                parameterNames = self.getParameterNames()
+                self.lower1, self.upper1, self.lower2, self.upper2 = self.separateBounds(optimizer2.lowerBound,
+                                                                                         optimizer2.upperBound,
+                                                                                         parameterNames1,
+                                                                                         parameterNames2,
+                                                                                         parameterNames)
+
                 # Update fittings
                 self.keepSampleFit(self.fitting1, self.prot1, sample2name,
                                    x1,y1,self.prot1.yPredicted,
@@ -424,5 +437,3 @@ class ProtPKPDODETwoVias(ProtPKPD,PKPDModelBase2):
     def _summary(self):
         msg = []
         return msg
-
-# Falta construir salida experiment y fitting
