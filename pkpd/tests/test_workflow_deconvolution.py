@@ -100,7 +100,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
                                 paramsSource=1,
                                 prmUser='0.0, 0.035339, 0.2835, 28.7765',
                                 doses='Bolus ; via=Oral; bolus; t=0 h; d=1 ug',
-                                tF=24)
+                                tF=24*60)
         prot.inputODE.set(protEV1MonoCompartment)
         self.launchProtocol(prot)
         self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
@@ -183,7 +183,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(Cl > 0.25 and Cl < 0.32)  # Gabrielsson p 515, Solution II: CL/F=0.2819
         self.assertTrue(V > 10 and V < 40)  # Gabrielsson p 515, Solution II: V/F=32.05 -------------- Mine: 27.5
         self.assertTrue(tlag > 0 and tlag < 25)  # Gabrielsson p 511, Solution II: tlag=16
-        self.assertTrue(a0 > 0.60 and a0 < 0.7)
+        self.assertTrue(a0 > 0.60 and a0 < 0.73)
         self.assertTrue(a1 > 0.8 and a1 < 0.88)
 
         fitting = PKPDFitting()
