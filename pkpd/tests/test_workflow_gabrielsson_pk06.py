@@ -103,7 +103,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         fitting = PKPDFitting()
         fitting.load(protIVMonoCompartmentUrine.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
-        self.assertTrue(fitting.sampleFits[0].AIC<-55)
+        self.assertTrue(fitting.sampleFits[0].AIC<-12)
 
         # Import an experiment (extravascular)
         print("Import Experiment (extravascular)")
@@ -150,7 +150,7 @@ class TestGabrielssonPK06Workflow(TestWorkflow):
         fitting = PKPDFitting()
         fitting.load(protEV1MonoCompartmentUrine.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.965)
-        self.assertTrue(fitting.sampleFits[0].AIC<-7)
+        self.assertTrue(fitting.sampleFits[0].AIC<-3)
 
         # Elimination rate of IV
         print("Elimination rate IV ...")

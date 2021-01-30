@@ -103,7 +103,7 @@ class TestGabrielssonPK05Workflow(TestWorkflow):
         fitting = PKPDFitting()
         fitting.load(protIVMonoCompartmentUrine.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.98)
-        self.assertTrue(fitting.sampleFits[0].AIC<-70)
+        self.assertTrue(fitting.sampleFits[0].AIC<-33)
 
 
 if __name__ == "__main__":
