@@ -111,7 +111,7 @@ class TestGabrielssonPK16Workflow(TestWorkflow):
         fitting = PKPDFitting()
         fitting.load(protIVTwoCompartmentsUrine.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
-        self.assertTrue(fitting.sampleFits[0].AIC<-120)
+        self.assertTrue(fitting.sampleFits[0].AIC<-27)
 
 if __name__ == "__main__":
     unittest.main()
