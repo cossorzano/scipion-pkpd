@@ -192,10 +192,13 @@ def parseOperation(operation):
         idx0 = operation.find("$[", idxF + 1)
 
     parsedOperation = copy.copy(operation)
+    ldict={}
     for varName in varList:
-        exec ("parsedOperation=parsedOperation.replace('$(%s)','%s')" % (varName, varName))
+        exec ("parsedOperation=parsedOperation.replace('$(%s)','%s')" % (varName, varName), locals(), ldict)
     for varName in coeffList:
-        exec ("parsedOperation=parsedOperation.replace('$[%s]','%s')" % (varName, varName))
+        exec ("parsedOperation=parsedOperation.replace('$[%s]','%s')" % (varName, varName), locals(), ldict)
+    if 'parsedOperation' in ldict:
+        parsedOperation=ldict['parsedOperation']
     return parsedOperation, varList, coeffList
 
 def excelWriteRow(msgList, workbook, row, col=1, sheetName="", bold=False):

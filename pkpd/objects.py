@@ -473,17 +473,20 @@ class PKPDSample:
         return eval(expressionPython, {"__builtins__" : {"True": True, "False": False, "None": None} }, {})
 
     def evaluateParsedExpression(self, parsedOperation, varList):
+        ldict = {}
         for varName in varList:
             variable = self.variableDictPtr[varName]
             if variable.isLabel():
-                exec ("%s=self.getDescriptorValue('%s')" % (varName, varName))
+                exec ("%s=self.getDescriptorValue('%s')" % (varName, varName), locals(), ldict)
                 if variable.isNumeric():
-                    exec ("%s=float(%s)" % (varName, varName))
+                    exec ("%s=float(%s)" % (varName, varName), locals(), ldict)
             else:
                 # Measurement or time
-                exec ("%s=np.asarray(self.getValues('%s'),dtype=np.float)" % (varName, varName))
+                exec ("%s=np.asarray(self.getValues('%s'),dtype=np.float)" % (varName, varName),
+                      dict(locals(), **globals()), ldict)
         aux = None
-        exec ("aux=%s" % parsedOperation)
+        exec ("aux=%s" % parsedOperation, dict(locals(), **globals()), ldict)
+        aux=ldict['aux']
         return aux
 
     def getVariableValues(self, varList):
