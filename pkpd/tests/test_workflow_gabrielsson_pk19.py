@@ -212,9 +212,9 @@ class TestGabrielssonPK19Workflow(TestWorkflow):
 
         fitting = PKPDFitting()
         fitting.load(protPKPDTwoCompartment.outputFitting.fnFitting)
-        self.assertTrue(fitting.sampleFits[0].R2>0.97)
-        self.assertTrue(fitting.sampleFits[1].R2>0.97)
-        self.assertTrue(fitting.sampleFits[2].R2>0.97)
+        self.assertTrue(fitting.sampleFits[0].R2>0.96)
+        self.assertTrue(fitting.sampleFits[1].R2>0.96)
+        self.assertTrue(fitting.sampleFits[2].R2>0.96)
 
         print("Fitting a two-compartments model, individual ...")
         protPKPDTwoCompartment = self.newProtocol(ProtPKPDTwoCompartments,
