@@ -561,7 +561,7 @@ class ExperimentWindow(gui.Window):
                     self.plotDict[s.sampleName] = True
             leg = ax.legend()
             if leg:
-                leg.draggable()
+                leg.set_draggable(True)
 
             if doShow:
                 self.plotter.show()
@@ -678,7 +678,7 @@ class ExperimentWindow(gui.Window):
                 ax.plot(np.asarray(xValues)[idx], np.asarray(ypValues)[idx], 'g', label="Fit")
                 leg = ax.legend()
                 if leg:
-                    leg.draggable()
+                    leg.set_draggable(True)
 
                 plotter.show()
 
