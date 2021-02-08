@@ -183,7 +183,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         self.assertTrue(Cl > 0.25 and Cl < 0.32)  # Gabrielsson p 515, Solution II: CL/F=0.2819
         self.assertTrue(V > 10 and V < 40)  # Gabrielsson p 515, Solution II: V/F=32.05 -------------- Mine: 27.5
         self.assertTrue(tlag > 0 and tlag < 25)  # Gabrielsson p 511, Solution II: tlag=16
-        self.assertTrue(a0 > 0.23 and a0 < 0.73)
+        self.assertTrue(a0 > 0.23 and a0 < 0.76)
         self.assertTrue(a1 > 0.6 and a1 < 0.90)
 
         fitting = PKPDFitting()
