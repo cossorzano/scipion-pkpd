@@ -43,6 +43,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDMonoCompartmentUrine, ProtPKPDTwoCompartments, '\
                                    'ProtPKPDTwoCompartmentsAutoinduction, ProtPKPDTwoCompartmentsClint, '\
+                                   'ProtPKPDTwoCompartmentsClintCl, '\
                                    'ProtPKPDTwoCompartmentsClintMetabolite, ProtPKPDTwoCompartmentsUrine, '\
                                    'ProtPKPDODERefine',
                       help='Select a run of an ODE model')
