@@ -29,7 +29,7 @@ import numpy as np
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 class TestDissolutionF2Workflow(TestWorkflow):
 
@@ -41,7 +41,7 @@ class TestDissolutionF2Workflow(TestWorkflow):
         cls.exptRefFn = cls.dataset.getFile('experiment12Ref')
 
     def testDissolutionWorkflow(self):
-        print "Import Experiment"
+        print("Import Experiment")
         protImportTest = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment test',
                                       inputFile=self.exptTestFn)

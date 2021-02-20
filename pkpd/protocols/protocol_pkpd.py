@@ -29,7 +29,7 @@ In this module are protocol base classes related to PKPD
 """
 import sys
 import os
-from pyworkflow.em.protocol import *
+from pwem.protocols import *
 from pkpd.objects import PKPDExperiment, PKPDFitting
 import pyworkflow.protocol.params as params
 

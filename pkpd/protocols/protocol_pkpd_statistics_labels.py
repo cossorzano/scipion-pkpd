@@ -55,7 +55,7 @@ class ProtPKPDStatisticsLabel(ProtPKPD):
         fnStatistics = self._getPath("statistics.txt")
         fhOut = open(fnStatistics,'w')
 
-        for varName, variable in experiment.variables.iteritems():
+        for varName, variable in experiment.variables.items():
             if variable.role == PKPDVariable.ROLE_LABEL:
                 varValues = experiment.getSubGroupLabels("True",varName)
                 if variable.varType == PKPDVariable.TYPE_TEXT:

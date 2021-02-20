@@ -109,7 +109,7 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
         timeRange = self.experiment.getRange(self.varNameX)
         deltaT = 0.5
         t = np.arange(0.0,timeRange[1],deltaT)
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             self.printSection("Deconvolving "+sampleName)
             sample.interpretDose()
             drugSource = DrugSource()

@@ -29,7 +29,7 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
-from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.objects import PKPDExperiment, PKPDSample
 from pkpd.utils import computeXYmean, twoWayUniqueFloatValues
 from .protocol_pkpd import ProtPKPD
 

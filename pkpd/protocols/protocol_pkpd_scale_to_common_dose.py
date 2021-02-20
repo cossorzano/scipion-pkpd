@@ -67,7 +67,7 @@ class ProtPKPDScaleToCommonDose(ProtPKPD):
         self.experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
         self.printSection("Changing measurements")
         varNames = [token.strip() for token in self.measurementsToChange.get().split(',')]
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             sample.interpretDose()
             oldDose = sample.getCumulatedDose(self.t0.get(),self.tF.get())
             K = self.newDose.get()/oldDose

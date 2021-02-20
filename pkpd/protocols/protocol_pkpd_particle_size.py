@@ -24,7 +24,11 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
+
 import math
 import numpy as np
 from scipy.stats import norm

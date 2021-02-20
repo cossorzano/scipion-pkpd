@@ -24,7 +24,6 @@
 # *
 # **************************************************************************
 
-import math
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -103,7 +102,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         self.outputExperiment.general["comment"]="Amount released at any time t"
 
         timeRange = self.experiment.getRange(self.timeVar.get())
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             # Get t, Cp
             t=np.asarray(sample.getValues(self.timeVar.get()),dtype=np.float64)
             Cp=np.asarray(sample.getValues(self.concVar.get()),dtype=np.float64)

@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK11Workflow(TestWorkflow):
@@ -43,7 +41,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
 
     def testGabrielssonPK11Workflow(self):
         # Import an experiment
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -52,7 +50,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -62,7 +60,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Filter time variable
-        print "Filter time"
+        print("Filter time")
         protFilterTime = self.newProtocol(ProtPKPDFilterMeasurements,
                                                   objLabel='pkpd - filter measurements t<=1440',
                                                   filterType=1, condition='$(t)<=1440')
@@ -72,7 +70,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
         self.validateFiles('protFilterTime', protFilterTime)
 
         # Fit a two-compartment model with oral absorption to a set of measurements
-        print "Fitting a two-compartment model ..."
+        print("Fitting a two-compartment model ...")
         protPKPDPOTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - ev1 two-compartments',
                                                      globalSearch=False,
@@ -101,7 +99,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Fit a two-compartment model with oral absorption to a set of measurements
-        print "Fitting a two-compartment model ..."
+        print("Fitting a two-compartment model ...")
         protPKPDPOTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - ev1 two-compartments',
                                                      globalSearch=False,
@@ -130,35 +128,7 @@ class TestGabrielssonPK11Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.98)
 
         # Fit a two-compartment model with oral absorption to a set of measurements
-        print("Fitting a two-compartment model ...")
-        protPKPDPOTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
-                                                     objLabel='pkpd - ev1 two-compartments h',
-                                                     bounds='(0.0, 0.2); (0.0, 2.0); (0.05, 10.0); (0.5, 20); (0.01, 5.0); (0.5, 18.0)')
-        protPKPDPOTwoCompartments.inputExperiment.set(protImport.outputExperiment)
-        self.launchProtocol(protPKPDPOTwoCompartments)
-        self.assertIsNotNone(protPKPDPOTwoCompartments.outputExperiment.fnPKPD, "There was a problem with the two-compartmental model ")
-        self.assertIsNotNone(protPKPDPOTwoCompartments.outputFitting.fnFitting, "There was a problem with the two-compartmental model ")
-        self.validateFiles('protPKPDPOTwoCompartments', protPKPDPOTwoCompartments)
-        experiment = PKPDExperiment()
-        experiment.load(protPKPDPOTwoCompartments.outputExperiment.fnPKPD)
-        Cl = float(experiment.samples['Individual'].descriptors['Cl'])
-        Clp = float(experiment.samples['Individual'].descriptors['Clp'])
-        V = float(experiment.samples['Individual'].descriptors['V'])
-        Vp = float(experiment.samples['Individual'].descriptors['Vp'])
-        Ka = float(experiment.samples['Individual'].descriptors['Oral_Ka'])
-        tlag = float(experiment.samples['Individual'].descriptors['Oral_tlag'])
-        self.assertTrue(Cl>3.4 and Cl<4.8)
-        self.assertTrue(Clp>0.5 and Clp<1.0)
-        self.assertTrue(V>5.5 and V<13)
-        self.assertTrue(Vp>7.5 and Vp<14)
-        self.assertTrue(Ka>0.35 and Ka<1.1) # Gabrielsson p.590 K01=1.934 h^-1=0.032 min^-1
-        self.assertTrue(tlag<0.2) # Gabrielsson p.590, tlag=0.327 h=19.6 min
-        fitting = PKPDFitting()
-        fitting.load(protPKPDPOTwoCompartments.outputFitting.fnFitting)
-        self.assertTrue(fitting.sampleFits[0].R2>0.975)
-
-        # Fit a two-compartment model with oral absorption to a set of measurements
-        print "Fitting a PD model ..."
+        print("Fitting a PD model ...")
         protFitPD = self.newProtocol(ProtPKPDGenericFit,
                                      objLabel='pkpd - fit pd',
                                      modelType=2,

@@ -26,7 +26,10 @@
 
 import copy
 import math
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 from collections import OrderedDict
 import numpy as np
 
@@ -391,7 +394,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         elif self.fitType.get()==2:
             fitType = "relative"
 
-        for groupName, group in self.experiment.groups.iteritems():
+        for groupName, group in self.experiment.groups.items():
             self.printSection("Fitting "+groupName)
             self.clearGroupParameters()
 

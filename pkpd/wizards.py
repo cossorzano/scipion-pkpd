@@ -25,10 +25,8 @@
 # *
 # **************************************************************************
 
-import os
-import Tkinter as tk
-import ttk
-import pyworkflow.object as pwobj
+import tkinter as tk
+import tkinter.ttk as ttk
 from pyworkflow.wizard import Wizard
 import pyworkflow.gui.dialog as dialog
 from pyworkflow.gui.tree import TreeProvider, BoundTree
@@ -515,7 +513,7 @@ class PKPDODEWizard(Wizard):
                     protocol.model.drugSource = protocol.drugSource
 
                 i = 0
-                for sampleName, sample in protocol.experiment.samples.iteritems():
+                for sampleName, sample in protocol.experiment.samples.items():
                     sample.interpretDose()
                     if i == 0:
                         if not type(protocol) in PKPDODEWizard._nonODE:

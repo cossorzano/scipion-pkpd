@@ -25,13 +25,13 @@
 # **************************************************************************
 
 import numpy as np
-from os.path import exists
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.pkpd_units import PKPDUnit
 
 # TESTED in test_workflow_gabrielsson_pk06.py
+
 
 class ProtPKPDNCAEstimateBioavailability(ProtPKPD):
     """ Estimate bioavailability as F=(AUCpo/Dpo) / (AUCiv/Div) [Gabrielsson 2010, p. 546], i.e., the ratio \n
@@ -61,7 +61,7 @@ class ProtPKPDNCAEstimateBioavailability(ProtPKPD):
         self.experimentIV=self.readExperiment(self.protNCAIV.get().outputExperiment.fnPKPD)
 
         Flist = []
-        for sampleEVname, sampleEV in self.experimentEV.samples.iteritems():
+        for sampleEVname, sampleEV in self.experimentEV.samples.items():
             if sampleEVname in self.experimentIV.samples:
                 sampleEV.interpretDose()
                 DEV=sampleEV.getDoseAt(0)

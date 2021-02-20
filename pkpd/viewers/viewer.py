@@ -30,7 +30,7 @@ import numpy as np
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
 from pkpd.objects import PKPDExperiment, PKPDAllometricScale
 from pyworkflow.gui.text import openTextFileEditor
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 from pkpd.objects import PKPDFitting, PKPDSignalAnalysis
 from pkpd.pkpd_units import strUnit
 

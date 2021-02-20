@@ -26,7 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable
+from pkpd.objects import PKPDExperiment, PKPDSample
 
 
 class ProtPKPDDropMeasurements(ProtPKPD):
@@ -63,13 +63,13 @@ class ProtPKPDDropMeasurements(ProtPKPD):
         filteredExperiment = PKPDExperiment()
         filteredExperiment.general = copy.copy(experiment.general)
         filteredExperiment.variables = {}
-        for varName, variable in experiment.variables.iteritems():
+        for varName, variable in experiment.variables.items():
             if not varName in varsToDrop:
                 filteredExperiment.variables[varName] = copy.copy(variable)
         filteredExperiment.samples = {}
         filteredExperiment.doses = copy.copy(experiment.doses)
 
-        for sampleKey, sample in experiment.samples.iteritems():
+        for sampleKey, sample in experiment.samples.items():
             candidateSample = PKPDSample()
             candidateSample.variableDictPtr    = filteredExperiment.variables
             candidateSample.doseDictPtr        = filteredExperiment.doses

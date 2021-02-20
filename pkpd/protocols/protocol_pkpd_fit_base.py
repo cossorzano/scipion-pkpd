@@ -26,7 +26,10 @@
 
 import math
 from collections import OrderedDict
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 
 import pyworkflow.protocol.params as params
@@ -195,7 +198,7 @@ class ProtPKPDFitBase(ProtPKPD):
         AICcList=[]
         BICList=[]
         self.prepareForAnalysis()
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             self.printSection("Fitting "+sampleName)
             x, y = sample.getXYValues(self.varNameX,self.varNameY)
             print("X= "+str(x))

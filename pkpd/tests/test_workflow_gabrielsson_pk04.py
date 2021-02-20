@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -44,7 +42,7 @@ class TestGabrielssonPK04Workflow(TestWorkflow):
     
     def testGabrielssonPK04Workflow(self):
         #First, import an experiment
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK04Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -63,7 +61,7 @@ class TestGabrielssonPK04Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Filter time variable
-        print "Filter time"
+        print("Filter time")
         protFilterTime = self.newProtocol(ProtPKPDFilterMeasurements,
                                           objLabel='pkpd - filter measurements (t<24h)',
                                           filterType=1, condition='$(t)<1440')
@@ -73,7 +71,7 @@ class TestGabrielssonPK04Workflow(TestWorkflow):
         self.validateFiles('protFilterTime', protFilterTime)
 
         # Fit a model to the first dose
-        print "Fitting monocompartmental model with 1st order to 1st dose..."
+        print("Fitting monocompartmental model with 1st order to 1st dose...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(25, 60.0); (0.0, 0.01); (0.08, 0.2); (40.0, 70)')
@@ -98,7 +96,7 @@ class TestGabrielssonPK04Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-60)
 
         # Fit a model to the all doses
-        print "Fitting monocompartmental model with 1st order to all doses..."
+        print("Fitting monocompartmental model with 1st order to all doses...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(25, 60.0); (0.001, 0.005); (0.1, 0.15); (20.0, 70)',

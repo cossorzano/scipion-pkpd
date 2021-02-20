@@ -28,7 +28,7 @@ import numpy as np
 import os
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
+from pkpd.objects import PKPDVariable
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 
 
@@ -81,7 +81,7 @@ class ProtPKPDExportToCSV(ProtPKPD):
             linePattern="%(SampleID)s; %(SampleName)s"
             listOfVariables = []
             for varRole in [PKPDVariable.ROLE_LABEL, PKPDVariable.ROLE_TIME, PKPDVariable.ROLE_MEASUREMENT]:
-                for varName,var in experiment.variables.iteritems():
+                for varName,var in experiment.variables.items():
                     if var.role == varRole:
                         header+="; %s"%varName
                         headerDefaultDict[varName]="NA"
@@ -95,12 +95,12 @@ class ProtPKPDExportToCSV(ProtPKPD):
 
             # Print all samples
             counter=1
-            for sampleName,sample in experiment.samples.iteritems():
+            for sampleName,sample in experiment.samples.items():
                 sampleDict=headerDefaultDict.copy()
                 sampleDict["SampleID"]=counter
                 sampleDict["SampleName"]=sampleName
                 if sample.descriptors:
-                    for descriptor,value in sample.descriptors.iteritems():
+                    for descriptor,value in sample.descriptors.items():
                         sampleDict[descriptor]=str(value)
                 for i in range(sample.getNumberOfMeasurements()):
                     lineDict=sampleDict.copy()
@@ -113,7 +113,7 @@ class ProtPKPDExportToCSV(ProtPKPD):
                 counter+=1
         else:
             allT=[]
-            for sampleName,sample in experiment.samples.iteritems():
+            for sampleName,sample in experiment.samples.items():
                 allT+=getattr(sample,"measurement_%s"%self.tVar.get())
             allT=set(allT) # Get unique values
             allT=[float(t) for t in allT]

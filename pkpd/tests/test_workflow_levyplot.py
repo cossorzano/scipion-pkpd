@@ -29,7 +29,7 @@ import os
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 class TestLevyPlotWorkflow(TestWorkflow):
 
@@ -41,7 +41,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         cls.fnInVivo = cls.dataset.getFile('invivo12')
 
     def testDissolutionWorkflow(self):
-        print "Import Experiment in vitro"
+        print("Import Experiment in vitro")
         protImportInVitro = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import in vitro',
                                       inputFile=self.fnInVitro)
@@ -50,7 +50,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('protImport', protImportInVitro)
 
         # Mahalanobis
-        print "Mahalanobis ..."
+        print("Mahalanobis ...")
         protMah1= self.newProtocol(ProtPKPDStatsMahalanobis,
                                    objLabel='pkpd - Mahalanobis measurements',
                                    labels='C'
@@ -61,7 +61,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertTrue(os.path.exists(fnSummary))
 
         # Average sample
-        print "Average sample ..."
+        print("Average sample ...")
         protAvg= self.newProtocol(ProtPKPDAverageSample,
                                    objLabel='pkpd - Average sample'
                                    )
@@ -70,7 +70,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protAvg.outputExperiment.fnPKPD, "There was a problem with the import")
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -79,7 +79,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertIsNotNone(protChangeTimeUnit.outputExperiment.fnPKPD, "There was a problem with changing units")
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
-        print "Import Experiment in vivo"
+        print("Import Experiment in vivo")
         protImportInVivo = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import in vivo',
                                       inputFile=self.fnInVivo)
@@ -88,7 +88,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('protImport', protImportInVivo)
 
         # NCA numeric
-        print "NCA numeric ..."
+        print("NCA numeric ...")
         protNCA = self.newProtocol(ProtPKPDNCANumeric,
                                 objLabel='pkpd - nca numeric')
         protNCA.inputExperiment.set(protImportInVivo.outputExperiment)
@@ -109,7 +109,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.assertTrue(MRT > 129 and MRT < 130)
 
         # Fit a Weibull dissolution
-        print "Fitting Weibull model ..."
+        print("Fitting Weibull model ...")
         protWeibull = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Weibull',
                                 globalSearch=True, modelType=3)
@@ -120,7 +120,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
 
         # Fit Order 1
-        print "Fitting EV1-monocompartment model ..."
+        print("Fitting EV1-monocompartment model ...")
         protModelInVivo = self.newProtocol(ProtPKPDMonoCompartment,
                                        objLabel='pkpd - fit monocompartment',
                                        bounds="(0.0, 8.0); (0.0, 0.2); (0.0, 10.0); (10.0, 50.0)"
@@ -132,7 +132,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDMonoCompartment', ProtPKPDMonoCompartment)
 
         # Deconvolve the in vivo
-        print "Deconvolving in vivo ..."
+        print("Deconvolving in vivo ...")
         protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                        objLabel='pkpd - deconvolution'
                                        )
@@ -142,7 +142,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDeconvolve', ProtPKPDDeconvolve)
 
         # Deconvolve the in vivo
-        print "Deconvolving in vivo Wagner Nelson..."
+        print("Deconvolving in vivo Wagner Nelson...")
         protDeconvWN = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
                                         objLabel='pkpd - deconvolution Wagner Nelson'
                                        )
@@ -152,7 +152,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDeconvolutionWagnerNelson', ProtPKPDDeconvolutionWagnerNelson)
 
         # Fit bicompartment
-        print "Fitting EV1-twocompartments model ..."
+        print("Fitting EV1-twocompartments model ...")
         protModelInVivo2 = self.newProtocol(ProtPKPDTwoCompartments,
                                        objLabel='pkpd - fit two compartments',
                                        bounds="(0.0, 8.0); (0.0, 0.2); (0.0, 10.0); (0.1, 50.0);  (0.0, 10.0); (0.1, 50.0)"
@@ -164,7 +164,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDTwoCompartments', ProtPKPDTwoCompartments)
 
         # Deconvolve the in vivo
-        print "Deconvolving in vivo Loo Riegelman ..."
+        print("Deconvolving in vivo Loo Riegelman ...")
         protDeconvLR = self.newProtocol(ProtPKPDDeconvolutionLooRiegelman,
                                         objLabel='pkpd - deconvolution Loo Riegelman'
                                        )
@@ -174,7 +174,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDeconvolutionLooRiegelman', ProtPKPDDeconvolutionLooRiegelman)
 
         # Levy plot
-        print "Levy plot ..."
+        print("Levy plot ...")
         protLevy = self.newProtocol(ProtPKPDDissolutionLevyPlot,
                                       objLabel='pkpd - levy plot'
                                       )
@@ -185,7 +185,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionLevyPlot', ProtPKPDDissolutionLevyPlot)
 
         # IVIVC
-        print "In vitro-in vivo correlation ..."
+        print("In vitro-in vivo correlation ...")
         protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                      responseScale=1,
                                      objLabel='pkpd - ivivc'
@@ -198,7 +198,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # IVIVC generic
-        print "In vitro-in vivo generic ..."
+        print("In vitro-in vivo generic ...")
         protIVIVCG = self.newProtocol(ProtPKPDDissolutionIVIVCGeneric,
                                       timeScale='$[a0]+$[a1]*$(t)+$[a2]*np.power($(t),2.0)',
                                       timeBounds='a0: [-100,100]; a1: [1e-4,1e3]; a2: [1e-8,1e3]',
@@ -214,7 +214,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionIVIVCG', ProtPKPDDissolutionIVIVCGeneric)
 
         # IVIVC Wagner
-        print "In vitro-in vivo correlation Wagner Nelson..."
+        print("In vitro-in vivo correlation Wagner Nelson...")
         protIVIVCWN = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                        responseScale=1,
                                        objLabel='pkpd - ivivc'
@@ -226,7 +226,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionIVIVC', ProtPKPDDissolutionIVIVC)
 
         # Dissolution simulation
-        print "IVIV+PK simulation ..."
+        print("IVIV+PK simulation ...")
         protIVIVPK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk',
                                       inputN=100,
@@ -242,7 +242,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # Internal validity
-        print "Internal validity ..."
+        print("Internal validity ...")
         protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
                                        objLabel='pkpd - internal validity',
                                        )
@@ -263,7 +263,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
             lineNo+=1
 
         # Bootstrap dissolution
-        print "Dissolution bootstrap ..."
+        print("Dissolution bootstrap ...")
         protDissolBootstrap = self.newProtocol(ProtPKPDFitBootstrap,
                                       objLabel='pkpd - dissol bootstrap',
                                       Nbootstrap=10
@@ -274,7 +274,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDFitBootstrap', ProtPKPDFitBootstrap)
 
         # Bootstrap ODE
-        print "ODE bootstrap ..."
+        print("ODE bootstrap ...")
         protODEBootstrap = self.newProtocol(ProtPKPDODEBootstrap,
                                                objLabel='pkpd - ode bootstrap',
                                                Nbootstrap=3
@@ -286,7 +286,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDODEBootstrap', ProtPKPDODEBootstrap)
 
         # Dissolution simulation
-        print "IVIV+PK simulation ..."
+        print("IVIV+PK simulation ...")
         protIVIVPKBoot = self.newProtocol(ProtPKPDDissolutionPKSimulation,
                                       objLabel='pkpd - ivivc+pk bootstrap',
                                       inputN=100,
@@ -301,7 +301,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionPKSimulation', ProtPKPDDissolutionPKSimulation)
 
         # t Test
-        print "T-test ..."
+        print("T-test ...")
         protTtest= self.newProtocol(ProtPKPDStatsExp2Subgroups2Mean,
                                     objLabel='pkpd - t test',
                                     label1 = 'MRT',
@@ -319,7 +319,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
         #         self.assertTrue(pval>0.1)
 
         # Kolmogorov test
-        print "Kolmogorov test ..."
+        print("Kolmogorov test ...")
         protKtest= self.newProtocol(ProtPKPDStatsExp2Subgroups2Kolmogorov,
                                     objLabel='pkpd - Kolmogorov test',
                                     label1='MRT',
@@ -338,7 +338,7 @@ class TestLevyPlotWorkflow(TestWorkflow):
 
 
         # Mahalanobis
-        print "Mahalanobis ..."
+        print("Mahalanobis ...")
         protMah2 = self.newProtocol(ProtPKPDStatsMahalanobis,
                                     objLabel='pkpd - Mahalanobis labels',
                                     labels='AUC0t AUMC0t Cmax'

@@ -1,6 +1,7 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@gmail.com)
+# * Authors: Yunior C. Fonseca Reyna    (cfonseca@cnb.csic.es)
+# *
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -20,32 +21,6 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'jmdelarosa@cnb.csic.es'
+# *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-from numpy import genfromtxt, isnan
-
-from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pwem.viewers.plotter import EmPlotter
-
-from pkpd.protocols import ProtPKPDDissolutionF2
-
-class PKPDDissolutionF2Viewer(Viewer):
-    _targets = [ProtPKPDDissolutionF2]
-    _environments = [DESKTOP_TKINTER]
-
-    def visualize(self, obj, **kwargs):
-        prot = obj
-        f1 = genfromtxt(prot._getExtraPath('f1.txt'))
-        f2 = genfromtxt(prot._getExtraPath('f2.txt'))
-
-        plotter = EmPlotter(style='seaborn-whitegrid')
-        plotter.createSubPlot("Histogram of f1", "f1", "Count")
-        plotter.plotHist(f1[~isnan(f1)], 50)
-        plotter.show()
-
-        plotter = EmPlotter(style='seaborn-whitegrid')
-        plotter.createSubPlot("Histogram of f2", "f2", "Count")
-        plotter.plotHist(f2[~isnan(f2)], 50)
-        plotter.show()

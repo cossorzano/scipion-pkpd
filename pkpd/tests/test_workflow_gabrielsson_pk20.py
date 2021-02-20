@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK20Workflow(TestWorkflow):
@@ -44,7 +42,7 @@ class TestGabrielssonPK20Workflow(TestWorkflow):
     def testGabrielssonPK20Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment (intravenous doses) Group"
+        print("Import Experiment (intravenous doses) Group")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK20Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -63,7 +61,7 @@ class TestGabrielssonPK20Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeConcUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (Cp to mg/L)',
                                               labelToChange='Cp', newUnitsCategory=4, newUnitsCategoryConc=1)
@@ -73,7 +71,7 @@ class TestGabrielssonPK20Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeConcUnit)
 
         # Fit a mono-compartment model with intravenous absorption to a set of measurements
-        print "Fitting a mono-compartment model intrinsic ..."
+        print("Fitting a mono-compartment model intrinsic ...")
         protPKPDPMonoCompartment = self.newProtocol(ProtPKPDMonoCompartmentClint,
                                                      objLabel='pkpd - iv mono-compartment intrinsic',
                                                      globalSearch=True,fitType=1,

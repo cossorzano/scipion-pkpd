@@ -27,7 +27,10 @@
 PKPD functions
 """
 import copy
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 import math
 from scipy.interpolate import InterpolatedUnivariateSpline, pchip_interpolate
@@ -64,7 +67,14 @@ def find_nearest(array,value):
 
 def getMD5String(fn):
     fnTime = time.strftime("%Y-%m-%d-%M:%S\n",time.gmtime(getmtime(fn)))
-    return hashlib.md5(fnTime+open(fn, 'rb').read()).hexdigest()
+
+    mhash = hashlib.md5()
+    with open(fn, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * mhash.block_size), b""):
+            mhash.update(chunk)
+    return mhash.hexdigest()
+
+    #return hashlib.md5(fnTime+open(fn, 'rb').read()).hexdigest().
 
 def writeMD5(fn):
     if not exists(fn):
@@ -182,10 +192,13 @@ def parseOperation(operation):
         idx0 = operation.find("$[", idxF + 1)
 
     parsedOperation = copy.copy(operation)
+    ldict={}
     for varName in varList:
-        exec ("parsedOperation=parsedOperation.replace('$(%s)','%s')" % (varName, varName))
+        exec ("parsedOperation=parsedOperation.replace('$(%s)','%s')" % (varName, varName), locals(), ldict)
     for varName in coeffList:
-        exec ("parsedOperation=parsedOperation.replace('$[%s]','%s')" % (varName, varName))
+        exec ("parsedOperation=parsedOperation.replace('$[%s]','%s')" % (varName, varName), locals(), ldict)
+    if 'parsedOperation' in ldict:
+        parsedOperation=ldict['parsedOperation']
     return parsedOperation, varList, coeffList
 
 def excelWriteRow(msgList, workbook, row, col=1, sheetName="", bold=False):

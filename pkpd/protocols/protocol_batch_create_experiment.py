@@ -26,7 +26,7 @@
 
 
 from pyworkflow.protocol.params import PointerParam, StringParam
-from pyworkflow.em.protocol import BatchProtocol
+from pwem.protocols import BatchProtocol
 from .protocol_pkpd import ProtPKPD
 import copy
 

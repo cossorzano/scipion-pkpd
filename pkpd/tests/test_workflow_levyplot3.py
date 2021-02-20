@@ -29,7 +29,7 @@ import os
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 class TestLevyPlotWorkflow3(TestWorkflow):
 
@@ -41,7 +41,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         cls.fnInVivo = cls.dataset.getFile('invivo12')
 
     def testDissolutionWorkflow(self):
-        print "Import Experiment in vitro"
+        print("Import Experiment in vitro")
         protImportInVitro = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import in vitro',
                                       inputFile=self.fnInVitro)
@@ -50,7 +50,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.validateFiles('protImport', protImportInVitro)
 
         # Change the time unit to minute
-        print "Change Units"
+        print("Change Units")
         protChangeTimeUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (t to min)',
                                               labelToChange='t', newUnitsCategory=0, newUnitsCategoryTime=1)
@@ -59,7 +59,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.assertIsNotNone(protChangeTimeUnit.outputExperiment.fnPKPD, "There was a problem with changing units")
         self.validateFiles('protChangeUnits', protChangeTimeUnit)
 
-        print "Import Experiment in vivo"
+        print("Import Experiment in vivo")
         protImportInVivo = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import in vivo',
                                       inputFile=self.fnInVivo)
@@ -68,7 +68,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.validateFiles('protImport', protImportInVivo)
 
         # Fit a Weibull dissolution
-        print "Fitting Weibull model ..."
+        print("Fitting Weibull model ...")
         protWeibull = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Weibull',
                                 globalSearch=True, modelType=3)
@@ -79,7 +79,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.validateFiles('ProtPKPDDissolutionFit', ProtPKPDDissolutionFit)
 
         # Fit Order 1
-        print "Fitting EV1-monocompartment model ..."
+        print("Fitting EV1-monocompartment model ...")
         protModelInVivo = self.newProtocol(ProtPKPDMonoCompartment,
                                        objLabel='pkpd - fit monocompartment',
                                        bounds="(0.0, 8.0); (0.0, 0.2); (0.0, 10.0); (10.0, 50.0)"
@@ -91,7 +91,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.validateFiles('ProtPKPDMonoCompartment', ProtPKPDMonoCompartment)
 
         # Deconvolve the in vivo
-        print "Deconvolving in vivo ..."
+        print("Deconvolving in vivo ...")
         protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                        objLabel='pkpd - deconvolution'
                                        )
@@ -101,7 +101,7 @@ class TestLevyPlotWorkflow3(TestWorkflow):
         self.validateFiles('ProtPKPDDeconvolve', ProtPKPDDeconvolve)
 
         # Levy plot
-        print "Levy plot ..."
+        print("Levy plot ...")
         protLevy = self.newProtocol(ProtPKPDDissolutionLevyPlot,
                                       objLabel='pkpd - levy plot'
                                       )

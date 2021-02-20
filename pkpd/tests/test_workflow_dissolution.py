@@ -24,13 +24,10 @@
 # *
 # **************************************************************************
 
-import numpy as np
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 import copy
 
 class TestDissolutionWorkflow(TestWorkflow):
@@ -42,7 +39,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         cls.exptFn = cls.dataset.getFile('experiment')
 
     def testDissolutionWorkflow(self):
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -51,7 +48,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a zero order dissolution
-        print "Fitting 0th order ..."
+        print("Fitting 0th order ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                  objLabel='pkpd - fit dissolution 0th order',
                                  globalSearch=True,modelType=0)
@@ -69,7 +66,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         fitting.load(prot.outputFitting.fnFitting)
         self.assertTrue(fitting.sampleFits[0].R2>0.38)
 
-        print "Fitting 0th order tlag ..."
+        print("Fitting 0th order tlag ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution 0th order tlag',
                                 globalSearch=True, modelType=0, allowTlag=True)
@@ -90,7 +87,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2 > 0.38)
 
         # Fit a first order dissolution
-        print "Fitting 1st order ..."
+        print("Fitting 1st order ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                  objLabel='pkpd - fit dissolution 1st order',
                                  globalSearch=True,modelType=1)
@@ -112,7 +109,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a fractional order dissolution
-        print "Fitting fractional order ..."
+        print("Fitting fractional order ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution fractional order',
                                 globalSearch=True, modelType=2)
@@ -136,7 +133,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Weibull dissolution
-        print "Fitting Weibull model ..."
+        print("Fitting Weibull model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Weibull',
                                 globalSearch=True, modelType=3)
@@ -161,7 +158,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Double Weibull dissolution
-        print "Fitting Double Weibull model ..."
+        print("Fitting Double Weibull model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution double Weibull',
                                 globalSearch=True, modelType=4)
@@ -176,7 +173,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.999)
 
         # Fit a Triple Weibull dissolution
-        print "Fitting Triple Weibull model ..."
+        print("Fitting Triple Weibull model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution triple Weibull',
                                 globalSearch=True, modelType=5)
@@ -191,7 +188,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.999)
 
         # Fit a Higuchi dissolution
-        print "Fitting Higuchi model ..."
+        print("Fitting Higuchi model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Higuchi',
                                 globalSearch=True, modelType=6)
@@ -211,7 +208,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Korsmeyer-Peppas dissolution
-        print "Fitting Korsmeyer-Peppas model ..."
+        print("Fitting Korsmeyer-Peppas model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Korsmeyer-Peppas',
                                 globalSearch=True, modelType=7)
@@ -233,7 +230,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Hixson-Crowell dissolution
-        print "Fitting Hixson-Crowell model ..."
+        print("Fitting Hixson-Crowell model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hixson-Crowell',
                                 globalSearch=True, modelType=8)
@@ -255,7 +252,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Hopfenberg dissolution
-        print "Fitting Hopfenberg model ..."
+        print("Fitting Hopfenberg model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hopfenberg',
                                 globalSearch=True, modelType=9)
@@ -279,7 +276,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Fit a Hill dissolution
-        print "Fitting Hill model ..."
+        print("Fitting Hill model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Hill',
                                 globalSearch=True, modelType=10)
@@ -302,7 +299,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.995)
 
         # Fit a Makoid Banakar dissolution
-        print "Fitting Makoid Banakar model ..."
+        print("Fitting Makoid Banakar model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Makoid Banakar',
                                 globalSearch=True, modelType=11)
@@ -325,7 +322,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.95)
 
         # Fit a Spline dissolution
-        print "Fitting Spline model ..."
+        print("Fitting Spline model ...")
         prot = self.newProtocol(ProtPKPDDissolutionFit,
                                 objLabel='pkpd - fit dissolution Spline',
                                 globalSearch=True, modelType=12)
@@ -346,7 +343,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.995)
 
         # Check that fit bootstrap is working
-        print "Fitting bootstrap ..."
+        print("Fitting bootstrap ...")
         prot = self.newProtocol(ProtPKPDFitBootstrap,
                                 objLabel='pkpd - fit bootstrap')
         prot.inputFit.set(protWeibull)
@@ -362,7 +359,7 @@ class TestDissolutionWorkflow(TestWorkflow):
         self.assertTrue(mu[2]>1.4 and mu[2]<1.5)
 
         # Check that operations are working
-        print "Operations 1 ..."
+        print("Operations 1 ...")
         prot = self.newProtocol(ProtPKPDOperateExperiment,
                                 newVarLine = 'Vmax2 ; none ; numeric; label ; Vmax/2',
                                 operation = '$(Vmax)/2',
@@ -377,7 +374,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Check that operations are working
-        print "Operations 2 ..."
+        print("Operations 2 ...")
         prot = self.newProtocol(ProtPKPDOperateExperiment,
                                 newVarLine='Hello ; none ; text; label ; Hello',
                                 operation='"Hello"',
@@ -392,7 +389,7 @@ class TestDissolutionWorkflow(TestWorkflow):
 
 
         # Check that operations are working
-        print "Operations 3 ..."
+        print("Operations 3 ...")
         prot = self.newProtocol(ProtPKPDOperateExperiment,
                                 newVarLine = 'VmaxC ; none ; numeric; measurement ; Vmax+log10(C)',
                                 operation = '$(Vmax)+np.log10($(C)+1)',

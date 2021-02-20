@@ -26,8 +26,8 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
-from pkpd.pkpd_units import  unitFromString, convertUnits, strUnit, PKPDUnit
+from pkpd.objects import PKPDVariable
+from pkpd.pkpd_units import unitFromString, convertUnits, strUnit, PKPDUnit
 
 # TESTED in test_workflow_gabrielsson_pk01.py
 # TESTED in test_workflow_gabrielsson_pk03.py
@@ -117,7 +117,7 @@ class ProtPKPDChangeUnits(ProtPKPD):
 
         variable = self.experiment.variables[self.labelToChange.get()]
 
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             if variable.varName == "dose":
                 pass
             else:

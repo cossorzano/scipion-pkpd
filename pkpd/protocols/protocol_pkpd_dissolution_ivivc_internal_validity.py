@@ -64,7 +64,7 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
 
         trueAUC = {}
         trueCmax = {}
-        for sampleName, sample in trueExp.samples.iteritems():
+        for sampleName, sample in trueExp.samples.items():
             try:
                 trueAUC[sampleName]=float(sample.descriptors["AUC0t"])
                 trueCmax[sampleName]=float(sample.descriptors["Cmax"])
@@ -74,7 +74,7 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
         simAUC = {}
         simCmax = {}
         simNames = []
-        for sampleName, sample in simExp.samples.iteritems():
+        for sampleName, sample in simExp.samples.items():
             fromNames=sample.descriptors["from"]
             sampleName=fromNames.split("---")[0]
             if not sampleName in simNames:

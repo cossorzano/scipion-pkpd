@@ -29,9 +29,7 @@ import numpy as np
 import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd_fit_base import ProtPKPDFitBase
-from pkpd.objects import PKPDFitting, PKPDSampleFitBootstrap, PKPDLSOptimizer, PKPDModelBase2
-from .protocol_pkpd_pdgeneric_fit import ProtPKPDGenericFit
-from .protocol_pkpd_dissolution_fit import ProtPKPDDissolutionFit
+from pkpd.objects import PKPDFitting, PKPDSampleFitBootstrap, PKPDLSOptimizer
 
 # Tested by test_workflow_dissolution
 
@@ -100,7 +98,7 @@ class ProtPKPDFitBootstrap(ProtPKPDFitBase):
             fitType = "relative"
 
         parameterNames = self.model.getParameterNames()
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             self.printSection("Fitting "+sampleName)
 
             x, y = sample.getXYValues(self.varNameX,self.varNameY)

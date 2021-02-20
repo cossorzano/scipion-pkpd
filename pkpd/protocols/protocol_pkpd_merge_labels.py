@@ -26,8 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import PKPDExperiment, PKPDVariable
-from pkpd.pkpd_units import PKPDUnit
+from pkpd.objects import PKPDVariable
 
 
 class ProtPKPDMergeLabels(ProtPKPD):
@@ -60,12 +59,12 @@ class ProtPKPDMergeLabels(ProtPKPD):
         self.printSection("Merging labels")
 
         labelsToAdd = []
-        for varName, variable in self.experiment2.variables.iteritems():
+        for varName, variable in self.experiment2.variables.items():
             if variable.role == PKPDVariable.ROLE_LABEL:
                 if not varName in self.experiment.variables:
                     labelsToAdd.append(variable)
 
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             if sampleName in self.experiment2.samples:
                 sample2 = self.experiment2.samples[sampleName]
                 for variable in labelsToAdd:

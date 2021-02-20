@@ -184,7 +184,7 @@ class ProtPKPDImportFromText(ProtPKPD):
             self.readTextFile()
 
             if self.dosesToSamples.get()=="" and self.experiment.doses: # There are doses but they are not assigned
-               dosename = self.experiment.doses.keys()[0]
+               dosename = list(self.experiment.doses.keys())[0]
                for samplename in self.experiment.samples:
                    self.experiment.samples[samplename].doseList.append(dosename)
 
@@ -317,9 +317,13 @@ class ProtPKPDImportFromExcel(ProtPKPDImportFromText):
                 for j in range(sheet.max_column):
                     cellValue = sheet.cell(row=i + 1, column=j + 1).value
                     if cellValue is None:
+                        if 'allMeasurements' in locals():
+                            allMeasurements.append("NA")
                         continue
                     cellValue = str(cellValue).strip()
                     if cellValue == "":
+                        if 'allMeasurements' in locals():
+                            allMeasurements.append("NA")
                         continue
                     if i-i0 == 0 and j >= 1:
                         sampleName = cellValue
