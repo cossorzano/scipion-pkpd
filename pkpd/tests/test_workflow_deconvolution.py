@@ -147,7 +147,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot.outputExperiment.fnPKPD)
         A = np.asarray(experiment.samples['Simulation_0'].getValues('A'), dtype=np.float64)
-        self.assertTrue(A[400] > 91 and A[400] <= 100)
+        self.assertTrue(A[-1] > 91 and A[-1] <= 100)
 
         # Change via
         print("Change via ...")
