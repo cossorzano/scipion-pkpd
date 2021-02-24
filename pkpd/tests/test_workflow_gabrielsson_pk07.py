@@ -118,7 +118,7 @@ class TestGabrielssonPK07Workflow(TestWorkflow):
         lambda2 = float(experiment.samples['Individual'].descriptors['lambda2'])
         self.assertTrue(c1>1.03 and c1<1.05) # Gabrielsson p. 555 A=1.06
         self.assertTrue(lambda1>0.038 and lambda1<0.040) # Gabrielsson p. 555 alpha=0.048
-        self.assertTrue(c2>0.72 and c2<0.73) # Gabrielsson p. 555 B=0.79
+        self.assertTrue(c2>0.71 and c2<0.73) # Gabrielsson p. 555 B=0.79
         self.assertTrue(lambda2>0.0028 and lambda2<0.0030) # Gabrielsson p. 555 beta=0.0031
         fitting = PKPDFitting()
         fitting.load(protExponentials.outputFitting.fnFitting)

@@ -201,9 +201,9 @@ Individual1 ; t; Cp
         experiment = PKPDExperiment()
         experiment.load(protModelInVivo.outputExperiment.fnPKPD)
         V = float(experiment.samples['Individual1'].descriptors['V'])
-        self.assertTrue(V>48 and V<54)
+        self.assertTrue(V>46 and V<54)
         Cl = float(experiment.samples['Individual1'].descriptors['Cl'])
-        self.assertTrue(Cl>0.19 and Cl<0.22)
+        self.assertTrue(Cl>0.18 and Cl<0.22)
 
         fitting = PKPDFitting()
         fitting.load(protModelInVivo.outputFitting.fnFitting)
