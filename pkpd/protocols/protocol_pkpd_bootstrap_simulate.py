@@ -52,7 +52,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         form.addSection('Input')
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDMonoCompartmentPD, ProtPKPDTwoCompartmentsBothPD, '\
-                                   'ProtPKPDODERefine', help='Select a run of an ODE model')
+                                   'ProtPKPDODERefine, ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
+                      help='Select a run of an ODE model')
         form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined','ODE Fitting'], default=0,
                       help="Choose a population of parameters, your own parameters or a previously fitted set of measurements")
         form.addParam('inputPopulation', params.PointerParam, label="Input population", condition="paramsSource==0",
