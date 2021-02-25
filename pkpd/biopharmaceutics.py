@@ -104,7 +104,15 @@ class BiopharmaceuticsModelOrder0(BiopharmaceuticsModel):
         return ['Rin']
 
     def calculateParameterUnits(self,sample):
-        self.parameterUnits = [PKPDUnit.UNIT_WEIGHTINVTIME_mg_MIN]
+        if self.ptrExperiment is None:
+            dunits=PKPDUnit.UNIT_WEIGHT_mg
+            tunits=PKPDUnit.UNIT_TIME_MIN
+        else:
+            dunits=self.ptrExperiment.getDoseUnits()
+            tunits = self.ptrExperiment.getTimeUnits().unit
+        print(dunits,tunits)
+        rateUnits = divideUnits(dunits,tunits)
+        self.parameterUnits = [rateUnits]
         return self.parameterUnits
 
     def getAg(self,t):
