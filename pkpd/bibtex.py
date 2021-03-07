@@ -142,4 +142,15 @@
   Url                      = {https://www.ncbi.nlm.nih.gov/labs/articles/17979655/}
 }
 
+@Article{Hartung2020,
+  Title                    = {A mechanistic framework for a priori pharmacokinetic predictions of orally inhaled drugs},
+  Author                   = {Hartung, N. and Borghardt, J. M.},
+  Journal                  = {PLOS Computational Biology},
+  Year                     = {2020},
+  Pages                    = {e1008466},
+  Volume                   = {16},
+  Doi                      = {http://doi.org/10.1371/journal.pcbi.1008466},
+  Url                      = {https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008466}
+}
+
 """

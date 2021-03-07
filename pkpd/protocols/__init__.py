@@ -71,6 +71,7 @@ from .protocol_pkpd_gather_fitting import ProtPKPDGatherFitting
 from .protocol_pkpd_import_from_table import ProtPKPDImportFromTable
 from .protocol_pkpd_import_from_csv import *
 from .protocol_pkpd_import_from_winnonlin import ProtPKPDImportFromWinnonlin
+from .protocol_pkpd_inhalation_lung_physiology import ProtPKPDInhLungPhysiology
 from .protocol_pkpd_iv_two_compartments import ProtPKPDIVTwoCompartments
 from .protocol_pkpd_join_samples import ProtPKPDJoinSamples
 from .protocol_pkpd_merge_labels import ProtPKPDMergeLabels
