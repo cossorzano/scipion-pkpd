@@ -42,7 +42,6 @@ class ProtPKPDInhLungPhysiology(ProtPKPD):
         # Hartung2020_MATLAB/physiol_subst/input_physiology.m
 
         form.addSection('Input')
-
         groupS = form.addGroup('Systemic parameters')
         groupS.addParam('Qco', params.FloatParam, label="Cardiac output [ml/min]", default=312/60*1000,
                       help='6000 from  Boger 2016, Table S3. 312/60*1000 from Brown 1997')
@@ -67,6 +66,41 @@ class ProtPKPDInhLungPhysiology(ProtPKPD):
                       label="Bronchial ELF heights for interpolation, terminal bronchioles [cm]",
                       default=1.8*1e-4, help='Hartung 2020, Fig.4 in Suppl. 1 Appendix')
 
+        form.addSection('Lung structure')
+        groupT= form.addGroup('Trachea')
+        groupT.addParam('tracheaLength', params.StringParam, label='Length [cm]', default='10.0',
+                        help='Yeh/Schum 1980, Bull. Math. Biol.')
+        groupT.addParam('tracheaDiameter', params.StringParam, label='Diameter [cm]', default='2.01',
+                        help='Yeh/Schum 1980, Bull. Math. Biol.')
+
+        groupB1 = form.addGroup('Main bronchi')
+        groupB1.addParam('bronchi1Length', params.StringParam, label='Length [cm]', default='4.36',
+                         help='Yeh/Schum 1980, Bull. Math. Biol.')
+        groupB1.addParam('bronchi1Diameter', params.StringParam, label='Diameter [cm]', default='1.56',
+                         help='Yeh/Schum 1980, Bull. Math. Biol.')
+
+        groupB2 = form.addGroup('Bronchi')
+        groupB2.addParam('bronchi2Length', params.StringParam, label='Length [cm]', default='1.78 0.965 0.995 1.01 0.890 0.962 0.867',
+                         help='Define as many as required separated by spaces. Yeh/Schum 1980, Bull. Math. Biol.')
+        groupB2.addParam('bronchi2Diameter', params.StringParam, label='Diameter [cm]', default='1.13 0.827 0.651 0.574 0.435 0.373 0.322',
+                         help='Define as many as required separated by spaces. Yeh/Schum 1980, Bull. Math. Biol.')
+
+        groupB3 = form.addGroup('Bronchioles')
+        groupB3.addParam('bronchi3Length', params.StringParam, label='Length [cm]',
+                         default='0.667 0.556 0.446 0.359 0.275 0.212',
+                         help='Define as many as required separated by spaces. Yeh/Schum 1980, Bull. Math. Biol.')
+        groupB3.addParam('bronchi3Diameter', params.StringParam, label='Diameter [cm]',
+                         default='0.257 0.198 0.156 0.118 0.092 0.073',
+                         help='Define as many as required separated by spaces. Yeh/Schum 1980, Bull. Math. Biol.')
+
+        groupB4 = form.addGroup('Terminal bronchioles')
+        groupB4.addParam('bronchi4Length', params.StringParam, label='Length [cm]',
+                         default='0.168',
+                         help='Yeh/Schum 1980, Bull. Math. Biol.')
+        groupB4.addParam('bronchi4Diameter', params.StringParam, label='Diameter [cm]',
+                         default='0.060',
+                         help='Yeh/Schum 1980, Bull. Math. Biol.')
+
     #--------------------------- INSERT steps functions --------------------------------------------
 
     def _insertAllSteps(self):
@@ -85,6 +119,18 @@ class ProtPKPDInhLungPhysiology(ProtPKPD):
         self.lungParams.fbrVlun=self.fbrVlun.get()
         self.lungParams.helf_trach=self.helf_trach.get()
         self.lungParams.helf_termbr=self.helf_termbr.get()
+
+        self.lungParams.tracheaLength=self.tracheaLength.get()
+        self.lungParams.tracheaDiameter=self.tracheaDiameter.get()
+        self.lungParams.bronchi1Length=self.bronchi1Length.get()
+        self.lungParams.bronchi1Diameter=self.bronchi1Diameter.get()
+        self.lungParams.bronchi2Length=','.join(self.bronchi2Length.get().split())
+        self.lungParams.bronchi2Diameter=','.join(self.bronchi2Diameter.get().split())
+        self.lungParams.bronchi3Length=','.join(self.bronchi3Length.get().split())
+        self.lungParams.bronchi3Diameter=','.join(self.bronchi3Diameter.get().split())
+        self.lungParams.bronchi4Length=self.bronchi4Length.get()
+        self.lungParams.bronchi4Diameter=self.bronchi4Diameter.get()
+
         self.lungParams.write(self._getPath("lung_parameters.pkpd"))
 
     def createOutputStep(self):
