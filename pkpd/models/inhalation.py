@@ -164,3 +164,44 @@ class PKPhysiologyLungParameters(EMObject):
         data['Vol_cm3'] = self.OWlun * data['fVol']  # density = 1 [g/cm^3]
         data['Surf_cm2'] = self.Surf_alv;
         return data
+
+class PKSubstanceLungParameters(EMObject):
+    def __init__(self, **args):
+        EMObject.__init__(self, **args)
+        self.fnPhys = String()
+
+    def write(self, fnOut):
+        fh=open(fnOut,"w")
+        fh.write("%s # name\n"%self.name)
+        fh.write("%f # maximum dissolution rate in alveolar space in units [nmol/(cm*min)]\n"%self.kdiss_alv)
+        fh.write("%f # maximum dissolution rate in conducting airways in units [nmol/(cm*min)]\n"%self.kdiss_br)
+        fh.write("%f # steady-state permeability in alveolar space in [cm/min]\n"%self.kp_alv)
+        fh.write("%f # steady-state permeability in conducting airways in [cm/min]\n"%self.kp_br)
+        fh.write("%f # solubility in alveolar space in [nmol/cm3]=[uM]\n" % self.Cs_alv)
+        fh.write("%f # solubility in conducting airways in [nmol/cm3]=[uM]\n" % self.Cs_br)
+        fh.write("%s # density in [nmol/cm3] = [uM]\n" % self.rho)
+        fh.write("%f # molecular weight [g/mol]\n"%self.MW)
+        fh.write("%s # plasma to lung partition coefficient in alveolar space [unitless]\n" % self.Kpl_alv)
+        fh.write("%s # plasma to lung partition coefficient in conducting airways [unitless]\n" % self.Kpl_br)
+        fh.write("%s # fraction unbound in plasma [unitless]\n" % self.fu)
+        fh.write("%s # blood to plasma ratio [unitless]\n" % self.R)
+
+        fh.close()
+        self.fnPhys.set(fnOut)
+
+    def getData(self):
+        data = {}
+        data['name'] = self.name
+        data['kdiss_alv'] = self.kdiss_alv
+        data['kdiss_br'] = self.kdiss_br
+        data['kp_alv'] = self.kp_alv
+        data['kp_br'] = self.kp_br
+        data['Cs_alv'] = self.Cs_alv
+        data['Cs_br'] = self.Cs_br
+        data['rho'] = self.rho
+        data['MW'] = self.MW
+        data['Kpl_alv'] = self.Kpl_alv
+        data['Kpl_br'] = self.Kpl_br
+        data['fu'] = self.fu
+        data['R'] = self.R
+        return data
