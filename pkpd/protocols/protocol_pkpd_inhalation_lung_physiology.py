@@ -29,6 +29,8 @@ from .protocol_pkpd import ProtPKPD
 
 from pkpd.models.inhalation import PKPhysiologyLungParameters
 
+# Tested in test_workflow_inhalation1
+
 class ProtPKPDInhLungPhysiology(ProtPKPD):
     """ Produce a description of the lung physiological parameters\n
         See Hartung2020.

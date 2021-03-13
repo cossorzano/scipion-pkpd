@@ -29,6 +29,8 @@ from .protocol_pkpd import ProtPKPD
 
 from pkpd.models.inhalation import PKSubstanceLungParameters
 
+# Tested in test_workflow_inhalation1
+
 class ProtPKPDInhSubstanceProperties(ProtPKPD):
     """ Produce a description of the properties of a substance related to inhalation\n
         See Hartung2020.

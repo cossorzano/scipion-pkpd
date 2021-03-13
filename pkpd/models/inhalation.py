@@ -168,7 +168,7 @@ class PKPhysiologyLungParameters(EMObject):
 class PKSubstanceLungParameters(EMObject):
     def __init__(self, **args):
         EMObject.__init__(self, **args)
-        self.fnPhys = String()
+        self.fnSubst = String()
 
     def write(self, fnOut):
         fh=open(fnOut,"w")
@@ -187,7 +187,7 @@ class PKSubstanceLungParameters(EMObject):
         fh.write("%s # blood to plasma ratio [unitless]\n" % self.R)
 
         fh.close()
-        self.fnPhys.set(fnOut)
+        self.fnSubst.set(fnOut)
 
     def getData(self):
         data = {}
