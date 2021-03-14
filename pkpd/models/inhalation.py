@@ -63,8 +63,8 @@ class PKPhysiologyLungParameters(EMObject):
         fh.close()
         self.fnPhys.set(fnOut)
 
-    def load(self, fnIn):
-        fh.open(fnIn)
+    def read(self, fnIn):
+        fh=open(fnIn)
         self.Qco=float(fh.readline().split()[0])
         self.OWlun=float(fh.readline().split()[0])
         self.falvCO=float(fh.readline().split()[0])
@@ -179,15 +179,33 @@ class PKSubstanceLungParameters(EMObject):
         fh.write("%f # steady-state permeability in conducting airways in [cm/min]\n"%self.kp_br)
         fh.write("%f # solubility in alveolar space in [nmol/cm3]=[uM]\n" % self.Cs_alv)
         fh.write("%f # solubility in conducting airways in [nmol/cm3]=[uM]\n" % self.Cs_br)
-        fh.write("%s # density in [nmol/cm3] = [uM]\n" % self.rho)
+        fh.write("%f # density in [nmol/cm3] = [uM]\n" % self.rho)
         fh.write("%f # molecular weight [g/mol]\n"%self.MW)
-        fh.write("%s # plasma to lung partition coefficient in alveolar space [unitless]\n" % self.Kpl_alv)
-        fh.write("%s # plasma to lung partition coefficient in conducting airways [unitless]\n" % self.Kpl_br)
-        fh.write("%s # fraction unbound in plasma [unitless]\n" % self.fu)
-        fh.write("%s # blood to plasma ratio [unitless]\n" % self.R)
+        fh.write("%f # plasma to lung partition coefficient in alveolar space [unitless]\n" % self.Kpl_alv)
+        fh.write("%f # plasma to lung partition coefficient in conducting airways [unitless]\n" % self.Kpl_br)
+        fh.write("%f # fraction unbound in plasma [unitless]\n" % self.fu)
+        fh.write("%f # blood to plasma ratio [unitless]\n" % self.R)
 
         fh.close()
         self.fnSubst.set(fnOut)
+
+    def read(self, fnIn):
+        fh=open(fnIn)
+        self.name=fh.readline().split()[0]
+        self.kdiss_alv=float(fh.readline().split()[0])
+        self.kdiss_br=float(fh.readline().split()[0])
+        self.kp_alv=float(fh.readline().split()[0])
+        self.kp_br=float(fh.readline().split()[0])
+        self.Cs_alv=float(fh.readline().split()[0])
+        self.Cs_br=float(fh.readline().split()[0])
+        self.rho=float(fh.readline().split()[0])
+        self.MW=float(fh.readline().split()[0])
+        self.Kpl_alv=float(fh.readline().split()[0])
+        self.Kpl_br=float(fh.readline().split()[0])
+        self.fu=float(fh.readline().split()[0])
+        self.R=float(fh.readline().split()[0])
+        fh.close()
+        self.fnSubst.set(fnIn)
 
     def getData(self):
         data = {}
@@ -205,3 +223,30 @@ class PKSubstanceLungParameters(EMObject):
         data['fu'] = self.fu
         data['R'] = self.R
         return data
+
+class PKDepositionParameters(EMObject):
+    def __init__(self, **args):
+        EMObject.__init__(self, **args)
+        self.fnSubstance = String()
+        self.fnLung = String()
+        self.fnDeposition = String()
+
+    def setFiles(self, fnSubstance, fnLung, fnDeposition):
+        self.fnSubstance.set(fnSubstance)
+        self.fnLung.set(fnLung)
+        self.fnDeposition.set(fnDeposition)
+
+    def readDepositionFile(self, alvlim):
+        fh=open(self.fnDeposition.get())
+
+        fh.close()
+
+    def read(self):
+        self.substance = PKSubstanceLungParameters()
+        self.substance.read(self.fnSubstance.get())
+
+        self.lung = PKPhysiologyLungParameters()
+        self.lung.read(self.fnLung.get())
+
+        alveolarGeneration = len(self.lung.getBronchial()['type'])+1
+        self.readDepositionFile(alveolarGeneration)

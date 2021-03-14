@@ -36,7 +36,7 @@ class TestInhalation1Workflow(TestWorkflow):
     @classmethod
     def setUpClass(cls):
         tests.setupTestProject(cls)
-        cls.dataset = None
+        cls.dataset = PKPDDataSet.getDataSet('Inhalation')
 
     def testDissolutionWorkflow(self):
         # Lung parameters
@@ -57,6 +57,16 @@ class TestInhalation1Workflow(TestWorkflow):
                                    )
         self.launchProtocol(protGold)
         self.assertIsNotNone(protGold.outputSubstanceParameters.fnSubst, "There was a problem with the gold definition")
+
+        # Deposition parameters
+        print("Deposition ...")
+        protDepo = self.newProtocol(ProtPKPDInhImportDepositionProperties,
+                                    objLabel='pkpd - deposition',
+                                    deposition=self.dataset.getFile('deposition2'))
+        protDepo.substance.set(protGold.outputSubstanceParameters)
+        protDepo.lungModel.set(protLung.outputLungParameters)
+        self.launchProtocol(protDepo)
+        self.assertIsNotNone(protDepo.outputDeposition.fnDeposition, "There was a problem with the deposition")
 
 if __name__ == "__main__":
     unittest.main()

@@ -195,3 +195,9 @@ PKPDDataSet(name='model',  folder='model',
                'modelGoldSqlite': 'gold/model_gold.sqlite',
                'modelGoldXml': 'gold/model_gold.xml',
         })
+
+PKPDDataSet(name='Inhalation', folder='Inhalation',
+        files={
+               'deposition1': 'deposition1.pkpd',
+               'deposition2': 'deposition2.pkpd',
+               })
