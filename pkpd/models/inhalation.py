@@ -238,8 +238,63 @@ class PKDepositionParameters(EMObject):
 
     def readDepositionFile(self, alvlim):
         fh=open(self.fnDeposition.get())
+        state = 0
 
+        for line in fh.readlines():
+            if line.strip()=="":
+                continue
+
+            if state == 0: # Header
+                tokens = line.split(':')
+                if tokens[0]=='Total dose [ug]':
+                    self.dose = float(tokens[1].strip())
+                elif tokens[0]=='Diameter [um]':
+                    self.diameterMode = tokens[1].strip()
+                elif 'FractionDeposited' in tokens[0]:
+                    diameters = []
+                    oldGeneration = 0
+                    fractionMatrix = []
+                    fractionRow = []
+                    state = 1
+            elif state == 1: # table of numbers
+                tokens = [float(x.strip()) for x in line.split()]
+                diam = tokens[0]
+                generation = tokens[1]
+                fractionDeposited = tokens[2]
+                if not diam in diameters:
+                    diameters.append(diam)
+                if oldGeneration!=generation:
+                    if oldGeneration!=0:
+                        fractionMatrix.append(fractionRow)
+                    fractionRow=[]
+                    oldGeneration=generation
+                fractionRow.append(fractionDeposited)
+        fractionMatrix.append(fractionRow)
         fh.close()
+
+        diameters = np.asarray(diameters) # [um] for D
+        if self.diameterMode=="aerodynamic":
+            # Hartung2020_MATLAB/functions/aero2geom.m
+            lambdaVar = 1; # spherical shape
+            rho_water = 1; # [g / mL]
+            rho_subst = self.substance.rho * self.substance.MW * 1e-9; # [nmol / mL] *[g / mol] ->[g / mL]
+            diameters = diameters * np.sqrt( lambdaVar * rho_water / rho_subst);
+            print("diameters",diameters)
+
+        print("Bronchi",np.asarray(fractionMatrix[0:(alvlim-1)]))
+        print("Alveolar",np.asarray(fractionMatrix[alvlim-1:]))
+        self.dose_nmol = self.dose * 1e3 / self.substance.MW # % [ug] *1e3 / ([g/mol]) = [nmol]
+        self.bronchiDose_nmol = np.asarray(fractionMatrix[0:(alvlim-1)])*self.dose_nmol
+           # This is a matrix with as many rows as generations and as many columns as diameters
+           # The content is what is the dose deposited at that generation in nmol
+        self.alveolarDose_nmol = np.sum(np.asarray(fractionMatrix[alvlim-1:])*self.dose_nmol)
+           # This is a matrix with as many rows as generations in the alveoli and as many columns as diameters
+           # The content is what is the dose deposited at that generation in nmol
+
+        self.throatDose = self.dose_nmol - np.sum(self.bronchiDose_nmol) - self.alveolarDose_nmol
+
+        # Hartung2020_MATLAB/functions/diam2vol.m
+        self.particleSize = math.pi/6 * np.power(1e-4 * diameters,3) # [cm^3]
 
     def read(self):
         self.substance = PKSubstanceLungParameters()
@@ -250,3 +305,12 @@ class PKDepositionParameters(EMObject):
 
         alveolarGeneration = len(self.lung.getBronchial()['type'])+1
         self.readDepositionFile(alveolarGeneration)
+
+    def getData(self):
+        data = {}
+        data['bronchial'] = self.bronchiDose_nmol
+        data['alveolar'] = self.alveolarDose_nmol
+        data['throat'] = self.throatDose
+        data['size'] = self.particleSize
+        data['dose_nmol'] = self.dose_nmol
+        return data

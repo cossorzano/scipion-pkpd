@@ -198,6 +198,6 @@ PKPDDataSet(name='model',  folder='model',
 
 PKPDDataSet(name='Inhalation', folder='Inhalation',
         files={
-               'deposition1': 'deposition1.pkpd',
-               'deposition2': 'deposition2.pkpd',
+               'deposition1': 'deposition1.txt',
+               'deposition2': 'deposition2.txt',
                })

@@ -62,7 +62,7 @@ class TestInhalation1Workflow(TestWorkflow):
         print("Deposition ...")
         protDepo = self.newProtocol(ProtPKPDInhImportDepositionProperties,
                                     objLabel='pkpd - deposition',
-                                    deposition=self.dataset.getFile('deposition2'))
+                                    depositionFile=self.dataset.getFile('deposition1'))
         protDepo.substance.set(protGold.outputSubstanceParameters)
         protDepo.lungModel.set(protLung.outputLungParameters)
         self.launchProtocol(protDepo)
