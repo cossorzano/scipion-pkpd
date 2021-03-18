@@ -27,7 +27,7 @@
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 
-from pkpd.models.inhalation import PKPhysiologyLungParameters
+from pkpd.objects import PKPhysiologyLungParameters
 
 # Tested in test_workflow_inhalation1
 

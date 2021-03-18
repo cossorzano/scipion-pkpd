@@ -27,7 +27,7 @@
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 
-from pkpd.models.inhalation import PKDepositionParameters
+from pkpd.objects import PKDepositionParameters
 
 # Tested in test_workflow_inhalation1
 

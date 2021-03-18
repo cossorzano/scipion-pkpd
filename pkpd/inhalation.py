@@ -31,7 +31,8 @@ predictions of orally inhaled drugs. PLOS Computational Biology, 16: e1008466 (2
 """
 import math
 import numpy as np
-from pwem.objects import *
+from pwem.objects import EMObject
+from pyworkflow.object import String
 
 class PKPhysiologyLungParameters(EMObject):
     def __init__(self, **args):
