@@ -68,5 +68,13 @@ class TestInhalation1Workflow(TestWorkflow):
         self.launchProtocol(protDepo)
         self.assertIsNotNone(protDepo.outputDeposition.fnDeposition, "There was a problem with the deposition")
 
+        # Simulate inhalation
+        print("Inhalation simulation ...")
+        protSimulate = self.newProtocol(ProtPKPDInhSimulate,
+                                        objLabel='pkpd - simulate inhalation')
+        protSimulate.ptrDeposition.set(protDepo.outputDeposition)
+        self.launchProtocol(protSimulate)
+        # self.assertIsNotNone(protSimulate.outputDeposition.fnDeposition, "There was a problem with the deposition")
+
 if __name__ == "__main__":
     unittest.main()

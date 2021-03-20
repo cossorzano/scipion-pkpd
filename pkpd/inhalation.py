@@ -31,8 +31,9 @@ predictions of orally inhaled drugs. PLOS Computational Biology, 16: e1008466 (2
 """
 import math
 import numpy as np
+from scipy.interpolate import interp1d
 from pwem.objects import EMObject
-from pyworkflow.object import String
+from pyworkflow.object import String, Integer
 
 class PKPhysiologyLungParameters(EMObject):
     def __init__(self, **args):
@@ -315,3 +316,89 @@ class PKDepositionParameters(EMObject):
         data['size'] = self.particleSize
         data['dose_nmol'] = self.dose_nmol
         return data
+
+class PKCiliarySpeed(EMObject):
+    # Hartung2020_MATLAB/functions/get_cilspeed.m
+    # Only 'interp' model is implemented here
+
+    EXPON = 0
+    FIT = 1
+    INTERP = 2
+
+    def __init__(self, **args):
+        EMObject.__init__(self, **args)
+        self.type = Integer()
+        self.type.set(self.INTERP)
+
+        self.fnLung = String()
+
+    def setFiles(self, fnLung):
+        self.fnLung.set(fnLung)
+
+    def prepare(self):
+        lungParams = PKPhysiologyLungParameters()
+        lungParams.read(self.fnLung.get())
+        lungData = lungParams.getBronchial()
+
+        self.Lx = np.sum(lungData['length_cm'])
+        self.pos = lungData['pos']
+        self.diam_cm = lungData['diam_cm']
+
+        print("Ciliary speed ================")
+        print("Total length of the lung [cm]",self.Lx)
+        print("Location of branches [cm]",self.pos)
+        print("Diameter of the branches [cm]",self.diam_cm)
+
+        if self.type.get()==self.INTERP:
+            # Hofmann - Sturm model for mucociliary transport velocity
+            # Reference: Hofmann / Sturm (2004) J Aerosol Med, Vol 17(1)
+            self.v = 0.1 * 1.2553 * np.power(lungData['diam_cm'],2.808) # in [cm / min]
+            self.cilspeed = interp1d(self.pos, self.v, bounds_error=False, fill_value=(self.v[0], self.v[-1]))
+
+class PKInhalationDissolution(EMObject):
+    # Hartung2020_MATLAB/functions/get_disol.m
+    # All implemented dissolution models are based on an adapted version of
+    # the Noyes - Whitney equation, but differ in whether they
+    # 1) describe saturable or unsaturable dissolution
+    # 2) truncate or not the dissolution speed for small particles (for  numeric stability)
+    # 3) truncate or not the dissolution speed for large particles
+    #    (based on the assumption that only a part of the particle surface
+    #    is in contact with the dissolution medium)
+
+    UNSAT       = 0
+    TRUNC_UNSAT = 1
+    SAT         = 2 # Only this one is implemented
+    TRUNC_SAT   = 3
+    TRUNC2_SAT  = 4
+    CAP         = 5
+    XCAP        = 6
+    UNSOL       = 7
+
+    def __init__(self, **args):
+        EMObject.__init__(self, **args)
+        self.type = Integer()
+        self.type.set(self.SAT)
+        self.fnSubstance = String()
+
+    def setFiles(self, fnSubstance):
+        self.fnSubstance.set(fnSubstance)
+
+    def prepare(self):
+        substanceParams = PKSubstanceLungParameters()
+        substanceParams.read(self.fnSubstance.get())
+        substanceData = substanceParams.getData()
+
+        self.kdiss = substanceData['kdiss_br']
+        self.Cs = substanceData['Cs_br']
+        self.rho = substanceData['rho']
+
+        print("Substance ===================")
+        print("Maximum bronchial dissolution rate [nmol/(cm*min)]",self.kdiss)
+        print("Solubility in bronchi [nmol/cm3]=[uM]",self.Cs)
+        print("Density in [nmol/cm3]",self.rho)
+
+        D = self.kdiss / self.Cs
+        K = 4 * math.pi * D / (self.rho * np.power(4.0/3.0 * math.pi, 1.0/3.0))
+
+        if self.type.get()==self.SAT:
+            self.dissol = lambda s, Cf: np.where(s>0, K*(self.Cs-Cf) * np.power(s,1.0/3.0), 0.0) # [cm^3/min]

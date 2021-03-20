@@ -2695,6 +2695,8 @@ class PKPDDataSet:
 from .inhalation import PKSubstanceLungParameters as PKSubstanceLungParameters2
 from .inhalation import PKDepositionParameters as PKDepositionParameters2
 from .inhalation import PKPhysiologyLungParameters as PKPhysiologyLungParameters2
+from .inhalation import PKCiliarySpeed as PKCiliarySpeed2
+from .inhalation import PKInhalationDissolution as PKInhalationDissolution2
 
 class PKSubstanceLungParameters(PKSubstanceLungParameters2):
     pass
@@ -2703,4 +2705,10 @@ class PKPhysiologyLungParameters(PKPhysiologyLungParameters2):
     pass
 
 class PKDepositionParameters(PKDepositionParameters2):
+    pass
+
+class PKCiliarySpeed(PKCiliarySpeed2):
+    pass
+
+class PKInhalationDissolution(PKInhalationDissolution2):
     pass
