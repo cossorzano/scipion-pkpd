@@ -54,7 +54,7 @@ class ProtPKPDInhSubstanceProperties(ProtPKPD):
         groupA.addParam('kdiss_alv', params.FloatParam,
                         label="Maximum dissolution rate in alveolar space [nmol/(cm*min)]", default=3.3e-4)
         groupA.addParam('kdiss_br', params.FloatParam,
-                        label="Maximum dissolution rate in alveolar space [nmol/(cm*min)]", default=3.3e-4)
+                        label="Maximum dissolution rate in conducting airways [nmol/(cm*min)]", default=3.3e-4)
         groupA.addParam('kp_alv', params.FloatParam,
                         label="Steady-state permeability in alveolar space [cm/min]", default=5.33e-6*60)
         groupA.addParam('kp_br', params.FloatParam,
