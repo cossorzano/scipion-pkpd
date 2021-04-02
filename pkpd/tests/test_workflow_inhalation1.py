@@ -68,6 +68,21 @@ class TestInhalation1Workflow(TestWorkflow):
         self.launchProtocol(protDepo)
         self.assertIsNotNone(protDepo.outputDeposition.fnDeposition, "There was a problem with the deposition")
 
+        # PK parameters
+        print("PK parameters ...")
+        protPK = self.newProtocol(ProtPKPDCreateExperiment,
+                                  objLabel='pkpd - pk parameters',
+                                  newTitle='Gold PK parameters',
+                                  newVariables='Cl ; mL/min ; numeric[%f] ; label ; Two compartments, central clearance\n'
+                                               'V ; mL ; numeric[%f] ; label ; Two compartments, central volume\n'
+                                               'Vp ; mL ; numeric[%f] ; label ; Two compartments, peripheral volume\n'
+                                               'Q ; mL/min ; numeric[%f] ; label ; Two compartments, passage rate from central to peripheral and viceversa\n'
+                                               'F ; none ; numeric[%f] ; label ; Fraction that is absorbed orally\n'
+                                               'k01 ; 1/min ; numeric[%f] ; label ; 1st order absorption rate of the oral fraction\n',
+                                  newSamples='Individual1; Cl=0; V=1000; Vp=1000; Q=0; F=0; k01=0')
+        self.launchProtocol(protPK)
+        self.assertIsNotNone(protPK.outputExperiment.fnPKPD, "There was a problem with the PK parameters")
+
         # Simulate inhalation
         print("Inhalation simulation ...")
         protSimulate = self.newProtocol(ProtPKPDInhSimulate,
