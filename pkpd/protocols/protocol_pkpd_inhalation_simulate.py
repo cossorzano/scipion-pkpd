@@ -24,10 +24,15 @@
 # *
 # **************************************************************************
 
+import math
+import numpy as np
+
 import pyworkflow.protocol.params as params
+from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd import ProtPKPD
 
-from pkpd.objects import PKDepositionParameters, PKCiliarySpeed, PKInhalationDissolution
+from pkpd.objects import PKDepositionParameters, PKSubstanceLungParameters, PKPhysiologyLungParameters, PKLung
+from pkpd.inhalation import diam2vol, saturable_2D_upwind_IE
 
 # Tested in test_workflow_inhalation1
 
@@ -42,6 +47,9 @@ class ProtPKPDInhSimulate(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('ptrDeposition', params.PointerParam, pointerClass='PKDepositionParameters', label="Deposition")
+        form.addParam('ptrPK', params.PointerParam, pointerClass='PKPDExperiment', label="PK parameters")
+        form.addParam('simulationTime', params.FloatParam, label="Simulation time (min)", default=10*24*60)
+        form.addParam('deltaT', params.FloatParam, label='Time step (min)', default=1, expertLevel=LEVEL_ADVANCED)
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -54,14 +62,22 @@ class ProtPKPDInhSimulate(ProtPKPD):
         self.deposition.setFiles(self.ptrDeposition.get().fnSubstance.get(),
                                  self.ptrDeposition.get().fnLung.get(),
                                  self.ptrDeposition.get().fnDeposition.get())
+        self.deposition.read()
 
-        self.ciliarySpeed = PKCiliarySpeed()
-        self.ciliarySpeed.setFiles(self.ptrDeposition.get().fnLung.get())
-        self.ciliarySpeed.prepare()
+        substanceParams = PKSubstanceLungParameters()
+        substanceParams.read(self.ptrDeposition.get().fnSubstance.get())
 
-        self.inhalationDissolution = PKInhalationDissolution()
-        self.inhalationDissolution.setFiles(self.ptrDeposition.get().fnSubstance.get())
-        self.inhalationDissolution.prepare()
+        lungParams = PKPhysiologyLungParameters()
+        lungParams.read(self.ptrDeposition.get().fnLung.get())
+
+        pkLungParams = PKLung()
+        pkLungParams.prepare(substanceParams, lungParams)
+
+        diameters = np.concatenate((np.arange(0.1,1.1,0.1),np.arange(1.2,9.2,0.2))) # [um]
+        Sbnd = diam2vol(diameters)
+
+        tt=np.arange(0,self.simulationTime.get()+self.deltaT.get(),self.deltaT.get())
+        saturable_2D_upwind_IE(lungParams, pkLungParams, self.deposition, tt, Sbnd)
 
     def createOutputStep(self):
         pass

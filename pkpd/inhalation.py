@@ -31,9 +31,15 @@ predictions of orally inhaled drugs. PLOS Computational Biology, 16: e1008466 (2
 """
 import math
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, interp2d
 from pwem.objects import EMObject
 from pyworkflow.object import String, Integer
+
+def diam2vol(diameters):
+    # Hartung2020_MATLAB/functions/diam2vol.m
+    # Convert diameter to volume, assuming spherical shape
+    # Units: [um] for diameters, [cm^3] for V
+    return math.pi / 6 * np.power(1e-4 * diameters, 3)
 
 class PKPhysiologyLungParameters(EMObject):
     def __init__(self, **args):
@@ -46,6 +52,7 @@ class PKPhysiologyLungParameters(EMObject):
         fh.write("%f # lung tissue weight, without blood [g]\n"%self.OWlun)
         fh.write("%f # alveolar fraction of cardiac output\n"%self.falvCO)
         fh.write("%f # alveolar ELF volume [mL]\n"%self.Velf_alv)
+            # ELF = Epithelial Lining Fluid
         fh.write("%f # alveolar surface area [cm2]\n"%self.Surf_alv)
         fh.write("%f # bronchial fraction of cardiac output\n"%self.fbrCO)
         fh.write("%f # bronchial fraction of lung tissue volume\n"%self.fbrVlun)
@@ -151,6 +158,7 @@ class PKPhysiologyLungParameters(EMObject):
         data['h_elf_termbr'] = self.helf_termbr
         data['h_elf_cm'] = h_elf_cm
         data['elf_cm3'] = elf_cm3
+        data['voltis_cm3'] = voltis_cm3
 
         data['fVol'] = self.fbrVlun
         data['fQco'] = self.fbrCO
@@ -161,7 +169,7 @@ class PKPhysiologyLungParameters(EMObject):
         # Hartung2020_MATLAB/physiol_subst/physiology_alveolar.m
         data = {}
         data['fQco']=self.falvCO
-        data['fVol']=self.fbrVlun
+        data['fVol']=1-self.fbrVlun
         data['ELF_cm3'] = self.Velf_alv
         data['Vol_cm3'] = self.OWlun * data['fVol']  # density = 1 [g/cm^3]
         data['Surf_cm2'] = self.Surf_alv;
@@ -294,9 +302,7 @@ class PKDepositionParameters(EMObject):
            # The content is what is the dose deposited at that generation in nmol
 
         self.throatDose = self.dose_nmol - np.sum(self.bronchiDose_nmol) - self.alveolarDose_nmol
-
-        # Hartung2020_MATLAB/functions/diam2vol.m
-        self.particleSize = math.pi/6 * np.power(1e-4 * diameters,3) # [cm^3]
+        self.particleSize = diam2vol(diameters) # cm3
 
     def read(self):
         self.substance = PKSubstanceLungParameters()
@@ -330,14 +336,10 @@ class PKCiliarySpeed(EMObject):
         self.type = Integer()
         self.type.set(self.INTERP)
 
-        self.fnLung = String()
+        self.lungParams = None
 
-    def setFiles(self, fnLung):
-        self.fnLung.set(fnLung)
-
-    def prepare(self):
-        lungParams = PKPhysiologyLungParameters()
-        lungParams.read(self.fnLung.get())
+    def prepare(self, lungParams):
+        self.lungParams = lungParams
         lungData = lungParams.getBronchial()
 
         self.Lx = np.sum(lungData['length_cm'])
@@ -378,23 +380,23 @@ class PKInhalationDissolution(EMObject):
         EMObject.__init__(self, **args)
         self.type = Integer()
         self.type.set(self.SAT)
-        self.fnSubstance = String()
+        self.substanceParams = None
 
-    def setFiles(self, fnSubstance):
-        self.fnSubstance.set(fnSubstance)
-
-    def prepare(self):
-        substanceParams = PKSubstanceLungParameters()
-        substanceParams.read(self.fnSubstance.get())
+    def prepare(self, substanceParams, part):
+        self.substanceParams = substanceParams
         substanceData = substanceParams.getData()
 
-        self.kdiss = substanceData['kdiss_br']
-        self.Cs = substanceData['Cs_br']
+        if part=="bronchi":
+            self.kdiss = substanceData['kdiss_br']
+            self.Cs = substanceData['Cs_br']
+        else:
+            self.kdiss = substanceData['kdiss_alv']
+            self.Cs = substanceData['Cs_alv']
         self.rho = substanceData['rho']
 
-        print("Substance ===================")
-        print("Maximum bronchial dissolution rate [nmol/(cm*min)]",self.kdiss)
-        print("Solubility in bronchi [nmol/cm3]=[uM]",self.Cs)
+        print("Substance in %s ==================="%part)
+        print("Maximum dissolution rate [nmol/(cm*min)]",self.kdiss)
+        print("Solubility in [nmol/cm3]=[uM]",self.Cs)
         print("Density in [nmol/cm3]",self.rho)
 
         D = self.kdiss / self.Cs
@@ -402,3 +404,223 @@ class PKInhalationDissolution(EMObject):
 
         if self.type.get()==self.SAT:
             self.dissol = lambda s, Cf: np.where(s>0, K*(self.Cs-Cf) * np.power(s,1.0/3.0), 0.0) # [cm^3/min]
+
+class PKLung(EMObject):
+    # Hartung2020_MATLAB/functions/get_bronchial_kinetics.m
+    # Hartung2020_MATLAB/functions/get_alveolar_kinetics.m
+    def __init__(self, **args):
+        EMObject.__init__(self, **args)
+        self.substanceParams = None
+        self.lungParams = None
+        self.ciliarySpeed = None
+        self.inhalationDissolutionBronchi = None
+        self.inhalationDissolutionAlveoli = None
+
+    def prepare(self, substanceParams, lungParams):
+        self.substanceParams = substanceParams
+        self.lungParams = lungParams
+
+        self.ciliarySpeed = PKCiliarySpeed()
+        self.ciliarySpeed.prepare(lungParams)
+
+        self.inhalationDissolutionBronchi = PKInhalationDissolution()
+        self.inhalationDissolutionBronchi.prepare(substanceParams,"bronchi")
+
+        # Hartung2020_MATLAB/functions/get_bronchial_kinetics.m
+        bronchialData = lungParams.getBronchial()
+        pos = bronchialData['pos']
+        diam_cm = bronchialData['diam_cm']
+
+        self.substanceData = substanceParams.getData()
+        kp = self.substanceData['kp_br']
+        ka = math.pi * kp * diam_cm
+        print("Absorption rate per bronchial segment [1/min]",ka)
+        self.bronchialAbsorb = interp1d(pos, ka, bounds_error=False, fill_value=(ka[0], ka[-1]))
+
+        # Hartung2020_MATLAB/functions/get_alveolar_kinetics.m
+        self.inhalationDissolutionAlveoli = PKInhalationDissolution()
+        self.inhalationDissolutionAlveoli.prepare(substanceParams,"alveoli")
+
+    def cilspeed(self, x):
+        return self.ciliarySpeed.cilspeed(x)
+
+def conserving_projection(X1, V1, X2):
+    # Hartung2020_MATLAB/functions/conserving_projection.m
+    #   V2 = CONSERVING_PROJECTION(X1,V1,X2) projects quantity V1 from location
+    #   grid X1 to grid X2, ensuring int_x^y(v2(z)dz) = int_x^y(v1(z)dz) holds
+    #   for any x,y, where vI(z) := vI(j) for Xi(j) < z < Xi(j+1) (i=1,2)
+    #   (constant between grid cells)
+    cumV1 = np.concatenate(([0],np.cumsum(V1)));
+    interpolator = interp1d(X1, cumV1, bounds_error=False, fill_value=(cumV1[0], cumV1[-1]))
+    return np.diff(interpolator(X2))
+
+def P_aELF(lungData, Xbnd):
+    # Hartung2020_MATLAB/functions/P_aELF.m
+    #   Aim: locally and globally conserve ELF volumes
+    #   Input:  boundary gridpoints of computational location grid
+    #   Output: cross-sectional areas at (ctr) grid points (a_Xctr), satisfying
+    #           int_dx(Xbnd, a_Xctr) == sum(aw.elf_cm3) (and local volume conservation)
+    V_Xctr = conserving_projection(np.concatenate(([0],lungData['end_cm'])), lungData['elf_cm3'], Xbnd)
+    return np.divide(V_Xctr, np.diff(Xbnd))
+
+def P_aTis(lungData, Xbnd):
+    # Hartung2020_MATLAB/functions/P_aTis.m
+    #   Aim: locally and globally conserve tissue volumes
+    #   Input:  boundary gridpoints of computational location grid
+    #   Output: cross-sectional areas at (ctr) grid points (a_Xctr), satisfying
+    #           int_dx(Xbnd, a_Xctr) == sum(aw.voltis_cm3) (and local volume conservation)
+    V_Xctr = conserving_projection(np.concatenate(([0],lungData['end_cm'])), lungData['voltis_cm3'], Xbnd)
+    return np.divide(V_Xctr, np.diff(Xbnd))
+
+def P_hELF(lungData, Xctr):
+    # Hartung2020_MATLAB/functions/P_hELF.m
+    #   Input:  center gridpoints of computational location grid
+    #   Output: ELF heights at (ctr) grid points (h_Xctr), in cm.
+    interpolator = interp1d(lungData['pos'], lungData['h_elf_cm'], fill_value='extrapolate')
+    return interpolator(Xctr)
+
+def P_Qbr(lungData, systemicData, Xbnd):
+    # Hartung2020_MATLAB/functions/P_Qbr.m
+    #   Project bronchial (central lung) blood flow onto computational grid
+    #   Total blood flow is conserved
+    Qcl = lungData['fQco'] * systemicData['Qco']
+
+    # Modelling assumption: blood flow proportional to tissue volume
+    Qgen = Qcl * lungData['voltis_cm3'] / np.sum(lungData['voltis_cm3'])
+    Q_Xctr = conserving_projection(np.concatenate(([0],lungData['end_cm'])), Qgen, Xbnd)
+    return np.divide(Q_Xctr,np.diff(Xbnd));
+
+def project_deposition_2D(depositionData,X,S,lungData):
+    #   Project deposition data on 2D computational grid
+    #   Strategy for projection on 2D grid:
+    #     - Uniform distribution of dose in data location-size gridcells
+    #       (per generation and per size category) --> f(x,s)
+    #     - rho0 at solver location-size gridcell C = average of f(x,s) in C
+    xbnddat = np.concatenate(([0],lungData['end_cm']))
+
+    smax = diam2vol(50)
+    sdil_default = diam2vol(0.1)
+
+    # Projection onto bronchi
+    # step 1: distribute delta peaks in size over short size intervals
+    sdattmp = depositionData['size']
+    sdil = np.min([sdil_default, 0.5*np.min(sdattmp)])
+    if sdattmp.size>1:
+        sdil=np.min([sdil,np.min(np.diff(sdil))])
+    sbnddat = np.concatenate(([0],np.kron(sdattmp,[1,1]) + sdil*np.kron(np.ones(sdattmp.shape),[-1,1]), [smax]))
+
+    amtxs_br = depositionData['bronchial']
+    amtxs_br_ext = np.zeros((amtxs_br.shape[0],2*amtxs_br.shape[1]+1))
+    amtxs_br_ext[:,1::2] = amtxs_br
+
+    # step 2: compute cumulative amount matrix per data location-size grid
+    camtdat_br_x = np.cumsum(np.pad(amtxs_br_ext,((1,0),(0,0)),'constant',constant_values=0),axis=0)
+    camtdat_br_xs = np.cumsum(np.pad(camtdat_br_x,((0,0),(1,0)),'constant',constant_values=0),axis=1)
+
+    # step 3: linear interpolation projects onto solver location-size grid
+    interpolator = interp2d(sbnddat, xbnddat, camtdat_br_xs, bounds_error=False, fill_value=0)
+    camtbnd_br_xs = interpolator(S, X)
+
+    amtgrd_br_x = np.diff(camtbnd_br_xs, axis=0)
+    amtgrd_br_xs = np.diff(amtgrd_br_x, axis=1)
+
+    amtgrd_br_xs = np.where(amtgrd_br_xs<0,0,amtgrd_br_xs) # Make sure that everything is positive
+
+    # step 4: for each grid cell: amount -> location-resolved amount per size
+    dx = np.diff(X)
+    ds = np.diff(S)
+    s = 0.5*(S[0:-1] + S[1:])
+    rho0br = np.divide(amtgrd_br_xs,np.reshape(dx,(dx.size,1))*np.reshape(np.multiply(s,ds),(1,s.size)))
+
+def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
+    # Hartung2020_MATLAB/models/saturable_2D_upwind_IE.m
+    #   Algorithm features:
+    #   - Conducting airways, peripheral airways and systemic circulation fully coupled
+    #   - Upwind discretisation of PDE and compatible integration rules for mass conservation
+    #   - implicit Euler discretisation of linear processes
+    #   - saturable dissolution model
+    #   - initial particle size treated as a delta distribution; particle size is treat followed over time.
+    #   - along the location axis, an arbitrary grid can be used
+    #
+    #   Since dissolution is saturable, particle sizes at different airway
+    #   positions may differ from each other for t > 0.
+    #
+    #   The idea of this approach is that the size resolution in the data may
+    #   be much coarser than that the location grid
+    #   (extreme case: monodisperse particle distribution)
+    dt = np.diff(tt)
+
+    lungData = lungParams.getBronchial()
+    alveolarData = lungParams.getAlveolar()
+    systemicData = lungParams.getSystemic()
+    depositionData = depositionParams.getData()
+
+    Xbnd = np.sort([0] + lungData['end_cm'].tolist() + lungData['pos'].tolist())
+    Nx = Xbnd.size - 1
+    Ns = Sbnd.size - 1
+
+    # midpoints in discretisation cell (where rho, Cflu, Ctis are modelled)
+    Xctr = Xbnd[:-1] + np.diff(Xbnd)/2
+    Sctr = Sbnd[:-1] + np.diff(Sbnd)/2
+
+    # transport velocity
+    lambdaX = pkLung.cilspeed(Xbnd)
+
+    # location/size discretisation steps
+    dx = np.diff(Xbnd)
+    ds = np.diff(Sbnd)
+
+    # absorption into tissue
+    kaX = pkLung.bronchialAbsorb(Xctr)
+
+    # cross-sectional areas
+    aFluX = P_aELF(lungData, Xbnd)
+    aTisX = P_aTis(lungData, Xbnd)
+
+    # ELF heights in bronchi / alveolar space
+    hFluX = P_hELF(lungData, Xctr)
+    hFlualv = alveolarData['ELF_cm3']/alveolarData['Surf_cm2']
+
+    # blood flow
+    Qalv = alveolarData['fQco'] * systemicData['Qco'] # Alveolar
+    qX = P_Qbr(lungData, systemicData, Xbnd)
+    QbrX = np.multiply(qX, dx) # bronchial (location-resolved)
+
+    # plasma to lung partition coefficients
+    Kpl_br = pkLung.substanceData['Kpl_br']
+    Kpl_alv = pkLung.substanceData['Kpl_alv']
+    Kpl_u_br = Kpl_br / pkLung.substanceData['fu']
+    Kpl_u_alv = Kpl_alv / pkLung.substanceData['fu']
+
+    # permeability-surface area products [cm3/min]
+    PS_alv = pkLung.substanceData['kp_alv'] * alveolarData['Surf_cm2'];  # alveolar
+    PS_br = np.multiply(kaX , dx) # bronchial
+
+    # assign volumes to variables
+    alvELF = alveolarData['ELF_cm3']  # alveolar fluid
+    alvTis = alveolarData['Vol_cm3']  # alveolar tissue
+    brELF  = np.multiply(aFluX,dx)    # bronchial fluid
+    brTis  = np.multiply(aTisX,dx)    # bronchial tissue
+
+    # Allocate lung amounts: A_flu(alv/br), A_tis(alv/br)
+    Nt=tt.size-1
+    Aalvflu = np.zeros((Nt+1,1));
+    Aalvtis = np.zeros((Nt+1,1));
+
+    Abrflu  = np.zeros((Nt+1,Nx));
+    Abrtis  = np.zeros((Nt+1,Nx));
+
+    # Allocate systemic amounts: Asysgut, Asysctr, Asysper
+    Asysgut   = np.zeros((Nt+1,1));
+    Asysctr   = np.zeros((Nt+1,1));
+    Asysper   = np.zeros((Nt+1,1));
+
+    # Allocate amount cleared:
+    Aclear = np.zeros((Nt+1,1));     # for mass balance
+    Amcc   = np.zeros((Nt+1,1));     # to track cumulative amount cleared by MCC (not in mass balance)
+
+    # Initialize PSPM densities (br/alv) and gut compartment with dosing
+    rhobr  = np.zeros((Nt+1,Nx,Ns));
+    rhoalv = np.zeros((Nt+1, 1,Ns));
+
+    project_deposition_2D(depositionData, Xbnd, Sbnd, lungData)
