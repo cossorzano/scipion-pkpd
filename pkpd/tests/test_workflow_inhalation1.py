@@ -88,6 +88,7 @@ class TestInhalation1Workflow(TestWorkflow):
         protSimulate = self.newProtocol(ProtPKPDInhSimulate,
                                         objLabel='pkpd - simulate inhalation')
         protSimulate.ptrDeposition.set(protDepo.outputDeposition)
+        protSimulate.ptrPK.set(protPK.outputExperiment)
         self.launchProtocol(protSimulate)
         # self.assertIsNotNone(protSimulate.outputDeposition.fnDeposition, "There was a problem with the deposition")
 
