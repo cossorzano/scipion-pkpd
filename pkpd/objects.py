@@ -928,6 +928,12 @@ class PKPDExperiment(EMObject):
                 retval.append(varName)
         return retval
 
+    def getFirstSample(self):
+        if len(self.samples)==0:
+            return None
+        else:
+            return self.samples[next(iter(self.samples))]
+
     def subset(self,listOfSampleNames):
         newExperiment = PKPDExperiment()
 
