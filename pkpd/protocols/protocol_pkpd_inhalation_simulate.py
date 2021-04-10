@@ -31,7 +31,8 @@ import pyworkflow.protocol.params as params
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd import ProtPKPD
 
-from pkpd.objects import PKDepositionParameters, PKSubstanceLungParameters, PKPhysiologyLungParameters, PKLung
+from pkpd.objects import PKDepositionParameters, PKSubstanceLungParameters, PKPhysiologyLungParameters, PKLung,\
+                         PKPDExperiment
 from pkpd.inhalation import diam2vol, saturable_2D_upwind_IE
 
 # Tested in test_workflow_inhalation1
@@ -70,8 +71,11 @@ class ProtPKPDInhSimulate(ProtPKPD):
         lungParams = PKPhysiologyLungParameters()
         lungParams.read(self.ptrDeposition.get().fnLung.get())
 
+        pkParams = PKPDExperiment()
+        pkParams.load(self.ptrPK.get().fnPKPD)
+
         pkLungParams = PKLung()
-        pkLungParams.prepare(substanceParams, lungParams)
+        pkLungParams.prepare(substanceParams, lungParams, pkParams)
 
         diameters = np.concatenate((np.arange(0.1,1.1,0.1),np.arange(1.2,9.2,0.2))) # [um]
         Sbnd = diam2vol(diameters)

@@ -289,10 +289,7 @@ class PKDepositionParameters(EMObject):
             rho_water = 1; # [g / mL]
             rho_subst = self.substance.rho * self.substance.MW * 1e-9; # [nmol / mL] *[g / mol] ->[g / mL]
             diameters = diameters * np.sqrt( lambdaVar * rho_water / rho_subst);
-            print("diameters",diameters)
 
-        print("Bronchi",np.asarray(fractionMatrix[0:(alvlim-1)]))
-        print("Alveolar",np.asarray(fractionMatrix[alvlim-1:]))
         self.dose_nmol = self.dose * 1e3 / self.substance.MW # % [ug] *1e3 / ([g/mol]) = [nmol]
         self.bronchiDose_nmol = np.asarray(fractionMatrix[0:(alvlim-1)])*self.dose_nmol
            # This is a matrix with as many rows as generations and as many columns as diameters
@@ -403,7 +400,12 @@ class PKInhalationDissolution(EMObject):
         K = 4 * math.pi * D / (self.rho * np.power(4.0/3.0 * math.pi, 1.0/3.0))
 
         if self.type.get()==self.SAT:
-            self.dissol = lambda s, Cf: np.where(s>0, K*(self.Cs-Cf) * np.power(s,1.0/3.0), 0.0) # [cm^3/min]
+            self.dissol = lambda s, Cf: np.multiply(np.reshape(K*(self.Cs-Cf),(Cf.size,1)),
+                                                    np.reshape(np.where(s>0, np.power(s,1.0/3.0), 0.0),(1,s.size)))
+                          # [cm^3/min]
+
+    def getDissolution(self, s, Cf, h):
+        return self.dissol(s,Cf)
 
 class PKLung(EMObject):
     # Hartung2020_MATLAB/functions/get_bronchial_kinetics.m
@@ -416,7 +418,7 @@ class PKLung(EMObject):
         self.inhalationDissolutionBronchi = None
         self.inhalationDissolutionAlveoli = None
 
-    def prepare(self, substanceParams, lungParams):
+    def prepare(self, substanceParams, lungParams, pkParams):
         self.substanceParams = substanceParams
         self.lungParams = lungParams
 
@@ -440,6 +442,15 @@ class PKLung(EMObject):
         # Hartung2020_MATLAB/functions/get_alveolar_kinetics.m
         self.inhalationDissolutionAlveoli = PKInhalationDissolution()
         self.inhalationDissolutionAlveoli.prepare(substanceParams,"alveoli")
+
+        self.pkData={}
+        sample = pkParams.getFirstSample()
+        self.pkData['V'] = float(sample.getDescriptorValue('V'))
+        self.pkData['Cl'] = float(sample.getDescriptorValue('Cl'))
+        self.pkData['Q'] = float(sample.getDescriptorValue('Q'))
+        self.pkData['Vp'] = float(sample.getDescriptorValue('Vp'))
+        self.pkData['k01'] = float(sample.getDescriptorValue('k01'))
+        self.pkData['F'] = float(sample.getDescriptorValue('F'))
 
     def cilspeed(self, x):
         return self.ciliarySpeed.cilspeed(x)
@@ -532,6 +543,18 @@ def project_deposition_2D(depositionData,X,S,lungData):
     s = 0.5*(S[0:-1] + S[1:])
     rho0br = np.divide(amtgrd_br_xs,np.reshape(dx,(dx.size,1))*np.reshape(np.multiply(s,ds),(1,s.size)))
 
+    # Alveolar
+    amt_alv = depositionData['alveolar']
+    amt_alv_ext = np.zeros((1,2*1+1))
+    amt_alv_ext[:,1::2] = amt_alv
+    camtdat_alv = np.concatenate(([0],np.cumsum(amt_alv_ext)))
+    interpolator = interp1d(sbnddat, camtdat_alv, bounds_error=False, fill_value=0)
+    camtbnd_alv = interpolator(S)
+
+    amtgrd_alv = np.diff(camtbnd_alv);
+    rho0alv = np.divide(amtgrd_alv, np.multiply(s,ds))
+    return (rho0br, rho0alv)
+
 def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     # Hartung2020_MATLAB/models/saturable_2D_upwind_IE.m
     #   Algorithm features:
@@ -623,4 +646,58 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     rhobr  = np.zeros((Nt+1,Nx,Ns));
     rhoalv = np.zeros((Nt+1, 1,Ns));
 
-    project_deposition_2D(depositionData, Xbnd, Sbnd, lungData)
+    rho0br, rho0alv = project_deposition_2D(depositionData, Xbnd, Sbnd, lungData)
+    rhobr[0,:,:]=rho0br
+    rhoalv[0,:,:]=rho0alv
+    Asysgut[0] = depositionData['throat']
+    CFL_factor = np.zeros((Nt,1))
+
+    # Time iteration
+    # pre-compute expressions constant in time
+    # row vectors (expandable to a 1-by-Nx-by-Ns array)
+    l_dx_post = np.divide(lambdaX[1:],dx)
+    l_dx_pre = np.divide(lambdaX[0:-1],dx)
+    dSctr = np.diff(Sctr) # from discrete integration by parts
+    ds3D = np.reshape(ds, (1, 1, ds.size))
+
+    # PK parameters
+    Vc = pkLung.pkData['V'];
+    k10 = pkLung.pkData['Cl'] / Vc
+    k12 = pkLung.pkData['Q'] / Vc
+    k21 = pkLung.pkData['Q'] / pkLung.pkData['Vp']
+    k01 = pkLung.pkData['k01']
+    F = pkLung.pkData['F']
+
+    Qbrtot = np.sum(QbrX) # total bronchial blood flow
+    R =  pkLung.substanceData['R']
+
+    # Time loop
+    for n in range(Nt): # (semi - explicit Euler; implicit absorption into tissue)
+        dtn = dt[n]
+        Calvflun = Aalvflu[n] / alvELF;
+        Cbrflun = np.divide(Abrflu[n,:], brELF)
+
+        d_Sbnd_Cflualv = np.reshape(pkLung.inhalationDissolutionAlveoli.getDissolution(Sbnd, Calvflun, hFlualv),
+                                    (Sbnd.size))
+        rhoalv[n + 1,:,:] = \
+                 np.multiply(1-dtn*np.divide(d_Sbnd_Cflualv[0:-1],ds3D), rhoalv[n,:,:])+\
+                 dtn  * np.multiply(np.divide(d_Sbnd_Cflualv[1:], ds3D),\
+                                    np.pad(rhoalv[n,:,1:],((0,0),(0,1)),'constant',constant_values=0))
+        dissolved_alv = np.dot(dSctr,np.reshape(np.multiply(d_Sbnd_Cflualv[1:-1], rhoalv[n,:,1:]),(dSctr.size)))
+
+        d_Sbnd_Cflubr = pkLung.inhalationDissolutionBronchi.getDissolution(Sbnd, Cbrflun, hFluX)
+
+        aux = rhobr[n, :, :]
+        rhobr[n + 1,:,:] = \
+            np.multiply(1 - dtn * np.reshape(l_dx_pre,(l_dx_pre.size,1))+
+                                              np.reshape(np.divide(d_Sbnd_Cflubr[:,0:-1], ds3D),aux.shape),
+                        rhobr[n, :, :]) + \
+            dtn * np.multiply(np.reshape(l_dx_post,(l_dx_post.size,1)),
+                              np.pad(rhobr[n,1:,:],((0,1),(0,0)),'constant',constant_values=0)) +\
+            dtn * np.multiply(np.divide(d_Sbnd_Cflubr[:,1:], ds3D), \
+                              np.pad(rhobr[n, :, 1:], ((0, 0), (0, 1)), 'constant', constant_values=0))
+        print(rhobr[n + 1,:,:])
+        print(np.abs(rhobr[n + 1,:,:]).max())
+        print(np.mean(rhobr[n + 1,:,:]))
+
+        aaaaa
