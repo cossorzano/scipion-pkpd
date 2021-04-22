@@ -309,3 +309,8 @@ def smoothPchip(x,y):
     #xunique, yunique = uniqueFloatValues(x,ypos)
     #yInterpolated = pchip_interpolate(xunique,yunique,x)
     #return yInterpolated
+
+def int_dx(x, y):
+    # Integral over size space (natural grid)
+    dx = np.diff(x)
+    return np.sum(np.multiply(y,dx))
