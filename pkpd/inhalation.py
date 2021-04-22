@@ -31,9 +31,11 @@ predictions of orally inhaled drugs. PLOS Computational Biology, 16: e1008466 (2
 """
 import math
 import numpy as np
+import scipy.linalg
 from scipy.interpolate import interp1d, interp2d
 from pwem.objects import EMObject
 from pyworkflow.object import String, Integer
+from .utils import int_dx
 
 def diam2vol(diameters):
     # Hartung2020_MATLAB/functions/diam2vol.m
@@ -696,8 +698,54 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
                               np.pad(rhobr[n,1:,:],((0,1),(0,0)),'constant',constant_values=0)) +\
             dtn * np.multiply(np.divide(d_Sbnd_Cflubr[:,1:], ds3D), \
                               np.pad(rhobr[n, :, 1:], ((0, 0), (0, 1)), 'constant', constant_values=0))
-        print(rhobr[n + 1,:,:])
-        print(np.abs(rhobr[n + 1,:,:]).max())
-        print(np.mean(rhobr[n + 1,:,:]))
 
+        dissolved_br = np.multiply(dx,
+                                   np.sum(np.multiply(dSctr,
+                                                      np.multiply(d_Sbnd_Cflubr[:, 1:-1],rhobr[n,:, 1:])),
+                                          axis=1))
+        A1 = np.diag(1+dtn*np.divide(PS_br,brELF))
+        A2 = np.diag(-(dtn/Kpl_u_br)*np.divide(PS_br,brTis))
+        A3 = np.diag(-dtn*np.divide(PS_br,brELF))
+        A4 = np.diag(1+np.multiply(np.divide(dtn,brTis),PS_br/Kpl_u_br + QbrX*(R/Kpl_br)))
+        Mbr = np.kron(A1,[[1,0],[0,0]])+np.kron(A2,[[0,1],[0,0]])+np.kron(A3,[[0,0],[1,0]])+np.kron(A4,[[0,0],[0,1]])
+
+        Malv = np.asarray([[1 + dtn/alvELF*PS_alv,  -dtn/alvTis * PS_alv/Kpl_u_alv],
+                           [-dtn/alvELF*PS_alv   ,  1 + dtn/alvTis*(PS_alv/Kpl_u_alv + Qalv*R/Kpl_alv)]])
+
+        Msys = np.asarray([ # gut        per       clear      ctr  <- X_i' %f(X_j)
+                           [1+dtn*k01     ,      0  ,      0   ,           0],           # gut
+                           [0             ,1+dtn*k21,      0   ,    -dtn*k12],           # per
+                           [-dtn*(1-F)*k01,      0  ,      1   ,    -dtn*k10],           # clear
+                           [-dtn*F*k01,     -dtn*k21,      0   , 1+dtn*(k10+k12+(Qalv+Qbrtot)/Vc)]]) # ctr
+
+        Mbrctr = -np.kron((dtn / Vc) * QbrX, [0, 1])
+        Malvctr = -np.asarray([0, (dtn / Vc) * Qalv])
+        Mbralvctr = np.concatenate((Mbrctr, Malvctr))
+        Mctrbr = -np.kron(dtn* np.divide(QbrX, brTis) * (R / Kpl_br), [0, 1])
+        Mctralv = -np.asarray([0, dtn * (Qalv / alvTis) * (R / Kpl_alv)])
+        Mctrbralv = np.concatenate((Mctrbr,Mctralv))
+
+        M = np.block([[scipy.linalg.block_diag(Mbr,Malv), np.zeros((2*Nx+2,3)), np.reshape(Mbralvctr,(2*Nx+2,1))],
+                     [np.block([[np.zeros((3,2*Nx+2))],[np.reshape(Mctrbralv,(1,2*Nx+2))]]),
+                      Msys]])
+        rhsbr = np.block([[Abrflu[n,:] + dtn * dissolved_br],[Abrtis[n,:]]])
+
+        mcc = dtn * lambdaX[0] * int_dx(Sbnd, np.multiply(Sctr,rhobr[n,0,:]))
+        rhs = np.concatenate((np.reshape(rhsbr,(rhsbr.size,1),order='F'),
+                              [Aalvflu[n] + dtn * dissolved_alv],
+                              [Aalvtis[n]],
+                              [Asysgut[n] + mcc],
+                              [Asysper[n]],
+                              [Aclear[n]],
+                              [Asysctr[n]]))
+        Ynext = np.linalg.solve(M,rhs)
+
+        Abrflu[n + 1,:]  = np.reshape(Ynext[0:(2*Nx):2],(Nx,))
+        Abrtis[n + 1,:]  = np.reshape(Ynext[1:(2*Nx):2],(Nx,))
+        Aalvflu[n + 1] = Ynext[2 * Nx]
+        Aalvtis[n + 1] = Ynext[2 * Nx + 1]
+        Asysgut[n + 1] = Ynext[2 * Nx + 2]
+        Asysper[n + 1] = Ynext[2 * Nx + 3]
+        Aclear[n + 1] = Ynext[2 * Nx + 4]
+        Asysctr[n + 1] = Ynext[2 * Nx + 5]
         aaaaa
