@@ -35,7 +35,7 @@ import scipy.linalg
 from scipy.interpolate import interp1d, interp2d
 from pwem.objects import EMObject
 from pyworkflow.object import String, Integer
-from .utils import int_dx
+from .utils import int_dx, int_dx1dx2
 
 def diam2vol(diameters):
     # Hartung2020_MATLAB/functions/diam2vol.m
@@ -574,6 +574,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     #   be much coarser than that the location grid
     #   (extreme case: monodisperse particle distribution)
     dt = np.diff(tt)
+    T = np.max(tt)
 
     lungData = lungParams.getBronchial()
     alveolarData = lungParams.getAlveolar()
@@ -748,4 +749,117 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
         Asysper[n + 1] = Ynext[2 * Nx + 3]
         Aclear[n + 1] = Ynext[2 * Nx + 4]
         Asysctr[n + 1] = Ynext[2 * Nx + 5]
-        aaaaa
+
+        Amcc[n + 1] = Amcc[n] + mcc
+
+        # Quality control: detect a violation of CFL condition
+        aux = np.reshape(np.divide(d_Sbnd_Cflubr[:,0:-1],ds3D),(d_Sbnd_Cflubr.shape[0],d_Sbnd_Cflubr.shape[1]-1)) +\
+              np.dot(np.reshape(l_dx_pre,(l_dx_pre.shape[0],1)),np.ones((1,d_Sbnd_Cflubr.shape[1]-1)))
+        CFL_factor[n] = dtn * aux.max()
+        if CFL_factor[n] > 1:
+            print('CFL condition not satisfied at t=%f'%tt[n + 1])
+
+        # Quality control: detect a negative quantity
+        if Asysgut[n+1] < 0:
+            print('Asysgut not positive at t=%f'%tt[n + 1])
+        if Asysctr[n+1] < 0:
+            print('Asysctr not positive at t=%f'%tt[n + 1])
+        if Asysper[n+1] < 0:
+            print('Asysper not positive at t=%f'%tt[n + 1])
+
+        if (rhobr[n+1,:,:]).min() < 0:
+            print('rho (br) not positive at t=%f'%tt[n + 1])
+        if (Abrflu[n+1,:]).min() < 0:
+            print('A_flu (br) not positive at t=%f'%tt[n + 1])
+        if (Abrtis[n+1,:]).min() < 0:
+            print('A_tis (br) not positive at t=%f'%tt[n + 1])
+
+        if (rhoalv[n+1,:,:]).min() < 0:
+            print('rho (alv) not positive at t=%f'%tt[n + 1])
+        if (Aalvflu[n+1,:]).min() < 0:
+            print('A_flu (alv) not positive at t=%f'%tt[n + 1])
+        if (Aalvtis[n+1,:]).min() < 0:
+            print('A_tis (alv) not positive at t=%f'%tt[n + 1])
+
+    # Amount of undissolved drug in alveolar space
+    Aalvsol = np.zeros(rhoalv.shape[0])
+    for n in range(rhoalv.shape[0]):
+        Aalvsol[n]=int_dx(Sbnd,np.multiply(Sctr,np.reshape(rhoalv[n,0,:],(rhoalv.shape[2]))))
+
+    # Concentration of drug dissolved in alveolar epithelial lining fluid
+    Calvflu = Aalvflu / alvELF
+
+    # Concentration of drug in alveolar lung tissue
+    Calvtis =  Aalvtis/alvTis;
+
+    # Amount of undissolved drug in conducting airways (bronchial)
+    Abrsol = np.zeros(rhobr.shape[0])
+    for n in range(rhobr.shape[0]):
+        Abrsol[n]=int_dx1dx2(Xbnd,Sbnd,np.multiply(Sctr,np.reshape(rhobr[n,:,:],(rhobr.shape[1],rhobr.shape[2]))))
+
+    # Concentration of drug dissolved in bronchial epithelial lining fluid
+    Cbrflu = np.divide(Abrflu, brELF)
+
+    # Concentration of drug in bronchial lung tissue
+    Cbrtis = np.divide(Abrtis, brTis)
+
+    # Amounts
+    Aalv = {'solid': Aalvsol,
+            'fluid': Aalvflu,
+            'tissue': Aalvtis}
+    Abr  = {'solid': Abrsol,
+            'fluid': np.sum(Abrflu,axis=1),
+            'tissue': np.sum(Abrtis,axis=1),
+            'clear':  Amcc}
+    Asys = {'gut': Asysgut,
+            'ctr': Asysctr,
+            'per': Asysper,
+            'clear':  Aclear}
+
+    A = {'alv':Aalv,
+         'br': Abr,
+         'sys':Asys}
+
+    # Concentrations
+    Calv = {'fluid': Calvflu,
+            'tissue': Calvtis}
+    Cbr = {'fluid': Cbrflu,
+           'tissue': Cbrtis}
+    Csys = {'ctr': Asysctr / Vc}
+
+    C = {'alv': Calv,
+         'br': Cbr,
+         'sys': Csys}
+
+    # Geometry
+    alvgeom = {'V': {'flu': alvELF, 'tis': alvTis}}    # pooled
+    brgeom  = {'a': {'flu': aFluX,  'tis': aTisX}}     # location-resolved
+    geom = {'alv': alvgeom, 'br':brgeom}
+
+    # Discretisation
+    grd   = {'t':tt,'X':Xctr,'S':Sctr,'dX':dx,'dS':ds}
+    param = {'Nt':Nt,'Nx':Nx,'Ns':Ns,'T':T}
+    discr = {'grid':grd,'param':param}
+
+    # Input
+    inpt = {'lungParams':lungParams, 'pkLung':pkLung, 'depositionParams':depositionParams}
+
+    # Units (for use e.g. in plotting)
+    units = {
+        'amount': '[nmol]',
+        'time':  '[min]',              # These units are used con-
+        'length':'[cm]',               # sistently across substance /
+        'area':  '[cm2]',              # physiological databases,
+        'volume':'[cm3]',              # read_deposition() and systemic
+        'weight':'[g]'}                # PK models
+
+    # complete model output
+    sol = {
+        'A':    A,
+        'C':    C,
+        'geom': geom,
+        'discr':discr,
+        'input':inpt,
+        'units':units
+    }
+    return sol

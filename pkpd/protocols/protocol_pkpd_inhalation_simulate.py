@@ -81,7 +81,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Sbnd = diam2vol(diameters)
 
         tt=np.arange(0,self.simulationTime.get()+self.deltaT.get(),self.deltaT.get())
-        saturable_2D_upwind_IE(lungParams, pkLungParams, self.deposition, tt, Sbnd)
+        sol=saturable_2D_upwind_IE(lungParams, pkLungParams, self.deposition, tt, Sbnd)
 
     def createOutputStep(self):
         pass
