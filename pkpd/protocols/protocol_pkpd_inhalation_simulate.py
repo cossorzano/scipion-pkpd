@@ -32,7 +32,8 @@ from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from .protocol_pkpd import ProtPKPD
 
 from pkpd.objects import PKDepositionParameters, PKSubstanceLungParameters, PKPhysiologyLungParameters, PKLung,\
-                         PKPDExperiment
+                         PKPDExperiment, PKPDVariable, PKPDSample
+from pkpd.pkpd_units import createUnit
 from pkpd.inhalation import diam2vol, saturable_2D_upwind_IE
 
 # Tested in test_workflow_inhalation1
@@ -83,8 +84,48 @@ class ProtPKPDInhSimulate(ProtPKPD):
         tt=np.arange(0,self.simulationTime.get()+self.deltaT.get(),self.deltaT.get())
         sol=saturable_2D_upwind_IE(lungParams, pkLungParams, self.deposition, tt, Sbnd)
 
+        # Postprocessing
+        depositionData = self.deposition.getData()
+        alvDose = depositionData['alveolar']
+        bronchDose = np.sum(depositionData['bronchial'])
+        lungDose = alvDose + bronchDose
+        AsysGut = sol['A']['sys']['gut']
+        Acleared = sol['A']['sys']['clear'] + AsysGut - AsysGut[0]
+        lungRetention = 100*(lungDose - Acleared)/lungDose;  # in percent of lung dose
+
+        # Create output
+        self.experimentLungRetention = PKPDExperiment()
+        self.experimentLungRetention.general["title"]="Lung retention"
+
+        tvar = PKPDVariable()
+        tvar.varName = "t"
+        tvar.varType = PKPDVariable.TYPE_NUMERIC
+        tvar.role = PKPDVariable.ROLE_TIME
+        tvar.units = createUnit("min")
+
+        Rvar = PKPDVariable()
+        Rvar.varName = "Retention"
+        Rvar.varType = PKPDVariable.TYPE_NUMERIC
+        Rvar.role = PKPDVariable.ROLE_MEASUREMENT
+        Rvar.units = createUnit("none")
+        Rvar.comment = "Lung retention (% lung dose)"
+
+        self.experimentLungRetention.variables["t"] = tvar
+        self.experimentLungRetention.variables["Retention"] = Rvar
+
+        # Samples
+        simulationSample = PKPDSample()
+        simulationSample.sampleName = "simulation"
+        simulationSample.addMeasurementColumn("t", tt)
+        simulationSample.addMeasurementColumn("Retention", lungRetention)
+        self.experimentLungRetention.samples["simulmvarNameation"] = simulationSample
+
+        self.experimentLungRetention.write(self._getPath("experiment.pkpd"))
+
     def createOutputStep(self):
-        pass
+        self._defineOutputs(outputExperiment=self.experimentLungRetention)
+        self._defineSourceRelation(self.ptrDeposition.get(), self.experimentLungRetention)
+        self._defineSourceRelation(self.ptrPK.get(), self.experimentLungRetention)
 
     def _citations(self):
         return ['Hartung2020']
