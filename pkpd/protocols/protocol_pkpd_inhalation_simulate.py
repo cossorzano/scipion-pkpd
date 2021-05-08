@@ -93,6 +93,9 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Acleared = sol['A']['sys']['clear'] + AsysGut - AsysGut[0]
         lungRetention = 100*(lungDose - Acleared)/lungDose;  # in percent of lung dose
 
+        Csysnmol = sol['C']['sys']['ctr']
+        Csys = Csysnmol * substanceParams.getData()['MW']
+
         # Create output
         self.experimentLungRetention = PKPDExperiment()
         self.experimentLungRetention.general["title"]="Lung retention"
@@ -110,14 +113,32 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Rvar.units = createUnit("none")
         Rvar.comment = "Lung retention (% lung dose)"
 
+        Cnmolvar = PKPDVariable()
+        Cnmolvar.varName = "Cnmol"
+        Cnmolvar.varType = PKPDVariable.TYPE_NUMERIC
+        Cnmolvar.role = PKPDVariable.ROLE_MEASUREMENT
+        Cnmolvar.units = createUnit("nmol/mL")
+        Cnmolvar.comment = "Central compartment concentration"
+
+        Cvar = PKPDVariable()
+        Cvar.varName = "C"
+        Cvar.varType = PKPDVariable.TYPE_NUMERIC
+        Cvar.role = PKPDVariable.ROLE_MEASUREMENT
+        Cvar.units = createUnit("g/mL")
+        Cvar.comment = "Central compartment concentration"
+
         self.experimentLungRetention.variables["t"] = tvar
         self.experimentLungRetention.variables["Retention"] = Rvar
+        self.experimentLungRetention.variables["Cnmol"] = Cnmolvar
+        self.experimentLungRetention.variables["C"] = Cvar
 
         # Samples
         simulationSample = PKPDSample()
         simulationSample.sampleName = "simulation"
         simulationSample.addMeasurementColumn("t", tt)
         simulationSample.addMeasurementColumn("Retention", lungRetention)
+        simulationSample.addMeasurementColumn("Cnmol", Csysnmol)
+        simulationSample.addMeasurementColumn("C", Csys)
         self.experimentLungRetention.samples["simulmvarNameation"] = simulationSample
 
         self.experimentLungRetention.write(self._getPath("experiment.pkpd"))
