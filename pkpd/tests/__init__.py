@@ -200,4 +200,6 @@ PKPDDataSet(name='Inhalation', folder='Inhalation',
         files={
                'deposition1': 'deposition1.txt',
                'deposition2': 'deposition2.txt',
+               'SmithPSLGold6': 'Smith2008_PSL_Gold_6Subjects.csv',
+               'SmithPSLGold6_prm': 'Smith2008_fittedModelParameters.csv'
                })

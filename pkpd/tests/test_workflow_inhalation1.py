@@ -24,7 +24,10 @@
 # *
 # **************************************************************************
 
+import csv
+import numpy as np
 import os
+import pandas
 
 from pyworkflow.tests import *
 from pkpd.protocols import *
@@ -86,11 +89,76 @@ class TestInhalation1Workflow(TestWorkflow):
         # Simulate inhalation
         print("Inhalation simulation ...")
         protSimulate = self.newProtocol(ProtPKPDInhSimulate,
-                                        objLabel='pkpd - simulate inhalation')
+                                        objLabel='pkpd - simulate inhalation',
+                                        deltaT=1.8)
         protSimulate.ptrDeposition.set(protDepo.outputDeposition)
         protSimulate.ptrPK.set(protPK.outputExperiment)
         self.launchProtocol(protSimulate)
-        # self.assertIsNotNone(protSimulate.outputDeposition.fnDeposition, "There was a problem with the deposition")
+        self.assertIsNotNone(protSimulate.outputExperiment.fnPKPD, "There was a problem with the simulation")
+        experiment = PKPDExperiment()
+        experiment.load(protSimulate.outputExperiment.fnPKPD)
+        t = np.asarray([float (x) for x in experiment.samples['simulation'].getValues('t')])
+        retention = np.asarray([float(x) for x in experiment.samples['simulation'].getValues('Retention')])
+        self.assertTrue(abs(retention[0]-100.0)<0.001)
+        self.assertTrue(abs(retention[8000]-1.3809)<0.001)
+
+        # Plot short term
+        dataSmith=pandas.read_csv(self.dataset.getFile('SmithPSLGold6'))
+        IDs=pandas.unique(dataSmith['Subject'])
+
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=(12,9))
+        plt.plot(t/60,retention)
+        plt.title('Short-term retention')
+        plt.xlabel('Time (hours)')
+        plt.ylabel('Lung retention (% lung dose)')
+        plt.ylim([-2, 102])
+        plt.xlim([0, 24])
+        plt.xticks(np.arange(0,24,4))
+
+        tmax_splot1 = 24 * 60  # 24 h
+        colors = ['r','g','b','c','y','m','k']
+        i=0
+        legends=['PDE model prediction']
+        for subject in IDs:
+            data_i = dataSmith[dataSmith.Subject==subject]
+            PSL_i = data_i[data_i.Particle=='PSL']
+            Gold_i = data_i[data_i.Particle=='Gold']
+
+            indPSL_splot1 = PSL_i.Time_h <= tmax_splot1 / 60
+            indGld_splot1 = Gold_i.Time_h <= tmax_splot1 / 60
+
+            plt.plot(PSL_i.Time_h[indPSL_splot1], PSL_i.lungRetention[indPSL_splot1], "%sv"%colors[i])
+            plt.plot(Gold_i.Time_h[indGld_splot1], Gold_i.lungRetention[indGld_splot1], "%sx"%colors[i])
+            legends.append('PSL %s'%subject)
+            legends.append('Gold %s'%subject)
+            i+=1
+        plt.legend(legends)
+        plt.savefig('shortTerm.png')
+
+        # Plot long term
+        plt.figure(figsize=(12, 9))
+        plt.plot(t / (60*24), retention)
+        plt.title('Long-term retention')
+        plt.xlabel('Time (days)')
+        plt.ylabel('Lung retention (% lung dose)')
+        plt.ylim([-2, 102])
+        plt.xlim([0, 10.5])
+
+        i = 0
+        legends = ['PDE model prediction']
+        for subject in IDs:
+            data_i = dataSmith[dataSmith.Subject == subject]
+            PSL_i = data_i[data_i.Particle == 'PSL']
+            Gold_i = data_i[data_i.Particle == 'Gold']
+
+            plt.plot(PSL_i.Time_h/24, PSL_i.lungRetention, "%sv" % colors[i])
+            plt.plot(Gold_i.Time_h/24, Gold_i.lungRetention, "%sx" % colors[i])
+            legends.append('PSL %s' % subject)
+            legends.append('Gold %s' % subject)
+            i += 1
+        plt.legend(legends)
+        plt.savefig('longTerm.png')
 
 if __name__ == "__main__":
     unittest.main()
