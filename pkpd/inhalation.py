@@ -185,18 +185,18 @@ class PKSubstanceLungParameters(EMObject):
     def write(self, fnOut):
         fh=open(fnOut,"w")
         fh.write("%s # name\n"%self.name)
-        fh.write("%f # maximum dissolution rate in alveolar space in units [nmol/(cm*min)]\n"%self.kdiss_alv)
-        fh.write("%f # maximum dissolution rate in conducting airways in units [nmol/(cm*min)]\n"%self.kdiss_br)
-        fh.write("%f # steady-state permeability in alveolar space in [cm/min]\n"%self.kp_alv)
-        fh.write("%f # steady-state permeability in conducting airways in [cm/min]\n"%self.kp_br)
-        fh.write("%f # solubility in alveolar space in [nmol/cm3]=[uM]\n" % self.Cs_alv)
-        fh.write("%f # solubility in conducting airways in [nmol/cm3]=[uM]\n" % self.Cs_br)
-        fh.write("%f # density in [nmol/cm3] = [uM]\n" % self.rho)
-        fh.write("%f # molecular weight [g/mol]\n"%self.MW)
-        fh.write("%f # plasma to lung partition coefficient in alveolar space [unitless]\n" % self.Kpl_alv)
-        fh.write("%f # plasma to lung partition coefficient in conducting airways [unitless]\n" % self.Kpl_br)
-        fh.write("%f # fraction unbound in plasma [unitless]\n" % self.fu)
-        fh.write("%f # blood to plasma ratio [unitless]\n" % self.R)
+        fh.write("%.60g # maximum dissolution rate in alveolar space in units [nmol/(cm*min)]\n"%self.kdiss_alv)
+        fh.write("%.60g # maximum dissolution rate in conducting airways in units [nmol/(cm*min)]\n"%self.kdiss_br)
+        fh.write("%.60g # steady-state permeability in alveolar space in [cm/min]\n"%self.kp_alv)
+        fh.write("%.60g # steady-state permeability in conducting airways in [cm/min]\n"%self.kp_br)
+        fh.write("%.60g # solubility in alveolar space in [nmol/cm3]=[uM]\n" % self.Cs_alv)
+        fh.write("%.60g # solubility in conducting airways in [nmol/cm3]=[uM]\n" % self.Cs_br)
+        fh.write("%.60g # density in [nmol/cm3] = [uM]\n" % self.rho)
+        fh.write("%.60g # molecular weight [g/mol]\n"%self.MW)
+        fh.write("%.60g # plasma to lung partition coefficient in alveolar space [unitless]\n" % self.Kpl_alv)
+        fh.write("%.60g # plasma to lung partition coefficient in conducting airways [unitless]\n" % self.Kpl_br)
+        fh.write("%.60g # fraction unbound in plasma [unitless]\n" % self.fu)
+        fh.write("%.60g # blood to plasma ratio [unitless]\n" % self.R)
 
         fh.close()
         self.fnSubst.set(fnOut)
@@ -692,8 +692,8 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
         aux = rhobr[n, :, :]
         rhobr[n + 1,:,:] = \
-            np.multiply(1 - dtn * np.reshape(l_dx_pre,(l_dx_pre.size,1))+
-                                              np.reshape(np.divide(d_Sbnd_Cflubr[:,0:-1], ds3D),aux.shape),
+            np.multiply(1 - dtn * (np.reshape(l_dx_pre,(l_dx_pre.size,1))+
+                                              np.reshape(np.divide(d_Sbnd_Cflubr[:,0:-1], ds3D),aux.shape)),
                         rhobr[n, :, :]) + \
             dtn * np.multiply(np.reshape(l_dx_post,(l_dx_post.size,1)),
                               np.pad(rhobr[n,1:,:],((0,1),(0,0)),'constant',constant_values=0)) +\
