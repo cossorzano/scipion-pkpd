@@ -242,6 +242,7 @@ class PKDepositionParameters(EMObject):
         self.fnSubstance = String()
         self.fnLung = String()
         self.fnDeposition = String()
+        self.doseMultiplier = 1
 
     def setFiles(self, fnSubstance, fnLung, fnDeposition):
         self.fnSubstance.set(fnSubstance)
@@ -259,7 +260,7 @@ class PKDepositionParameters(EMObject):
             if state == 0: # Header
                 tokens = line.split(':')
                 if tokens[0]=='Total dose [ug]':
-                    self.dose = float(tokens[1].strip())
+                    self.dose = float(tokens[1].strip())*self.doseMultiplier
                 elif tokens[0]=='Diameter [um]':
                     self.diameterMode = tokens[1].strip()
                 elif 'FractionDeposited' in tokens[0]:

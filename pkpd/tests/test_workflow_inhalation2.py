@@ -134,12 +134,13 @@ class TestInhalation2Workflow(TestWorkflow):
         self.launchProtocol(protPK)
         self.assertIsNotNone(protPK.outputExperiment.fnPKPD, "There was a problem with the PK parameters")
 
-        def simulate(protDepo, label, tmax0, Cmax0, AUC0):
+        def simulate(protDepo, label, multiplier, tmax0, Cmax0, AUC0):
             print("Inhalation simulation %s ..."%label)
             protSimulate = self.newProtocol(ProtPKPDInhSimulate,
-                                                objLabel='pkpd - simulate inhalation %s'%label,
-                                                simulationTime=12 * 60,
-                                                deltaT=0.18)
+                                            objLabel='pkpd - simulate inhalation %s'%label,
+                                            doseMultiplier = multiplier,
+                                            simulationTime=12 * 60,
+                                            deltaT=0.18)
             protSimulate.ptrDeposition.set(protDepo.outputDeposition)
             protSimulate.ptrPK.set(protPK.outputExperiment)
             self.launchProtocol(protSimulate)
@@ -156,13 +157,22 @@ class TestInhalation2Workflow(TestWorkflow):
             return [tmax, Cmax, AUC_Sys_12h_scaled]
 
         # Simulate inhalations
-        [tmax15x1, Cmax15x1, AUC_Sys_12h_scaled15x1] = simulate(protDepo15, "1.5x1",  36.36, 72.4503, 197.5372)
-        [tmax30x1, Cmax30x1, AUC_Sys_12h_scaled30x1] = simulate(protDepo30, "3.0x1",  69.30, 17.1307, 119.5475)
-        [tmax60x1, Cmax60x1, AUC_Sys_12h_scaled60x1] = simulate(protDepo60, "6.0x1", 404.28,  3.4926,  40.1811)
+        [tmax15x1, Cmax15x1, AUC_Sys_12h_scaled15x1] = simulate(protDepo15, "1.5x1", 1.0,  36.36, 72.4503, 197.5372)
+        [tmax30x1, Cmax30x1, AUC_Sys_12h_scaled30x1] = simulate(protDepo30, "3.0x1", 1.0,  69.30, 17.1307, 119.5475)
+        [tmax60x1, Cmax60x1, AUC_Sys_12h_scaled60x1] = simulate(protDepo60, "6.0x1", 1.0, 404.28,  3.4926,  40.1811)
+        [tmax15x45, Cmax15x45, AUC_Sys_12h_scaled15x45] = simulate(protDepo15, "1.5x4.5", 4.5,  36.00, 322.6792, 815.1956)
+        [tmax30x45, Cmax30x45, AUC_Sys_12h_scaled30x45] = simulate(protDepo30, "3.0x4.5", 4.5,  66.06,  76.2173, 510.0135)
+        [tmax60x45, Cmax60x45, AUC_Sys_12h_scaled60x45] = simulate(protDepo60, "6.0x4.5", 4.5, 378.36,  15.4504, 178.0614)
 
-        print([tmax15x1, Cmax15x1, AUC_Sys_12h_scaled15x1])
-        print([tmax30x1, Cmax30x1, AUC_Sys_12h_scaled30x1])
-        print([tmax60x1, Cmax60x1, AUC_Sys_12h_scaled60x1])
+        print('Nominal dose')
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(1.5, AUC_Sys_12h_scaled15x1, Cmax15x1, tmax15x1))
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(3.0, AUC_Sys_12h_scaled30x1, Cmax30x1, tmax30x1))
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(6.0, AUC_Sys_12h_scaled60x1, Cmax60x1, tmax60x1))
+
+        print('Increased dose (4x5)')
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(1.5, AUC_Sys_12h_scaled15x45, Cmax15x45, tmax15x45))
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(3.0, AUC_Sys_12h_scaled30x45, Cmax30x45, tmax30x45))
+        print('Aerodynamic Diameter=%f AUC_12h=%f Cmax=%f tmax=%f'%(6.0, AUC_Sys_12h_scaled60x45, Cmax60x45, tmax60x45))
 
 if __name__ == "__main__":
     unittest.main()

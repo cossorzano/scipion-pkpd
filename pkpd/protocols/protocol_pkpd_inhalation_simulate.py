@@ -49,6 +49,8 @@ class ProtPKPDInhSimulate(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('ptrDeposition', params.PointerParam, pointerClass='PKDepositionParameters', label="Deposition")
+        form.addParam('doseMultiplier', params.FloatParam, default=1.0, label='Dose multiplier',
+                      help="Multiply the dose in the deposition file by this factor")
         form.addParam('ptrPK', params.PointerParam, pointerClass='PKPDExperiment', label="PK parameters")
         form.addParam('simulationTime', params.FloatParam, label="Simulation time (min)", default=10*24*60)
         form.addParam('deltaT', params.FloatParam, label='Time step (min)', default=1, expertLevel=LEVEL_ADVANCED)
@@ -64,6 +66,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
         self.deposition.setFiles(self.ptrDeposition.get().fnSubstance.get(),
                                  self.ptrDeposition.get().fnLung.get(),
                                  self.ptrDeposition.get().fnDeposition.get())
+        self.deposition.doseMultiplier = self.doseMultiplier.get()
         self.deposition.read()
 
         substanceParams = PKSubstanceLungParameters()
