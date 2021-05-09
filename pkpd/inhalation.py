@@ -297,11 +297,12 @@ class PKDepositionParameters(EMObject):
         self.bronchiDose_nmol = np.asarray(fractionMatrix[0:(alvlim-1)])*self.dose_nmol
            # This is a matrix with as many rows as generations and as many columns as diameters
            # The content is what is the dose deposited at that generation in nmol
-        self.alveolarDose_nmol = np.sum(np.asarray(fractionMatrix[alvlim-1:])*self.dose_nmol)
+        alveolarMatrix = np.reshape(fractionMatrix[alvlim-1:],(len(fractionMatrix)-alvlim+1,diameters.size))
+        self.alveolarDose_nmol = np.sum(alveolarMatrix*self.dose_nmol, axis=0)
            # This is a matrix with as many rows as generations in the alveoli and as many columns as diameters
            # The content is what is the dose deposited at that generation in nmol
 
-        self.throatDose = self.dose_nmol - np.sum(self.bronchiDose_nmol) - self.alveolarDose_nmol
+        self.throatDose = self.dose_nmol - np.sum(self.bronchiDose_nmol) - np.sum(self.alveolarDose_nmol)
         self.particleSize = diam2vol(diameters) # cm3
 
     def read(self):
@@ -520,7 +521,7 @@ def project_deposition_2D(depositionData,X,S,lungData):
     sdattmp = depositionData['size']
     sdil = np.min([sdil_default, 0.5*np.min(sdattmp)])
     if sdattmp.size>1:
-        sdil=np.min([sdil,np.min(np.diff(sdil))])
+        sdil=np.min([sdil,np.min(np.diff(sdattmp))])
     sbnddat = np.concatenate(([0],np.kron(sdattmp,[1,1]) + sdil*np.kron(np.ones(sdattmp.shape),[-1,1]), [smax]))
 
     amtxs_br = depositionData['bronchial']
@@ -548,7 +549,7 @@ def project_deposition_2D(depositionData,X,S,lungData):
 
     # Alveolar
     amt_alv = depositionData['alveolar']
-    amt_alv_ext = np.zeros((1,2*1+1))
+    amt_alv_ext = np.zeros((1,2*amt_alv.size+1))
     amt_alv_ext[:,1::2] = amt_alv
     camtdat_alv = np.concatenate(([0],np.cumsum(amt_alv_ext)))
     interpolator = interp1d(sbnddat, camtdat_alv, bounds_error=False, fill_value=0)
@@ -651,6 +652,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     rhoalv = np.zeros((Nt+1, 1,Ns));
 
     rho0br, rho0alv = project_deposition_2D(depositionData, Xbnd, Sbnd, lungData)
+
     rhobr[0,:,:]=rho0br
     rhoalv[0,:,:]=rho0alv
     Asysgut[0] = depositionData['throat']
@@ -683,6 +685,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
         d_Sbnd_Cflualv = np.reshape(pkLung.inhalationDissolutionAlveoli.getDissolution(Sbnd, Calvflun, hFlualv),
                                     (Sbnd.size))
+
         rhoalv[n + 1,:,:] = \
                  np.multiply(1-dtn*np.divide(d_Sbnd_Cflualv[0:-1],ds3D), rhoalv[n,:,:])+\
                  dtn  * np.multiply(np.divide(d_Sbnd_Cflualv[1:], ds3D),\
@@ -710,6 +713,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
         A3 = np.diag(-dtn*np.divide(PS_br,brELF))
         A4 = np.diag(1+np.multiply(np.divide(dtn,brTis),PS_br/Kpl_u_br + QbrX*(R/Kpl_br)))
         Mbr = np.kron(A1,[[1,0],[0,0]])+np.kron(A2,[[0,1],[0,0]])+np.kron(A3,[[0,0],[1,0]])+np.kron(A4,[[0,0],[0,1]])
+
 
         Malv = np.asarray([[1 + dtn/alvELF*PS_alv,  -dtn/alvTis * PS_alv/Kpl_u_alv],
                            [-dtn/alvELF*PS_alv   ,  1 + dtn/alvTis*(PS_alv/Kpl_u_alv + Qalv*R/Kpl_alv)]])
