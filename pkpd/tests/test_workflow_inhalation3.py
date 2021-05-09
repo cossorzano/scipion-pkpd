@@ -157,7 +157,7 @@ class TestInhalation3Workflow(TestWorkflow):
         self.launchProtocol(protPKBud)
         self.assertIsNotNone(protPKBud.outputExperiment.fnPKPD, "There was a problem with the Bud PK parameters")
 
-        def simulate(protDepo, subst, label):
+        def simulate(protDepo, subst, label, mean0):
             if subst=="FP":
                 simulationTime = 24*60
                 deltaT = simulationTime/2000
@@ -181,16 +181,69 @@ class TestInhalation3Workflow(TestWorkflow):
             experiment.load(protSimulate.outputExperiment.fnPKPD)
             t = np.asarray([float(x) for x in experiment.samples['simulation'].getValues('t')])
             Cnmol = np.asarray([float(x) for x in experiment.samples['simulation'].getValues('Cnmol')])
+            self.assertTrue(abs(np.mean(Cnmol) - mean0) < 0.0001)
             return [t, Cnmol]
 
-        simulate(protDepoFPH200, 'FP', 'FP healthy 200')
-        simulate(protDepoFPH500, 'FP', 'FP healthy 500')
-        simulate(protDepoFPH1000, 'FP', 'FP healthy 1000')
-        simulate(protDepoFPA1000, 'FP', 'FP asthmatic 1000')
-        simulate(protDepoBudH400, 'Bud', 'Bud healthy 400')
-        simulate(protDepoBudH1000, 'Bud', 'Bud healthy 1000')
-        simulate(protDepoBudH1200, 'Bud', 'Bud healthy 1200')
-        simulate(protDepoBudA1200, 'Bud', 'Bud asthmatic 1200')
+        tFPH200,    CFPH200   = simulate(protDepoFPH200,   'FP',  'FP healthy 200', 1.8765186996510694e-05)
+        tFPH500,    CFPH500   = simulate(protDepoFPH500,   'FP',  'FP healthy 500', 4.6861526878265555e-05)
+        tFPH1000,   CFPH1000  = simulate(protDepoFPH1000,  'FP',  'FP healthy 1000', 9.355926105768224e-05)
+        tFPA1000,   CFPA1000  = simulate(protDepoFPA1000,  'FP',  'FP asthmatic 1000', 5.716379844797481e-05)
+        tBudH400,   CBudH400  = simulate(protDepoBudH400,  'Bud', 'Bud healthy 400', 0.00034539943943910243)
+        tBudH1000,  CBudH1000 = simulate(protDepoBudH1000, 'Bud', 'Bud healthy 1000', 0.0008609816286298489)
+        tBudH1200,  CBudH1200 = simulate(protDepoBudH1200, 'Bud', 'Bud healthy 1200', 0.001032184417771872)
+        tBudA1200,  CBudA1200 = simulate(protDepoBudA1200, 'Bud', 'Bud asthmatic 1200', 0.0007235576366965215)
+
+        # Experimental data
+        dataMoellmann = pandas.read_csv(self.dataset.getFile('Moellmann2001_data.csv'))
+        dataMoellmann = dataMoellmann.loc[dataMoellmann.Dosing_regimen=='Single Dose']
+        FP_200ug   = dataMoellmann.loc[(dataMoellmann.Drug=='Fluticasone_Propionate') & (dataMoellmann.Dose_ug == 200)]
+        FP_500ug   = dataMoellmann.loc[(dataMoellmann.Drug=='Fluticasone_Propionate') & (dataMoellmann.Dose_ug == 500)]
+        Bud_400ug  = dataMoellmann.loc[(dataMoellmann.Drug=='Budesonide')             & (dataMoellmann.Dose_ug == 400)]
+        Bud_1000ug = dataMoellmann.loc[(dataMoellmann.Drug=='Budesonide')             & (dataMoellmann.Dose_ug == 1000)]
+
+        dataHT =  pandas.read_csv(self.dataset.getFile('HarrisonTattersfield_data.csv'))
+        FP_asthma   = dataHT.loc[(dataHT.Drug=='Fluticasone_Propionate') & (dataHT.Population=='Asthma')           ];
+        FP_healthy  = dataHT.loc[(dataHT.Drug=='Fluticasone_Propionate') & (dataHT.Population=='Healthy volunteer')];
+        Bud_asthma  = dataHT.loc[(dataHT.Drug=='Budesonide')             & (dataHT.Population=='Asthma')           ];
+        Bud_healthy = dataHT.loc[(dataHT.Drug=='Budesonide')             & (dataHT.Population=='Healthy volunteer')];
+
+        # Plots
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=(12,9))
+        plt.title('Fluticasone propionate')
+        plt.xlabel('Time (hours)')
+        plt.ylabel('Dose-normalized plasma concentration [nM/ug dose]')
+        plt.yscale('log')
+        plt.ylim([3e-5, 6e-3])
+        plt.xlim([0, 21])
+        plt.xticks(np.arange(0,22,2))
+        plt.plot(FP_200ug.Time_h, FP_200ug["Conc_nmol/L"] / 200, 'o')
+        plt.plot(FP_500ug.Time_h, FP_500ug["Conc_nmol/L"] / 500, 'x')
+        plt.plot(FP_healthy.Time_h, FP_healthy["Conc_nmol/L"] / 1000, '<')
+        plt.plot(tFPH200/60,  CFPH200*1000  / 200)
+        plt.plot(tFPH500/60,  CFPH500*1000  / 500)
+        plt.plot(tFPH1000/60, CFPH1000*1000 / 1000)
+        plt.legend(['Moellmann et al. 200 ug', 'Moellmann et al. 500 ug', 'Harrison/Tattersfield 1000 ug',
+                    'PDE 200', 'PDE 500', 'PDE 1000'])
+        plt.savefig('FP.png')
+
+        plt.figure(figsize=(12,9))
+        plt.title('Budesonide')
+        plt.xlabel('Time (hours)')
+        plt.ylabel('Dose-normalized plasma concentration [nM/ug dose]')
+        plt.yscale('log')
+        plt.ylim([3e-5, 6e-3])
+        plt.xlim([0, 21])
+        plt.xticks(np.arange(0,22,2))
+        plt.plot(Bud_400ug.Time_h, Bud_400ug["Conc_nmol/L"] / 400, 'o')
+        plt.plot(Bud_1000ug.Time_h, Bud_1000ug["Conc_nmol/L"] / 1000, 'x')
+        plt.plot(Bud_healthy.Time_h, Bud_healthy["Conc_nmol/L"] / 1200, '<')
+        plt.plot(tBudH400/60,  CBudH400*1000  / 400)
+        plt.plot(tBudH1000/60, CBudH1000*1000 / 1000)
+        plt.plot(tBudH1200/60, CBudH1200*1000 / 1200)
+        plt.legend(['Moellmann et al. 400 ug','Moellmann et al. 1000 ug','Harrison/Tattersfield 1200 ug',
+                    'PDE 400', 'PDE 1000', 'PDE 1200'])
+        plt.savefig('Bud.png')
 
 if __name__ == "__main__":
     unittest.main()
