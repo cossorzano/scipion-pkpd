@@ -54,6 +54,11 @@ class ProtPKPDInhSimulate(ProtPKPD):
         form.addParam('ptrPK', params.PointerParam, pointerClass='PKPDExperiment', label="PK parameters")
         form.addParam('simulationTime', params.FloatParam, label="Simulation time (min)", default=10*24*60)
         form.addParam('deltaT', params.FloatParam, label='Time step (min)', default=1, expertLevel=LEVEL_ADVANCED)
+        form.addParam('diameters', params.StringParam, label='Diameters (um)',
+                      default="0.1,1.1,0.1; 1.2,9.2,0.2",
+                      help='Diameters to analyze. Syntax: start1, stop1, step1; start2, stop2, step2; ... They will be '
+                           'used as arguments of numpy.arange',
+                      expertLevel=LEVEL_ADVANCED)
 
     #--------------------------- INSERT steps functions --------------------------------------------
     def _insertAllSteps(self):
@@ -81,7 +86,9 @@ class ProtPKPDInhSimulate(ProtPKPD):
         pkLungParams = PKLung()
         pkLungParams.prepare(substanceParams, lungParams, pkParams)
 
-        diameters = np.concatenate((np.arange(0.1,1.1,0.1),np.arange(1.2,9.2,0.2))) # [um]
+        # diameters = np.concatenate((np.arange(0.1,1.1,0.1),np.arange(1.2,9.2,0.2))) # [um]
+        evalStr = "np.concatenate(("+",".join(["np.arange("+x.strip()+")" for x in self.diameters.get().split(";")])+"))"
+        diameters = eval(evalStr, {'np': np})
         Sbnd = diam2vol(diameters)
 
         tt=np.arange(0,self.simulationTime.get()+self.deltaT.get(),self.deltaT.get())
@@ -89,7 +96,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
 
         # Postprocessing
         depositionData = self.deposition.getData()
-        alvDose = depositionData['alveolar']
+        alvDose = np.sum(depositionData['alveolar'])
         bronchDose = np.sum(depositionData['bronchial'])
         lungDose = alvDose + bronchDose
         AsysGut = sol['A']['sys']['gut']
@@ -101,7 +108,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
 
         # Create output
         self.experimentLungRetention = PKPDExperiment()
-        self.experimentLungRetention.general["title"]="Lung retention"
+        self.experimentLungRetention.general["title"]="Inhalation simulate"
 
         tvar = PKPDVariable()
         tvar.varName = "t"
