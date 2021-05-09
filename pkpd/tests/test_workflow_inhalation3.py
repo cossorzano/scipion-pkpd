@@ -68,7 +68,7 @@ class TestInhalation3Workflow(TestWorkflow):
         protSubstBud=self.newProtocol(ProtPKPDInhSubstanceProperties,
                                      objLabel='pkpd - budesonide properties',
                                      name='budesonide',
-                                     rho=1.3e9/430.53, MW=430.53,
+                                     rho=1.3, MW=430.53,
                                      kdiss_alv=3.3e-4, kdiss_br=3.3e-4*0.2, kp_alv=5.33e-6*60, kp_br=5.33e-6*60,
                                      Cs_alv=69.797, Cs_br=69.797,
                                      Kpl_alv=8, Kpl_br=8, fu=0.161, R=0.8
@@ -134,7 +134,7 @@ class TestInhalation3Workflow(TestWorkflow):
         Q_L_h = k12_1_h * Vc_L;
         Vp_L = Q_L_h / k21_1_h;
         Foral = 0.11; # []
-        ka = 0.45; # [1 / h]
+        ka = 0.45; # [1 / min]
 
         CL_mL_min = 1000 / 60 * CL_L_h; # [L / h] --> [mL / min]
         Q_mL_min = 1000 / 60 * Q_L_h; # [L / h] --> [mL / min]
@@ -153,7 +153,7 @@ class TestInhalation3Workflow(TestWorkflow):
                                                  'k01 ; 1/min ; numeric[%f] ; label ; 1st order absorption rate of the oral fraction\n',
                                     newSamples='Individual1; Cl=%f; V=%f; Vp=%f; Q=%f; F=%f; k01=%f'%(CL_mL_min,Vc_mL,
                                                                                                       Vp_mL, Q_mL_min,
-                                                                                                      Foral, ka/60))
+                                                                                                      Foral, ka))
         self.launchProtocol(protPKBud)
         self.assertIsNotNone(protPKBud.outputExperiment.fnPKPD, "There was a problem with the Bud PK parameters")
 
@@ -181,8 +181,16 @@ class TestInhalation3Workflow(TestWorkflow):
             experiment.load(protSimulate.outputExperiment.fnPKPD)
             t = np.asarray([float(x) for x in experiment.samples['simulation'].getValues('t')])
             Cnmol = np.asarray([float(x) for x in experiment.samples['simulation'].getValues('Cnmol')])
-        simulate(protDepoFPH200, 'FP', 'FP healthy 200')
+            return [t, Cnmol]
 
+        simulate(protDepoFPH200, 'FP', 'FP healthy 200')
+        simulate(protDepoFPH500, 'FP', 'FP healthy 500')
+        simulate(protDepoFPH1000, 'FP', 'FP healthy 1000')
+        simulate(protDepoFPA1000, 'FP', 'FP asthmatic 1000')
+        simulate(protDepoBudH400, 'Bud', 'Bud healthy 400')
+        simulate(protDepoBudH1000, 'Bud', 'Bud healthy 1000')
+        simulate(protDepoBudH1200, 'Bud', 'Bud healthy 1200')
+        simulate(protDepoBudA1200, 'Bud', 'Bud asthmatic 1200')
 
 if __name__ == "__main__":
     unittest.main()
