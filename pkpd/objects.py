@@ -507,6 +507,8 @@ class PKPDSample:
             return None
 
     def setDescriptorValue(self, descriptorName, descriptorValue):
+        if self.descriptors is None:
+            self.descriptors = {}
         self.descriptors[descriptorName] = descriptorValue
 
 
