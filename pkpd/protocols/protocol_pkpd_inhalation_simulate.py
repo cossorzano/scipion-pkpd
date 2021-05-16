@@ -100,6 +100,8 @@ class ProtPKPDInhSimulate(ProtPKPD):
         bronchDose = np.sum(depositionData['bronchial'])
         lungDose = alvDose + bronchDose
         AsysGut = sol['A']['sys']['gut']
+        Abrcleared = sol['A']['br']['clear']
+        Abrcleared = np.reshape(Abrcleared,Abrcleared.size)
         Acleared = sol['A']['sys']['clear'] + AsysGut - AsysGut[0]
         lungRetention = 100*(lungDose - Acleared)/lungDose;  # in percent of lung dose
 
@@ -137,10 +139,50 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Cvar.units = createUnit("g/mL")
         Cvar.comment = "Central compartment concentration"
 
+        brClvar = PKPDVariable()
+        brClvar.varName = "brClear"
+        brClvar.varType = PKPDVariable.TYPE_NUMERIC
+        brClvar.role = PKPDVariable.ROLE_MEASUREMENT
+        brClvar.units = createUnit("nmol")
+        brClvar.comment = "Cumulative amount cleared by mucociliary elevator"
+
+        doseNmolVar = PKPDVariable()
+        doseNmolVar.varName = "dose_nmol"
+        doseNmolVar.varType = PKPDVariable.TYPE_NUMERIC
+        doseNmolVar.role = PKPDVariable.ROLE_LABEL
+        doseNmolVar.units = createUnit("nmol")
+        doseNmolVar.comment = "Input dose in nmol"
+
+        doseThroatVar = PKPDVariable()
+        doseThroatVar.varName = "throat_dose_nmol"
+        doseThroatVar.varType = PKPDVariable.TYPE_NUMERIC
+        doseThroatVar.role = PKPDVariable.ROLE_LABEL
+        doseThroatVar.units = createUnit("nmol")
+        doseThroatVar.comment = "Throat dose in nmol"
+
+        doseLungVar = PKPDVariable()
+        doseLungVar.varName = "lung_dose_nmol"
+        doseLungVar.varType = PKPDVariable.TYPE_NUMERIC
+        doseLungVar.role = PKPDVariable.ROLE_LABEL
+        doseLungVar.units = createUnit("nmol")
+        doseLungVar.comment = "Lung dose in nmol"
+
+        mccClearedLungDoseFractionVar = PKPDVariable()
+        mccClearedLungDoseFractionVar.varName = "mcc_cleared_lung_dose_fraction"
+        mccClearedLungDoseFractionVar.varType = PKPDVariable.TYPE_NUMERIC
+        mccClearedLungDoseFractionVar.role = PKPDVariable.ROLE_LABEL
+        mccClearedLungDoseFractionVar.units = createUnit("None")
+        mccClearedLungDoseFractionVar.comment = "MCC cleared lung dose fraction"
+
         self.experimentLungRetention.variables["t"] = tvar
         self.experimentLungRetention.variables["Retention"] = Rvar
         self.experimentLungRetention.variables["Cnmol"] = Cnmolvar
         self.experimentLungRetention.variables["C"] = Cvar
+        self.experimentLungRetention.variables["brClear"] = brClvar
+        self.experimentLungRetention.variables["dose_nmol"] = doseNmolVar
+        self.experimentLungRetention.variables["throat_dose_nmol"] = doseThroatVar
+        self.experimentLungRetention.variables["lung_dose_nmol"] = doseLungVar
+        self.experimentLungRetention.variables["mcc_cleared_lung_dose_fraction"] = mccClearedLungDoseFractionVar
 
         # Samples
         simulationSample = PKPDSample()
@@ -149,6 +191,12 @@ class ProtPKPDInhSimulate(ProtPKPD):
         simulationSample.addMeasurementColumn("Retention", lungRetention)
         simulationSample.addMeasurementColumn("Cnmol", Csysnmol)
         simulationSample.addMeasurementColumn("C", Csys)
+        simulationSample.addMeasurementColumn("brClear", Abrcleared)
+        simulationSample.setDescriptorValue("dose_nmol",depositionData['dose_nmol'])
+        simulationSample.setDescriptorValue("throat_dose_nmol",depositionData['throat'])
+        lungDose = depositionData['dose_nmol']-depositionData['throat']
+        simulationSample.setDescriptorValue("lung_dose_nmol",lungDose)
+        simulationSample.setDescriptorValue("mcc_cleared_lung_dose_fraction",Abrcleared[-1]/lungDose)
         self.experimentLungRetention.samples["simulmvarNameation"] = simulationSample
 
         self.experimentLungRetention.write(self._getPath("experiment.pkpd"))
