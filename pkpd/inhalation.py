@@ -593,6 +593,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
     # transport velocity
     lambdaX = pkLung.cilspeed(Xbnd)
+    # print("lambdaX",np.mean(lambdaX)); aaaaa
 
     # location/size discretisation steps
     dx = np.diff(Xbnd)
@@ -600,35 +601,52 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
     # absorption into tissue
     kaX = pkLung.bronchialAbsorb(Xctr)
+    # print("kaX",np.mean(kaX)); aaaaa
 
     # cross-sectional areas
     aFluX = P_aELF(lungData, Xbnd)
     aTisX = P_aTis(lungData, Xbnd)
+    # print("aFluX",np.mean(aFluX));
+    # print("aTisX",np.mean(aTisX)); aaaaa
 
     # ELF heights in bronchi / alveolar space
     hFluX = P_hELF(lungData, Xctr)
     hFlualv = alveolarData['ELF_cm3']/alveolarData['Surf_cm2']
+    # print("hFluX",np.mean(hFluX));
+    # print("hFlualv",np.mean(hFlualv)); aaaaa
 
     # blood flow
     Qalv = alveolarData['fQco'] * systemicData['Qco'] # Alveolar
     qX = P_Qbr(lungData, systemicData, Xbnd)
     QbrX = np.multiply(qX, dx) # bronchial (location-resolved)
+    # print("Qalv",np.mean(Qalv));
+    # print("QbrX",np.mean(QbrX)); aaaaa
 
     # plasma to lung partition coefficients
     Kpl_br = pkLung.substanceData['Kpl_br']
     Kpl_alv = pkLung.substanceData['Kpl_alv']
     Kpl_u_br = Kpl_br / pkLung.substanceData['fu']
     Kpl_u_alv = Kpl_alv / pkLung.substanceData['fu']
+    # print("Kpl_br",np.mean(Kpl_br));
+    # print("Kpl_alv",np.mean(Kpl_alv));
+    # print("Kpl_u_br",np.mean(Kpl_u_br));
+    # print("Kpl_u_alv",np.mean(Kpl_u_alv)); aaaaa
 
     # permeability-surface area products [cm3/min]
     PS_alv = pkLung.substanceData['kp_alv'] * alveolarData['Surf_cm2'];  # alveolar
     PS_br = np.multiply(kaX , dx) # bronchial
+    # print("PS_alv",np.mean(PS_alv));
+    # print("PS_br",np.mean(PS_br)); aaaaa
 
     # assign volumes to variables
     alvELF = alveolarData['ELF_cm3']  # alveolar fluid
     alvTis = alveolarData['Vol_cm3']  # alveolar tissue
     brELF  = np.multiply(aFluX,dx)    # bronchial fluid
     brTis  = np.multiply(aTisX,dx)    # bronchial tissue
+    # print("alvELF",np.mean(alvELF));
+    # print("alvTis",np.mean(alvTis));
+    # print("brELF",np.mean(brELF));
+    # print("brTis",np.mean(brTis)); aaaaa
 
     # Allocate lung amounts: A_flu(alv/br), A_tis(alv/br)
     Nt=tt.size-1
@@ -652,11 +670,14 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     rhoalv = np.zeros((Nt+1, 1,Ns));
 
     rho0br, rho0alv = project_deposition_2D(depositionData, Xbnd, Sbnd, lungData)
+    # print("rho0br",np.mean(rho0br));
+    # print("rho0alv",np.mean(rho0alv)); aaaaa
 
     rhobr[0,:,:]=rho0br
     rhoalv[0,:,:]=rho0alv
     Asysgut[0] = depositionData['throat']
     CFL_factor = np.zeros((Nt,1))
+    # print("depositionData['throat']",depositionData['throat']); aaaa
 
     # Time iteration
     # pre-compute expressions constant in time
@@ -665,6 +686,10 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     l_dx_pre = np.divide(lambdaX[0:-1],dx)
     dSctr = np.diff(Sctr) # from discrete integration by parts
     ds3D = np.reshape(ds, (1, 1, ds.size))
+    # print("l_dx_post",np.mean(l_dx_post));
+    # print("l_dx_pre",np.mean(l_dx_pre));
+    # print("dSctr",np.mean(dSctr));
+    # print("ds3D",np.mean(ds3D)); aaaaa
 
     # PK parameters
     Vc = pkLung.pkData['V'];
@@ -673,9 +698,17 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     k21 = pkLung.pkData['Q'] / pkLung.pkData['Vp']
     k01 = pkLung.pkData['k01']
     F = pkLung.pkData['F']
+    # print("Vc",Vc);
+    # print("k10",k10);
+    # print("k12",k12);
+    # print("k21",k21);
+    # print("k01",k01);
+    # print("F",F); aaaaa
 
     Qbrtot = np.sum(QbrX) # total bronchial blood flow
     R =  pkLung.substanceData['R']
+    # print("Qbrtot",Qbrtot);
+    # print("R",R); aaaaa
 
     # Time loop
     for n in range(Nt): # (semi - explicit Euler; implicit absorption into tissue)
@@ -685,14 +718,18 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
         d_Sbnd_Cflualv = np.reshape(pkLung.inhalationDissolutionAlveoli.getDissolution(Sbnd, Calvflun, hFlualv),
                                     (Sbnd.size))
+        # print("d_Sbnd_Cflualv",np.mean(d_Sbnd_Cflualv)); aaaaa
 
         rhoalv[n + 1,:,:] = \
                  np.multiply(1-dtn*np.divide(d_Sbnd_Cflualv[0:-1],ds3D), rhoalv[n,:,:])+\
                  dtn  * np.multiply(np.divide(d_Sbnd_Cflualv[1:], ds3D),\
                                     np.pad(rhoalv[n,:,1:],((0,0),(0,1)),'constant',constant_values=0))
+        # aaa=rhoalv[n + 1,:,:]; print("rhoalv[n + 1,:,:]",np.mean(aaa)); aaaaa
         dissolved_alv = np.dot(dSctr,np.reshape(np.multiply(d_Sbnd_Cflualv[1:-1], rhoalv[n,:,1:]),(dSctr.size)))
+        # print("dissolved_alv",np.mean(dissolved_alv)); aaaaa
 
         d_Sbnd_Cflubr = pkLung.inhalationDissolutionBronchi.getDissolution(Sbnd, Cbrflun, hFluX)
+        # print("d_Sbnd_Cflubr",np.mean(d_Sbnd_Cflubr)); aaaaa
 
         aux = rhobr[n, :, :]
         rhobr[n + 1,:,:] = \
@@ -703,26 +740,31 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
                               np.pad(rhobr[n,1:,:],((0,1),(0,0)),'constant',constant_values=0)) +\
             dtn * np.multiply(np.divide(d_Sbnd_Cflubr[:,1:], ds3D), \
                               np.pad(rhobr[n, :, 1:], ((0, 0), (0, 1)), 'constant', constant_values=0))
+        # aaa=rhobr[n + 1,:,:]; print("rhobr[n + 1,:,:]",np.mean(aaa)); aaaaa
 
         dissolved_br = np.multiply(dx,
                                    np.sum(np.multiply(dSctr,
                                                       np.multiply(d_Sbnd_Cflubr[:, 1:-1],rhobr[n,:, 1:])),
                                           axis=1))
+        # print("dissolved_br",np.mean(dissolved_br)); aaaaa
         A1 = np.diag(1+dtn*np.divide(PS_br,brELF))
         A2 = np.diag(-(dtn/Kpl_u_br)*np.divide(PS_br,brTis))
         A3 = np.diag(-dtn*np.divide(PS_br,brELF))
         A4 = np.diag(1+np.multiply(np.divide(dtn,brTis),PS_br/Kpl_u_br + QbrX*(R/Kpl_br)))
         Mbr = np.kron(A1,[[1,0],[0,0]])+np.kron(A2,[[0,1],[0,0]])+np.kron(A3,[[0,0],[1,0]])+np.kron(A4,[[0,0],[0,1]])
+        # print("Mbr",np.mean(Mbr))
 
 
         Malv = np.asarray([[1 + dtn/alvELF*PS_alv,  -dtn/alvTis * PS_alv/Kpl_u_alv],
                            [-dtn/alvELF*PS_alv   ,  1 + dtn/alvTis*(PS_alv/Kpl_u_alv + Qalv*R/Kpl_alv)]])
+        # print("Malv",np.mean(Malv))
 
         Msys = np.asarray([ # gut        per       clear      ctr  <- X_i' %f(X_j)
                            [1+dtn*k01     ,      0  ,      0   ,           0],           # gut
                            [0             ,1+dtn*k21,      0   ,    -dtn*k12],           # per
                            [-dtn*(1-F)*k01,      0  ,      1   ,    -dtn*k10],           # clear
                            [-dtn*F*k01,     -dtn*k21,      0   , 1+dtn*(k10+k12+(Qalv+Qbrtot)/Vc)]]) # ctr
+        # print("Msys",np.mean(Msys)); aaaa
 
         Mbrctr = -np.kron((dtn / Vc) * QbrX, [0, 1])
         Malvctr = -np.asarray([0, (dtn / Vc) * Qalv])
@@ -734,7 +776,9 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
         M = np.block([[scipy.linalg.block_diag(Mbr,Malv), np.zeros((2*Nx+2,3)), np.reshape(Mbralvctr,(2*Nx+2,1))],
                      [np.block([[np.zeros((3,2*Nx+2))],[np.reshape(Mctrbralv,(1,2*Nx+2))]]),
                       Msys]])
+        # print("M",np.mean(M)); aaaa
         rhsbr = np.block([[Abrflu[n,:] + dtn * dissolved_br],[Abrtis[n,:]]])
+        # print("rhsbr",np.mean(rhsbr)); aaaa
 
         mcc = dtn * lambdaX[0] * int_dx(Sbnd, np.multiply(Sctr,rhobr[n,0,:]))
         rhs = np.concatenate((np.reshape(rhsbr,(rhsbr.size,1),order='F'),
@@ -744,7 +788,9 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
                               [Asysper[n]],
                               [Aclear[n]],
                               [Asysctr[n]]))
+        # print("rhs",np.mean(rhs)); aaaa
         Ynext = np.linalg.solve(M,rhs)
+        # print("Ynext",np.mean(Ynext)); aaaa
 
         Abrflu[n + 1,:]  = np.reshape(Ynext[0:(2*Nx):2],(Nx,))
         Abrtis[n + 1,:]  = np.reshape(Ynext[1:(2*Nx):2],(Nx,))
@@ -790,23 +836,29 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     Aalvsol = np.zeros(rhoalv.shape[0])
     for n in range(rhoalv.shape[0]):
         Aalvsol[n]=int_dx(Sbnd,np.multiply(Sctr,np.reshape(rhoalv[n,0,:],(rhoalv.shape[2]))))
+    # print("Aalvsol",np.mean(Aalvsol)); aaaa
 
     # Concentration of drug dissolved in alveolar epithelial lining fluid
     Calvflu = Aalvflu / alvELF
 
     # Concentration of drug in alveolar lung tissue
     Calvtis =  Aalvtis/alvTis;
+    # print("Calvflu",np.mean(Calvflu));
+    # print("Calvtis",np.mean(Calvtis)); aaaa
 
     # Amount of undissolved drug in conducting airways (bronchial)
     Abrsol = np.zeros(rhobr.shape[0])
     for n in range(rhobr.shape[0]):
         Abrsol[n]=int_dx1dx2(Xbnd,Sbnd,np.multiply(Sctr,np.reshape(rhobr[n,:,:],(rhobr.shape[1],rhobr.shape[2]))))
+    # print("Abrsol",np.mean(Abrsol));
 
     # Concentration of drug dissolved in bronchial epithelial lining fluid
     Cbrflu = np.divide(Abrflu, brELF)
+    # print("Cbrflu",np.mean(Cbrflu));
 
     # Concentration of drug in bronchial lung tissue
     Cbrtis = np.divide(Abrtis, brTis)
+    # print("Cbrtis",np.mean(Cbrtis)); aaaa
 
     # Amounts
     Aalv = {'solid': Aalvsol,
