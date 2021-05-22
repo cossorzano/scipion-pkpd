@@ -40,6 +40,7 @@ from pkpd.objects import (PKPDDEOptimizer, PKPDLSOptimizer, PKPDFitting,
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.utils import parseRange
 from pkpd.biopharmaceutics import DrugSource
+from pkpd.pkpd_units import PKPDUnit
 
 
 class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
@@ -478,6 +479,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
                 # Add the parameters to the sample and experiment
                 for varName, varUnits, description, varValue in izip(self.getParameterNames(), self.parameterUnits, self.getParameterDescriptions(), self.parameters):
                     self.experiment.addParameterToSample(sampleName, varName, varUnits, description, varValue, rewrite=True)
+                self.experiment.addParameterToSample(sampleName, "R2", PKPDUnit.UNIT_NONE, "Fitting R2", sampleFit.R2, rewrite=True)
 
                 self.postSampleAnalysis(sampleName)
 
@@ -500,6 +502,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         self.fitting.modelParameters = self.getParameterNames()
         self.fitting.modelDescription=self.getDescription()
         self.fitting.write(self._getPath("fitting.pkpd"))
+        self.experiment.general['Model'] = self.getDescription()
         self.experiment.write(self._getPath("experiment.pkpd"))
 
     def createOutputStep(self):
