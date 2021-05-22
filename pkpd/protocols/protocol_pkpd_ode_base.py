@@ -497,6 +497,7 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
         self.fitting.modelParameters = self.getParameterNames()
         self.fitting.modelDescription=self.getDescription()
         self.fitting.write(self._getPath("fitting.pkpd"))
+        self.experiment.general['Model'] = self.getDescription()
         self.experiment.write(self._getPath("experiment.pkpd"))
 
     def createOutputStep(self):
