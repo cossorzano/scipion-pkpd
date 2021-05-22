@@ -46,6 +46,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
     PRM_POPULATION = 0
     PRM_USER_DEFINED = 1
     PRM_FITTING = 2
+    PRM_EXPERIMENT = 3
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
@@ -53,8 +54,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDMonoCompartmentPD, ProtPKPDTwoCompartmentsBothPD, '\
                                    'ProtPKPDODERefine, ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
-                      help='Select a run of an ODE model')
-        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined','ODE Fitting'], default=0,
+                      help='Select a run of an ODE model. This input is used to learn the kind of model that is needed. The parameters are '
+                           'taken from the sources below')
+        form.addParam('paramsSource', params.EnumParam, label="Source of parameters", choices=['ODE Bootstrap','User defined','ODE Fitting','Experiment'], default=0,
                       help="Choose a population of parameters, your own parameters or a previously fitted set of measurements")
         form.addParam('inputPopulation', params.PointerParam, label="Input population", condition="paramsSource==0",
                       pointerClass='PKPDFitting', pointerCondition="isPopulation", help='It must be a fitting coming from a bootstrap sample')
@@ -65,6 +67,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            'prmA, prmB, prmC, prmD')
         form.addParam('inputFitting', params.PointerParam, label="Input ODE fitting", condition="paramsSource==2",
                       pointerClass='PKPDFitting', help='It must be a fitting coming from a compartmental PK fitting')
+        form.addParam('inputExperiment', params.PointerParam, label="Input experiment", condition="paramsSource==3",
+                      pointerClass='PKPDExperiment', help='It must contain the parameters required for the simulation (Cl, V, Vp, ...)')
         form.addParam('doses', params.TextParam, label="Doses", height=5, width=50,
                       default="RepeatedBolus ; via=Oral; repeated_bolus; t=0:24:120 h; d=60 mg",
                       help="Structure: [Dose Name] ; [Via] ; [Dose type] ; [time] ; [dose] \n"\
@@ -231,6 +235,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         elif self.paramsSource.get()==ProtPKPDODESimulate.PRM_FITTING:
             self.fitting = self.readFitting(self.inputFitting.get().fnFitting)
         else:
+            # User defined or experiment
             if hasattr(self.protODE, "outputFitting"):
                 self.fitting = self.readFitting(self.protODE.outputFitting.fnFitting)
             elif hasattr(self.protODE, "outputFitting1"):
@@ -308,8 +313,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             for line in lines:
                 tokens = line.strip().split(',')
                 prmUser.append([float(token) for token in tokens])
-        else:
+        elif self.paramsSource == ProtPKPDODESimulate.PRM_FITTING:
             Nsimulations = len(self.fitting.sampleFits)
+        else:
+            self.inputExperiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
+            Nsimulations = len(self.inputExperiment.samples)
+            inputSampleNames = self.inputExperiment.samples.keys()
 
         # Simulate the different responses
         simulationsX = self.model.x
@@ -337,11 +346,17 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             elif self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
                 parameters = np.asarray(prmUser[i],np.double)
                 self.fromSample="User defined"
-            else:
+            elif self.paramsSource == ProtPKPDODESimulate.PRM_FITTING:
                 parameters = self.fitting.sampleFits[i].parameters
                 self.fromSample = self.fitting.sampleFits[i].sampleName
-            print("From sample name: %s"%self.fromSample)
+            else:
+                parameters = []
+                self.fromSample=inputSampleNames[i]
+                sample = self.inputExperiment.samples[self.fromSample]
+                for prmName in self.fitting.modelParameters:
+                    parameters.append(float(sample.getDescriptorValue(prmName)))
 
+            print("From sample name: %s"%self.fromSample)
             print("Simulated sample %d: %s"%(i,str(parameters)))
 
             # Prepare source and this object
