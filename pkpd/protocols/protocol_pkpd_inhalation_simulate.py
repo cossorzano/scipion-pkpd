@@ -51,7 +51,31 @@ class ProtPKPDInhSimulate(ProtPKPD):
         form.addParam('ptrDeposition', params.PointerParam, pointerClass='PKDepositionParameters', label="Deposition")
         form.addParam('doseMultiplier', params.FloatParam, default=1.0, label='Dose multiplier',
                       help="Multiply the dose in the deposition file by this factor")
+        form.addParam('substanceMultiplier', params.StringParam, default="1 1 1 1 1 1 1 1", label='Substance multiplier',
+                      help='Multiply a substance related parameter by this factor. This is a vector with the order: \n'
+                           '1. Solubility (br) \n'                 
+                           '2. Solubility (alv) \n'
+                           '3. Dissolution rate (br) \n'
+                           '4. Dissolution rate (alv) \n'
+                           '5. Permeability (br) \n'
+                           '6. Permeability (alv) \n'
+                           '7. Partition coefficient (br) \n'
+                           '8. Partition coefficient (alv)')
+        form.addParam('physiologyMultiplier', params.StringParam, default="1 1 1 1 1 1 1 1 1", label='Physiology multiplier',
+                      help='Multiply a physiology related parameter by this factor. This is a vector with the order: \n'
+                           '1. Mucociliary clearance\n'           
+                           '2. Fluid volume (br)\n'
+                           '3. Fluid volume (alv)\n'
+                           '4. Tissue volume (br)\n'
+                           '5. Tissue volume (alv)\n'
+                           '6. Surface area (br)\n'
+                           '7. Surface area (alv)\n'
+                           '8. Perfusion (br)\n'
+                           '9. Perfusion (alv)\n')
         form.addParam('ptrPK', params.PointerParam, pointerClass='PKPDExperiment', label="PK parameters")
+        form.addParam('pkMultiplier', params.StringParam, default="1", label='PK multiplier',
+                      help='Multiply a substance related parameter by this factor. This is a vector with the order: \n'
+                           '1. Systemic clearance\n')
         form.addParam('simulationTime', params.FloatParam, label="Simulation time (min)", default=10*24*60)
         form.addParam('deltaT', params.FloatParam, label='Time step (min)', default=1, expertLevel=LEVEL_ADVANCED)
         form.addParam('diameters', params.StringParam, label='Diameters (um)',
@@ -74,14 +98,25 @@ class ProtPKPDInhSimulate(ProtPKPD):
         self.deposition.doseMultiplier = self.doseMultiplier.get()
         self.deposition.read()
 
+        p = [float(x) for x in self.substanceMultiplier.get().split()]
         substanceParams = PKSubstanceLungParameters()
+        substanceParams.paramMultiplier = np.asarray([p[3], p[2], p[5], p[4], p[1], p[0], p[7], p[6]])
         substanceParams.read(self.ptrDeposition.get().fnSubstance.get())
 
+        # TODO
+        # case 'Mucociliary clearance'
+        #     model_j.trans = @(x) mult_factor * cilspeed_fit(x, sum(phys.br.gen.length_cm));
+
+        p = [float(x) for x in self.physiologyMultiplier.get().split()]
         lungParams = PKPhysiologyLungParameters()
+        lungParams.bronchialMultiplier = np.asarray([p[5], 1, 1, 1, p[1], p[3], 1, p[7]])
+        lungParams.alveolarMultiplier = np.asarray([p[8], 1, p[2], p[4], p[6]])
+        lungParams.systemicMultiplier = np.asarray([1, 1])
         lungParams.read(self.ptrDeposition.get().fnLung.get())
 
         pkParams = PKPDExperiment()
         pkParams.load(self.ptrPK.get().fnPKPD)
+        p = [float(x) for x in self.pkMultiplier.get().split()]
 
         pkLungParams = PKLung()
         pkLungParams.prepare(substanceParams, lungParams, pkParams)
