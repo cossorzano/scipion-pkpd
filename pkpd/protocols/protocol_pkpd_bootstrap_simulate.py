@@ -114,6 +114,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             newSample.addMeasurementColumn("t", simulationsX)
             for j in range(len(self.varNameY)):
                 newSample.addMeasurementColumn(self.varNameY[j], y[j])
+        newSample.descriptors["FromSample"] = self.fromSample
         newSample.descriptors["AUC0t"] = self.AUC0t
         newSample.descriptors["AUMC0t"] = self.AUMC0t
         newSample.descriptors["MRT"] = self.MRT
@@ -332,11 +333,14 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 sampleFit = self.fitting.sampleFits[nfit]
                 nprm = int(random.uniform(0,sampleFit.parameters.shape[0]))
                 parameters = sampleFit.parameters[nprm,:]
+                self.fromSample="Population %d"%nprm
             elif self.paramsSource==ProtPKPDODESimulate.PRM_USER_DEFINED:
                 parameters = np.asarray(prmUser[i],np.double)
+                self.fromSample="User defined"
             else:
                 parameters = self.fitting.sampleFits[i].parameters
-                print("Sample name: %s"%self.fitting.sampleFits[i].sampleName)
+                self.fromSample = self.fitting.sampleFits[i].sampleName
+            print("From sample name: %s"%self.fromSample)
 
             print("Simulated sample %d: %s"%(i,str(parameters)))
 
@@ -360,6 +364,12 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 self.AUMCunits = multiplyUnits(tvar.units.unit, self.AUCunits)
 
                 if self.addStats or self.addIndividuals:
+                    fromvar = PKPDVariable()
+                    fromvar.varName = "FromSample"
+                    fromvar.varType = PKPDVariable.TYPE_TEXT
+                    fromvar.role = PKPDVariable.ROLE_LABEL
+                    fromvar.units = createUnit("none")
+
                     AUCvar = PKPDVariable()
                     AUCvar.varName = "AUC0t"
                     AUCvar.varType = PKPDVariable.TYPE_NUMERIC
@@ -408,6 +418,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                     Cavgvar.role = PKPDVariable.ROLE_LABEL
                     Cavgvar.units = createUnit(strUnit(self.Cunits.unit))
 
+                    self.outputExperiment.variables["FromSample"] = fromvar
                     self.outputExperiment.variables["AUC0t"] = AUCvar
                     self.outputExperiment.variables["AUMC0t"] = AUMCvar
                     self.outputExperiment.variables["MRT"] = MRTvar
@@ -471,6 +482,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
                 print("Lower limit NCA")
                 self.NCA(simulationsX,limits[0])
+                self.fromSample="LowerLimit"
                 self.addSample("LowerLimit", dosename, simulationsX, limits[0])
 
             print("Mean profile NCA")
@@ -482,11 +494,13 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 for j in range(self.getResponseDimension()):
                     mu.append(np.mean(simulationsY[:,:,j],axis=0))
                 self.NCA(simulationsX,mu[0])
+            self.fromSample = "Mean"
             self.addSample("Mean", dosename, simulationsX, mu)
 
             if self.paramsSource!=ProtPKPDODESimulate.PRM_USER_DEFINED:
                 print("Upper limit NCA")
                 self.NCA(simulationsX,limits[1])
+                self.fromSample="UpperLimit"
                 self.addSample("UpperLimit", dosename, simulationsX, limits[1])
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
