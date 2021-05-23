@@ -47,6 +47,7 @@ class PKPhysiologyLungParameters(EMObject):
     def __init__(self, **args):
         EMObject.__init__(self, **args)
         self.fnPhys = String()
+        self.multiplier = [1] * 9
 
     def write(self, fnOut):
         fh=open(fnOut,"w")
@@ -154,33 +155,34 @@ class PKPhysiologyLungParameters(EMObject):
         data['start_cm']=start_cm
         data['end_cm']=end_cm
         data['pos']=pos
-        data['surf_cm2']=surf_cm2
+        data['surf_cm2']=surf_cm2 * self.multiplier[5]
 
         data['h_elf_trach'] = self.helf_trach
         data['h_elf_termbr'] = self.helf_termbr
         data['h_elf_cm'] = h_elf_cm
-        data['elf_cm3'] = elf_cm3
-        data['voltis_cm3'] = voltis_cm3
+        data['elf_cm3'] = elf_cm3 * self.multiplier[1]
+        data['voltis_cm3'] = voltis_cm3 * self.multiplier[3]
 
         data['fVol'] = self.fbrVlun
-        data['fQco'] = self.fbrCO
+        data['fQco'] = self.fbrCO * self.multiplier[7]
 
         return data
 
     def getAlveolar(self):
         # Hartung2020_MATLAB/physiol_subst/physiology_alveolar.m
         data = {}
-        data['fQco']=self.falvCO
+        data['fQco']=self.falvCO * self.multiplier[8]
         data['fVol']=1-self.fbrVlun
-        data['ELF_cm3'] = self.Velf_alv
-        data['Vol_cm3'] = self.OWlun * data['fVol']  # density = 1 [g/cm^3]
-        data['Surf_cm2'] = self.Surf_alv;
+        data['ELF_cm3'] = self.Velf_alv * self.multiplier[2]
+        data['Vol_cm3'] = self.OWlun * data['fVol']  * self.multiplier[4] # density = 1 [g/cm^3]
+        data['Surf_cm2'] = self.Surf_alv * self.multiplier[6]
         return data
 
 class PKSubstanceLungParameters(EMObject):
     def __init__(self, **args):
         EMObject.__init__(self, **args)
         self.fnSubst = String()
+        self.multiplier = [1] * 8
 
     def write(self, fnOut):
         fh=open(fnOut,"w")
@@ -222,16 +224,16 @@ class PKSubstanceLungParameters(EMObject):
     def getData(self):
         data = {}
         data['name'] = self.name
-        data['kdiss_alv'] = self.kdiss_alv
-        data['kdiss_br'] = self.kdiss_br
-        data['kp_alv'] = self.kp_alv
-        data['kp_br'] = self.kp_br
-        data['Cs_alv'] = self.Cs_alv
-        data['Cs_br'] = self.Cs_br
+        data['kdiss_alv'] = self.kdiss_alv * self.multiplier[3]
+        data['kdiss_br'] = self.kdiss_br * self.multiplier[2]
+        data['kp_alv'] = self.kp_alv * self.multiplier[5]
+        data['kp_br'] = self.kp_br * self.multiplier[4]
+        data['Cs_alv'] = self.Cs_alv * self.multiplier[1]
+        data['Cs_br'] = self.Cs_br * self.multiplier[0]
         data['rho'] = self.rho
         data['MW'] = self.MW
-        data['Kpl_alv'] = self.Kpl_alv
-        data['Kpl_br'] = self.Kpl_br
+        data['Kpl_alv'] = self.Kpl_alv * self.multiplier[7]
+        data['Kpl_br'] = self.Kpl_br * self.multiplier[6]
         data['fu'] = self.fu
         data['R'] = self.R
         return data
@@ -339,7 +341,9 @@ class PKCiliarySpeed(EMObject):
 
         self.lungParams = None
 
-    def prepare(self, lungParams):
+    def prepare(self, lungParams, ciliarySpeedType):
+        self.type.set(ciliarySpeedType)
+
         self.lungParams = lungParams
         lungData = lungParams.getBronchial()
 
@@ -352,7 +356,13 @@ class PKCiliarySpeed(EMObject):
         print("Location of branches [cm]",self.pos)
         print("Diameter of the branches [cm]",self.diam_cm)
 
-        if self.type.get()==self.INTERP:
+        if self.type.get()==self.EXPON:
+            # Exponentially increasing ciliary speed
+            self.cilspeed = lambda x: np.where(x>self.Lx, 0.0, np.exp(np.log(4e-3) + x * (np.log(50) - np.log(4e-3))))
+        elif self.type.get()==self.FIT:
+            # Simple fitted empirical ciliary transport model
+            self.cilspeed = lambda x: np.where(x<0.0, 0.0, np.exp(5*np.divide(self.Lx-x-3,np.power(3+self.Lx-x,0.92)))/200)
+        elif self.type.get()==self.INTERP:
             # Hofmann - Sturm model for mucociliary transport velocity
             # Reference: Hofmann / Sturm (2004) J Aerosol Med, Vol 17(1)
             self.v = 0.1 * 1.2553 * np.power(lungData['diam_cm'],2.808) # in [cm / min]
@@ -422,22 +432,37 @@ class PKLung(EMObject):
         self.inhalationDissolutionBronchi = None
         self.inhalationDissolutionAlveoli = None
 
-    def prepare(self, substanceParams, lungParams, pkParams):
+    def prepare(self, substanceParams, lungParams, pkParams, pkMultiplier, ciliarySpeedType):
         self.substanceParams = substanceParams
         self.lungParams = lungParams
 
         self.ciliarySpeed = PKCiliarySpeed()
-        self.ciliarySpeed.prepare(lungParams)
+        self.ciliarySpeed.prepare(lungParams, ciliarySpeedType)
 
         self.inhalationDissolutionBronchi = PKInhalationDissolution()
         self.inhalationDissolutionBronchi.prepare(substanceParams,"bronchi")
 
         # Hartung2020_MATLAB/functions/get_bronchial_kinetics.m
         bronchialData = lungParams.getBronchial()
+        bronchialData['elf_cm3'] = bronchialData['elf_cm3']
+        bronchialData['voltis_cm3'] = bronchialData['voltis_cm3']
+        bronchialData['surf_cm2'] = bronchialData['surf_cm2']
+        bronchialData['fQco'] = bronchialData['fQco']
+
         pos = bronchialData['pos']
         diam_cm = bronchialData['diam_cm']
 
         self.substanceData = substanceParams.getData()
+
+        self.substanceData['Cs_br'] = self.substanceData['Cs_br']
+        self.substanceData['Cs_alv'] = self.substanceData['Cs_alv']
+        self.substanceData['kdiss_br'] = self.substanceData['kdiss_br']
+        self.substanceData['kdiss_alv'] = self.substanceData['kdiss_alv']
+        self.substanceData['kp_br'] = self.substanceData['kp_br']
+        self.substanceData['kp_alv'] = self.substanceData['kp_alv']
+        self.substanceData['Kpl_br'] = self.substanceData['Kpl_br']
+        self.substanceData['Kpl_alv'] = self.substanceData['Kpl_alv']
+
         kp = self.substanceData['kp_br']
         ka = math.pi * kp * diam_cm
         print("Absorption rate per bronchial segment [1/min]",ka)
@@ -449,15 +474,15 @@ class PKLung(EMObject):
 
         self.pkData={}
         sample = pkParams.getFirstSample()
-        self.pkData['V'] = float(sample.getDescriptorValue('V'))
-        self.pkData['Cl'] = float(sample.getDescriptorValue('Cl'))
-        self.pkData['Q'] = float(sample.getDescriptorValue('Q'))
-        self.pkData['Vp'] = float(sample.getDescriptorValue('Vp'))
-        self.pkData['k01'] = float(sample.getDescriptorValue('k01'))
-        self.pkData['F'] = float(sample.getDescriptorValue('F'))
+        self.pkData['Cl'] = float(sample.getDescriptorValue('Cl')) * pkMultiplier[0]
+        self.pkData['V'] = float(sample.getDescriptorValue('V')) * pkMultiplier[1]
+        self.pkData['Q'] = float(sample.getDescriptorValue('Q')) * pkMultiplier[2]
+        self.pkData['Vp'] = float(sample.getDescriptorValue('Vp')) * pkMultiplier[3]
+        self.pkData['k01'] = float(sample.getDescriptorValue('k01')) * pkMultiplier[4]
+        self.pkData['F'] = float(sample.getDescriptorValue('F')) * pkMultiplier[5]
 
     def cilspeed(self, x):
-        return self.ciliarySpeed.cilspeed(x)
+        return self.lungParams.multiplier[0] * self.ciliarySpeed.cilspeed(x)
 
 def conserving_projection(X1, V1, X2):
     # Hartung2020_MATLAB/functions/conserving_projection.m
@@ -575,6 +600,9 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
     #   The idea of this approach is that the size resolution in the data may
     #   be much coarser than that the location grid
     #   (extreme case: monodisperse particle distribution)
+    # print(Sbnd.shape)
+    # print(np.mean(Sbnd)); aaaa
+
     dt = np.diff(tt)
     T = np.max(tt)
 
@@ -593,6 +621,7 @@ def saturable_2D_upwind_IE(lungParams, pkLung, depositionParams, tt, Sbnd):
 
     # transport velocity
     lambdaX = pkLung.cilspeed(Xbnd)
+    # print("Xbnd",np.mean(Xbnd))
     # print("lambdaX",np.mean(lambdaX)); aaaaa
 
     # location/size discretisation steps
