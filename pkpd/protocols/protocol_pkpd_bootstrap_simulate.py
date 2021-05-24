@@ -148,7 +148,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         Tminlist = []
         Ttaulist = []
         Ndoses=len(self.drugSource.parsedDoseList)
-        for ndose in range(0,max(Ndoses-1,1)):
+        for ndose in range(0,max(Ndoses,1)):
             tperiod0 = self.drugSource.parsedDoseList[ndose].t0
             if ndose+1<Ndoses:
                 tperiodF = self.drugSource.parsedDoseList[ndose+1].t0-self.model.deltaT
