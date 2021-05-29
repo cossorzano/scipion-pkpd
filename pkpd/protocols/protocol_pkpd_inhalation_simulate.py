@@ -220,6 +220,20 @@ class ProtPKPDInhSimulate(ProtPKPD):
         doseLungVar.units = createUnit("nmol")
         doseLungVar.comment = "Lung dose in nmol"
 
+        doseBronchialVar = PKPDVariable()
+        doseBronchialVar.varName = "bronchial_dose_nmol"
+        doseBronchialVar.varType = PKPDVariable.TYPE_NUMERIC
+        doseBronchialVar.role = PKPDVariable.ROLE_LABEL
+        doseBronchialVar.units = createUnit("nmol")
+        doseBronchialVar.comment = "Bronchial dose in nmol"
+
+        doseAlveolarVar = PKPDVariable()
+        doseAlveolarVar.varName = "alveolar_dose_nmol"
+        doseAlveolarVar.varType = PKPDVariable.TYPE_NUMERIC
+        doseAlveolarVar.role = PKPDVariable.ROLE_LABEL
+        doseAlveolarVar.units = createUnit("nmol")
+        doseAlveolarVar.comment = "Alveolar dose in nmol"
+
         mccClearedLungDoseFractionVar = PKPDVariable()
         mccClearedLungDoseFractionVar.varName = "mcc_cleared_lung_dose_fraction"
         mccClearedLungDoseFractionVar.varType = PKPDVariable.TYPE_NUMERIC
@@ -236,6 +250,8 @@ class ProtPKPDInhSimulate(ProtPKPD):
         self.experimentLungRetention.variables["dose_nmol"] = doseNmolVar
         self.experimentLungRetention.variables["throat_dose_nmol"] = doseThroatVar
         self.experimentLungRetention.variables["lung_dose_nmol"] = doseLungVar
+        self.experimentLungRetention.variables["bronchial_dose_nmol"] = doseBronchialVar
+        self.experimentLungRetention.variables["alveolar_dose_nmol"] = doseAlveolarVar
         self.experimentLungRetention.variables["mcc_cleared_lung_dose_fraction"] = mccClearedLungDoseFractionVar
 
         # Samples
@@ -251,6 +267,8 @@ class ProtPKPDInhSimulate(ProtPKPD):
         simulationSample.setDescriptorValue("throat_dose_nmol",depositionData['throat'])
         lungDose = depositionData['dose_nmol']-depositionData['throat']
         simulationSample.setDescriptorValue("lung_dose_nmol",lungDose)
+        simulationSample.setDescriptorValue("bronchial_dose_nmol",bronchDose)
+        simulationSample.setDescriptorValue("alveolar_dose_nmol",alvDose)
         simulationSample.setDescriptorValue("mcc_cleared_lung_dose_fraction",Abrcleared[-1]/lungDose)
         self.experimentLungRetention.samples["simulmvarNameation"] = simulationSample
 
