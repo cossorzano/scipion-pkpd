@@ -242,7 +242,7 @@ class TestInhalation6Workflow(TestWorkflow):
                  physiologyMultiplier="1 1 1 1 1 1 1 1 0.5")
         simulate(protDepoFPDA250_x2,  'FP', 'Particle size x2', 0.000014337075251, 0.008736680705496, 0.000020425178372, 0.065368750134521,
                  diameters="0.1,1.1,0.1; 1.2,24.2,0.2; 25,33,1", volMultiplier=2)
-        simulate(protDepoFPDA250_x05,  'FP', 'Particle size x2', 0.000173018319322, 0.031918987519192, 0.000056919164003, 0.402057950230398,
+        simulate(protDepoFPDA250_x05,  'FP', 'Particle size x0.5', 0.000173018319322, 0.031918987519192, 0.000056919164003, 0.402057950230398,
                  diameters="0.1,1.1,0.1; 1.2,24.2,0.2; 25,33,1", volMultiplier=0.5)
 
         # Plots
@@ -326,18 +326,6 @@ class TestInhalation6Workflow(TestWorkflow):
         plt.legend(['2-fold parameter increase', '2-fold parameter decrease'])
         plt.gca().xaxis.set_major_formatter(mtick.FuncFormatter(lambda x, _: x + baseline))
         plt.savefig('AUC0_24ratio.png')
-
-        plt.figure(figsize=(15, 9))
-        plt.title('Systemic AUC (0-24h)')
-        plt.xlabel('% of reference value')
-        plt.grid()
-        plt.yticks(pos, labels=[par[x] for x in ordering])
-        baseline = 100
-        plt.barh(pos, [x-baseline for x in (AUCincr_sys[ordering]).tolist()], color='b')
-        plt.barh(pos, [x-baseline for x in (AUCdecr_sys[ordering]).tolist()], color='r')
-        plt.legend(['2-fold parameter increase','2-fold parameter decrease'])
-        plt.gca().xaxis.set_major_formatter(mtick.FuncFormatter(lambda x, _: x + baseline))
-        plt.savefig('AUC0_24_systemic.png')
 
         plt.figure(figsize=(15, 9))
         plt.title('Systemic AUC (0-24h)')
