@@ -84,7 +84,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
                            '3. Flow between compartments (Q)\n'
                            '4. Peripheral apparent volume (Vp)\n'
                            '5. Absorption (k01)\n'
-                           '6. Fraction absorbed (F)\n'
+                           '6. Oral bioavailability (F)\n'
                       )
         form.addParam('ciliarySpeedType', params.EnumParam, choices=['Exponential', 'Fit', 'Interpolated'], default=2,
                       label='Ciliary speed', expertLevel=LEVEL_ADVANCED)
