@@ -1,0 +1,49 @@
+Dose_µg,Dosing_regimen,Drug,Population,Time_h,Conc_pg/mL,Conc_pg/L,Conc_g/L,MW_g/mol,Conc_nmol/L,Device,Reference
+1000,Single Dose,Fluticasone_Propionate,Asthma,0,0,0,0,500.57,0,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.075018157,27.61506276,27615.06276,2.76151E-08,500.57,0.055167235,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.131461736,52.44072524,52440.72524,5.24407E-08,500.57,0.104762022,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.34328905,49.09344491,49093.44491,4.90934E-08,500.57,0.098075084,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.528623489,70.85076709,70850.76709,7.08508E-08,500.57,0.141540178,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.713276646,77.82426778,77824.26778,7.78243E-08,500.57,0.155471298,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,0.980197829,70.013947,70013.947,7.00139E-08,500.57,0.139868444,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,1.976000874,78.94002789,78940.02789,7.894E-08,500.57,0.157700277,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,2.988707428,54.67224547,54672.24547,5.46722E-08,500.57,0.10921998,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,3.984124842,55.23012552,55230.12552,5.52301E-08,500.57,0.11033447,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,5.992325936,33.19386332,33193.86332,3.31939E-08,500.57,0.066312131,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Asthma,7.992171683,29.84658298,29846.58298,2.98466E-08,500.57,0.059625193,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0,0,0,0,500.57,0,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.076162197,52.44072524,52440.72524,5.24407E-08,500.57,0.104762022,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.169125067,69.73500697,69735.00697,6.9735E-08,500.57,0.139311199,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.335332189,76.42956764,76429.56764,7.64296E-08,500.57,0.152685074,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.511180096,92.32914923,92329.14923,9.23291E-08,500.57,0.184448028,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.733792235,123.0125523,123012.5523,1.23013E-07,500.57,0.245744955,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,0.982678724,123.8493724,123849.3724,1.23849E-07,500.57,0.24741669,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,1.987608378,130.8228731,130822.8731,1.30823E-07,500.57,0.26134781,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,2.991291158,110.7391911,110739.1911,1.10739E-07,500.57,0.221226184,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,3.994588306,82.28730823,82287.30823,8.22873E-08,500.57,0.164387215,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,6.003085051,66.66666667,66666.66667,6.66667E-08,500.57,0.133181506,Diskus,Harrison and Tattersfield
+1000,Single Dose,Fluticasone_Propionate,Healthy volunteer,7.984240531,57.74058577,57740.58577,5.77406E-08,500.57,0.115349673,Diskus,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.008853396,0,0,0,430.53,0,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.077084993,2089.572193,2089572.193,2.08957E-06,430.53,4.853488009,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.139686919,2274.064171,2274064.171,2.27406E-06,430.53,5.282010943,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.334058672,2049.465241,2049465.241,2.04947E-06,430.53,4.76033085,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.502000607,1881.016043,1881016.043,1.88102E-06,430.53,4.36907078,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.723276254,1760.695187,1760695.187,1.7607E-06,430.53,4.089599301,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,0.980190674,1700.534759,1700534.759,1.70053E-06,430.53,3.949863562,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,1.989643778,1299.465241,1299465.241,1.29947E-06,430.53,3.018291967,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,2.990539785,1002.673797,1002673.797,1.00267E-06,430.53,2.328928987,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,3.991495051,725.9358289,725935.8289,7.25936E-07,430.53,1.686144587,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,6.003088615,449.197861,449197.861,4.49198E-07,430.53,1.043360186,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Asthma,7.997473167,348.9304813,348930.4813,3.4893E-07,430.53,0.810467287,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,-2.37039E-05,-4.010695187,-4010.695187,-4.0107E-09,430.53,-0.009315716,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.086898396,2410.427807,2410427.807,2.41043E-06,430.53,5.598745285,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.157417416,2274.064171,2274064.171,2.27406E-06,430.53,5.282010943,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.33508979,2398.395722,2398395.722,2.3984E-06,430.53,5.570798137,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.510854003,1877.005348,1877005.348,1.87701E-06,430.53,4.359755064,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.722802177,1600.26738,1600267.38,1.60027E-06,430.53,3.716970663,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,0.979586225,1495.989305,1495989.305,1.49599E-06,430.53,3.474762049,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,1.980280749,1131.016043,1131016.043,1.13102E-06,430.53,2.627031897,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,2.998859844,818.1818182,818181.8182,8.18182E-07,430.53,1.900406053,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,4.009024064,657.7540107,657754.0107,6.57754E-07,430.53,1.527777415,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,6.002697501,316.8449198,316844.9198,3.16845E-07,430.53,0.73594156,Turbohaler,Harrison and Tattersfield
+1200,Single Dose,Budesonide,Healthy volunteer,7.979470076,256.684492,256684.492,2.56684E-07,430.53,0.596205821,Turbohaler,Harrison and Tattersfield

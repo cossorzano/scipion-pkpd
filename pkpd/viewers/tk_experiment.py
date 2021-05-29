@@ -393,6 +393,8 @@ class ExperimentWindow(gui.Window):
             varFrame.grid(row=0, column=col, sticky='new')
             label = tk.Label(varFrame, text=text, font=self.fontBold)
             label.grid(row=0, column=0, padx=5, pady=2, sticky='nw')
+            if len(choices)==0:
+                choices=['']
             combo = ComboBox(varFrame, choices, width=10)
             combo.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
             radioVar = tk.IntVar()

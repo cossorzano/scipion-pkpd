@@ -50,7 +50,6 @@ from .utils import (writeMD5, verifyMD5, excelWriteRow, excelFillCells,
 from .biopharmaceutics import (PKPDDose, PKPDVia, DrugSource, createDeltaDose,
                                createVia)
 
-
 class PKPDVariable:
     TYPE_NUMERIC = 1000
     TYPE_TEXT = 1001
@@ -508,6 +507,8 @@ class PKPDSample:
             return None
 
     def setDescriptorValue(self, descriptorName, descriptorValue):
+        if self.descriptors is None:
+            self.descriptors = {}
         self.descriptors[descriptorName] = descriptorValue
 
 
@@ -928,6 +929,12 @@ class PKPDExperiment(EMObject):
             if self.variables[varName].isMeasurement():
                 retval.append(varName)
         return retval
+
+    def getFirstSample(self):
+        if len(self.samples)==0:
+            return None
+        else:
+            return self.samples[next(iter(self.samples))]
 
     def subset(self,listOfSampleNames):
         newExperiment = PKPDExperiment()
@@ -2691,3 +2698,21 @@ class PKPDDataSet:
             print(">>>> %s" % command)
             os.system(command)
         return cls._datasetDict[name]
+
+# Inhalation ========================================================================
+from .inhalation import PKSubstanceLungParameters as PKSubstanceLungParameters2
+from .inhalation import PKDepositionParameters as PKDepositionParameters2
+from .inhalation import PKPhysiologyLungParameters as PKPhysiologyLungParameters2
+from .inhalation import PKLung as PKLung2
+
+class PKSubstanceLungParameters(PKSubstanceLungParameters2):
+    pass
+
+class PKPhysiologyLungParameters(PKPhysiologyLungParameters2):
+    pass
+
+class PKDepositionParameters(PKDepositionParameters2):
+    pass
+
+class PKLung(PKLung2):
+    pass
