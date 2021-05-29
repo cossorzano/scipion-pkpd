@@ -142,17 +142,27 @@ class ProtPKPDInhSimulate(ProtPKPD):
         alvDose = np.sum(depositionData['alveolar'])
         bronchDose = np.sum(depositionData['bronchial'])
         lungDose = alvDose + bronchDose
+        Aalvsolid = sol['A']['alv']['solid']
+        Aalvfluid = sol['A']['alv']['fluid']
+        Aalvtissue = sol['A']['alv']['tissue']
         AsysGut = sol['A']['sys']['gut']
+        AsysPer = sol['A']['sys']['per']
+        AsysCtr = sol['A']['sys']['ctr']
         Atisbr = sol['A']['br']['tissue']
+        Abrtissue = Atisbr
         Vtisbr = lungParams.getBronchial()['fVol'] * lungParams.getSystemic()['OWlung']
         Cavgbr = Atisbr / Vtisbr;
         Abrcleared = sol['A']['br']['clear']
         Abrcleared = np.reshape(Abrcleared,Abrcleared.size)
+        Abrsolid = sol['A']['br']['solid']
+        Abrfluid = sol['A']['br']['fluid']
         Acleared = sol['A']['sys']['clear'] + AsysGut - AsysGut[0]
         lungRetention = 100*(lungDose - Acleared)/lungDose;  # in percent of lung dose
 
         Csysnmol = sol['C']['sys']['ctr']
         Csys = Csysnmol * substanceParams.getData()['MW']
+
+        CsysPer = AsysPer * substanceParams.getData()['MW'] / pkLungParams.pkData['Vp']
 
         # Create output
         self.experimentLungRetention = PKPDExperiment()
@@ -185,6 +195,48 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Cvar.units = createUnit("g/mL")
         Cvar.comment = "Central compartment concentration"
 
+        alvTissueVar = PKPDVariable()
+        alvTissueVar.varName = "alvTissue"
+        alvTissueVar.varType = PKPDVariable.TYPE_NUMERIC
+        alvTissueVar.role = PKPDVariable.ROLE_MEASUREMENT
+        alvTissueVar.units = createUnit("nmol")
+        alvTissueVar.comment = "Amount in alveoli"
+
+        alvSolidVar = PKPDVariable()
+        alvSolidVar.varName = "alvSolid"
+        alvSolidVar.varType = PKPDVariable.TYPE_NUMERIC
+        alvSolidVar.role = PKPDVariable.ROLE_MEASUREMENT
+        alvSolidVar.units = createUnit("nmol")
+        alvSolidVar.comment = "Amount undissolved in alveoli"
+
+        alvFluidVar = PKPDVariable()
+        alvFluidVar.varName = "alvFluid"
+        alvFluidVar.varType = PKPDVariable.TYPE_NUMERIC
+        alvFluidVar.role = PKPDVariable.ROLE_MEASUREMENT
+        alvFluidVar.units = createUnit("nmol")
+        alvFluidVar.comment = "Amount in alveolar lining fluid"
+
+        brTissueVar = PKPDVariable()
+        brTissueVar.varName = "brTissue"
+        brTissueVar.varType = PKPDVariable.TYPE_NUMERIC
+        brTissueVar.role = PKPDVariable.ROLE_MEASUREMENT
+        brTissueVar.units = createUnit("nmol")
+        brTissueVar.comment = "Amount in bronchii"
+
+        brSolidVar = PKPDVariable()
+        brSolidVar.varName = "brSolid"
+        brSolidVar.varType = PKPDVariable.TYPE_NUMERIC
+        brSolidVar.role = PKPDVariable.ROLE_MEASUREMENT
+        brSolidVar.units = createUnit("nmol")
+        brSolidVar.comment = "Amount undissolved in bronchii"
+
+        brFluidVar = PKPDVariable()
+        brFluidVar.varName = "brFluid"
+        brFluidVar.varType = PKPDVariable.TYPE_NUMERIC
+        brFluidVar.role = PKPDVariable.ROLE_MEASUREMENT
+        brFluidVar.units = createUnit("nmol")
+        brFluidVar.comment = "Amount in bronchial lining fluid"
+
         brClvar = PKPDVariable()
         brClvar.varName = "brClear"
         brClvar.varType = PKPDVariable.TYPE_NUMERIC
@@ -198,6 +250,34 @@ class ProtPKPDInhSimulate(ProtPKPD):
         brCTisvar.role = PKPDVariable.ROLE_MEASUREMENT
         brCTisvar.units = createUnit("nmol/mL")
         brCTisvar.comment = "Concentration in bronchial tissue"
+
+        sysGutVar = PKPDVariable()
+        sysGutVar.varName = "sysAbsorption"
+        sysGutVar.varType = PKPDVariable.TYPE_NUMERIC
+        sysGutVar.role = PKPDVariable.ROLE_MEASUREMENT
+        sysGutVar.units = createUnit("nmol")
+        sysGutVar.comment = "Amount in absorption compartment"
+
+        sysCtrVar = PKPDVariable()
+        sysCtrVar.varName = "sysCentral"
+        sysCtrVar.varType = PKPDVariable.TYPE_NUMERIC
+        sysCtrVar.role = PKPDVariable.ROLE_MEASUREMENT
+        sysCtrVar.units = createUnit("nmol")
+        sysCtrVar.comment = "Amount in central compartment"
+
+        sysPerVar = PKPDVariable()
+        sysPerVar.varName = "sysPeripheral"
+        sysPerVar.varType = PKPDVariable.TYPE_NUMERIC
+        sysPerVar.role = PKPDVariable.ROLE_MEASUREMENT
+        sysPerVar.units = createUnit("nmol")
+        sysPerVar.comment = "Amount in peripheral compartment"
+
+        CsysPerVar = PKPDVariable()
+        CsysPerVar.varName = "Cp"
+        CsysPerVar.varType = PKPDVariable.TYPE_NUMERIC
+        CsysPerVar.role = PKPDVariable.ROLE_MEASUREMENT
+        CsysPerVar.units = createUnit("g/mL")
+        CsysPerVar.comment = "Concentration in peripheral compartment"
 
         doseNmolVar = PKPDVariable()
         doseNmolVar.varName = "dose_nmol"
@@ -245,8 +325,18 @@ class ProtPKPDInhSimulate(ProtPKPD):
         self.experimentLungRetention.variables["Retention"] = Rvar
         self.experimentLungRetention.variables["Cnmol"] = Cnmolvar
         self.experimentLungRetention.variables["C"] = Cvar
+        self.experimentLungRetention.variables["alvTissue"] = alvTissueVar
+        self.experimentLungRetention.variables["alvFluid"] = alvFluidVar
+        self.experimentLungRetention.variables["alvSolid"] = alvSolidVar
+        self.experimentLungRetention.variables["brTissue"] = brTissueVar
+        self.experimentLungRetention.variables["brFluid"] = brFluidVar
+        self.experimentLungRetention.variables["brSolid"] = brSolidVar
         self.experimentLungRetention.variables["brClear"] = brClvar
         self.experimentLungRetention.variables["CbrTis"] = brCTisvar
+        self.experimentLungRetention.variables["sysCentral"] = sysCtrVar
+        self.experimentLungRetention.variables["sysAbsoprtion"] = sysGutVar
+        self.experimentLungRetention.variables["sysPeripheral"] = sysPerVar
+        self.experimentLungRetention.variables["Cp"] = CsysPerVar
         self.experimentLungRetention.variables["dose_nmol"] = doseNmolVar
         self.experimentLungRetention.variables["throat_dose_nmol"] = doseThroatVar
         self.experimentLungRetention.variables["lung_dose_nmol"] = doseLungVar
@@ -261,8 +351,18 @@ class ProtPKPDInhSimulate(ProtPKPD):
         simulationSample.addMeasurementColumn("Retention", lungRetention)
         simulationSample.addMeasurementColumn("Cnmol", Csysnmol)
         simulationSample.addMeasurementColumn("C", Csys)
+        simulationSample.addMeasurementColumn("alvFluid", Aalvfluid)
+        simulationSample.addMeasurementColumn("alvTissue", Aalvtissue)
+        simulationSample.addMeasurementColumn("alvSolid", Aalvsolid)
+        simulationSample.addMeasurementColumn("brFluid", Abrfluid)
+        simulationSample.addMeasurementColumn("brTissue", Abrtissue)
+        simulationSample.addMeasurementColumn("brSolid", Abrsolid)
         simulationSample.addMeasurementColumn("brClear", Abrcleared)
         simulationSample.addMeasurementColumn("CbrTis", Cavgbr)
+        simulationSample.addMeasurementColumn("sysAbsorption", AsysGut)
+        simulationSample.addMeasurementColumn("sysCentral", AsysCtr)
+        simulationSample.addMeasurementColumn("sysPeripheral", AsysPer)
+        simulationSample.addMeasurementColumn("Cp", CsysPer)
         simulationSample.setDescriptorValue("dose_nmol",depositionData['dose_nmol'])
         simulationSample.setDescriptorValue("throat_dose_nmol",depositionData['throat'])
         lungDose = depositionData['dose_nmol']-depositionData['throat']
@@ -287,7 +387,7 @@ class ProtPKPDInhSimulate(ProtPKPD):
         Cs = substanceParams.getData()['Cs_br'];
 
         plt.figure(figsize=(15, 9))
-        plt.title('Bronchial concentration (Cs=%f [uM])'%Cs)
+        plt.title('Concentration in bronchial fluid (Cs=%f [uM])'%Cs)
         plt.imshow(Cflu, interpolation='bilinear', aspect='auto', extent=[np.min(Xctr),np.max(Xctr),T,0])
         plt.clim(0,Cs)
         plt.xlim(np.min(Xctr),np.max(Xctr))
@@ -295,7 +395,18 @@ class ProtPKPDInhSimulate(ProtPKPD):
         plt.colorbar()
         plt.ylabel('Time [h]')
         plt.xlabel('Distance from throat [cm]')
-        plt.savefig(self._getPath('concentrationBronchial.png'))
+        plt.savefig(self._getPath('concentrationBronchialFluid.png'))
+
+        Ctis = sol['C']['br']['fluid'];
+        plt.figure(figsize=(15, 9))
+        plt.title('Concentration in bronchial tissue')
+        plt.imshow(Ctis, interpolation='bilinear', aspect='auto', extent=[np.min(Xctr),np.max(Xctr),T,0])
+        plt.xlim(np.min(Xctr),np.max(Xctr))
+        plt.ylim(0,T)
+        plt.colorbar()
+        plt.ylabel('Time [h]')
+        plt.xlabel('Distance from throat [cm]')
+        plt.savefig(self._getPath('concentrationBronchialTissue.png'))
 
     def createOutputStep(self):
         self._defineOutputs(outputExperiment=self.experimentLungRetention)
