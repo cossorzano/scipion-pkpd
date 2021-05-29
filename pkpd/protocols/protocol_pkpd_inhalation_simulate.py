@@ -274,6 +274,29 @@ class ProtPKPDInhSimulate(ProtPKPD):
 
         self.experimentLungRetention.write(self._getPath("experiment.pkpd"))
 
+        # Plots
+        import matplotlib.pyplot as plt
+        lungData = lungParams.getBronchial()
+        Xbnd = np.sort([0] + lungData['end_cm'].tolist() + lungData['pos'].tolist())
+        Xctr = Xbnd[:-1] + np.diff(Xbnd) / 2
+
+        tvec = tt / 60;
+        T = np.max(tvec);
+
+        Cflu = sol['C']['br']['fluid'];
+        Cs = substanceParams.getData()['Cs_br'];
+
+        plt.figure(figsize=(15, 9))
+        plt.title('Bronchial concentration (Cs=%f [uM])'%Cs)
+        plt.imshow(Cflu, interpolation='bilinear', aspect='auto', extent=[np.min(Xctr),np.max(Xctr),T,0])
+        plt.clim(0,Cs)
+        plt.xlim(np.min(Xctr),np.max(Xctr))
+        plt.ylim(0,T)
+        plt.colorbar()
+        plt.ylabel('Time [h]')
+        plt.xlabel('Distance from throat [cm]')
+        plt.savefig(self._getPath('concentrationBronchial.png'))
+
     def createOutputStep(self):
         self._defineOutputs(outputExperiment=self.experimentLungRetention)
         self._defineSourceRelation(self.ptrDeposition.get(), self.experimentLungRetention)
