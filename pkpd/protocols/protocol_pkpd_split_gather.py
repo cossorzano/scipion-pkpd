@@ -40,9 +40,11 @@ class ProtPKPDSplitGather(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('splitOrGather', EnumParam, label="Operation", choices=['Split','Gather'], default=0)
-        form.addParam('inputExperiment', PointerParam, label="Experiment to split", pointerClass='PKPDExperiment', condition='splitOrGather==0')
+        form.addParam('inputExperiment', PointerParam, label="Experiment to split", pointerClass='PKPDExperiment',
+                      allowsNull=True, condition='splitOrGather==0')
         form.addParam('groupSize', IntParam, label="Group size", default=5, condition='splitOrGather==0')
-        form.addParam('inputExperiments', MultiPointerParam, label="Experiments to gather", pointerClass='PKPDExperiment', condition='splitOrGather==1')
+        form.addParam('inputExperiments', MultiPointerParam, label="Experiments to gather", pointerClass='PKPDExperiment',
+                      allowsNull=True, condition='splitOrGather==1')
 
     #--------------------------- INSERT steps functions --------------------------------------------
 
