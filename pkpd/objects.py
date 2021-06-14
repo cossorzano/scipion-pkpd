@@ -1013,6 +1013,10 @@ class PKPDModelBase(object):
         if experiment!=None:
             self.fnExperiment = experiment.fnPKPD
 
+    def unsetExperiment(self):
+        self.experiment = None
+        self.fnExperiment = None
+
     def setXVar(self, x):
         if not x in self.experiment.variables:
             raise Exception("Cannot find %s as a variable in the experiment"%x)

@@ -544,6 +544,7 @@ class PKPDODEWizard(Wizard):
                     if boundStr != "":
                         for label in labels:
                             form.setVar(label, boundStr)
+                protocol.unsetExperiment()
             # except Exception as e:
                 # pass
                 # form.showError("Error: %s" % str(e))
