@@ -444,24 +444,26 @@ class PKLung(EMObject):
 
         # Hartung2020_MATLAB/functions/get_bronchial_kinetics.m
         bronchialData = lungParams.getBronchial()
-        bronchialData['elf_cm3'] = bronchialData['elf_cm3']
-        bronchialData['voltis_cm3'] = bronchialData['voltis_cm3']
-        bronchialData['surf_cm2'] = bronchialData['surf_cm2']
-        bronchialData['fQco'] = bronchialData['fQco']
+        # Code just to show the equivalence between the .m and .py
+        # bronchialData['elf_cm3'] = bronchialData['elf_cm3']
+        # bronchialData['voltis_cm3'] = bronchialData['voltis_cm3']
+        # bronchialData['surf_cm2'] = bronchialData['surf_cm2']
+        # bronchialData['fQco'] = bronchialData['fQco']
 
         pos = bronchialData['pos']
         diam_cm = bronchialData['diam_cm']
 
         self.substanceData = substanceParams.getData()
 
-        self.substanceData['Cs_br'] = self.substanceData['Cs_br']
-        self.substanceData['Cs_alv'] = self.substanceData['Cs_alv']
-        self.substanceData['kdiss_br'] = self.substanceData['kdiss_br']
-        self.substanceData['kdiss_alv'] = self.substanceData['kdiss_alv']
-        self.substanceData['kp_br'] = self.substanceData['kp_br']
-        self.substanceData['kp_alv'] = self.substanceData['kp_alv']
-        self.substanceData['Kpl_br'] = self.substanceData['Kpl_br']
-        self.substanceData['Kpl_alv'] = self.substanceData['Kpl_alv']
+        # Code just to show the equivalence between the .m and .py
+        # self.substanceData['Cs_br'] = self.substanceData['Cs_br']
+        # self.substanceData['Cs_alv'] = self.substanceData['Cs_alv']
+        # self.substanceData['kdiss_br'] = self.substanceData['kdiss_br']
+        # self.substanceData['kdiss_alv'] = self.substanceData['kdiss_alv']
+        # self.substanceData['kp_br'] = self.substanceData['kp_br']
+        # self.substanceData['kp_alv'] = self.substanceData['kp_alv']
+        # self.substanceData['Kpl_br'] = self.substanceData['Kpl_br']
+        # self.substanceData['Kpl_alv'] = self.substanceData['Kpl_alv']
 
         kp = self.substanceData['kp_br']
         ka = math.pi * kp * diam_cm
