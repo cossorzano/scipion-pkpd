@@ -52,7 +52,7 @@ class ProtPKPDODESimulate2(ProtPKPDODEBase):
         form.addSection('Input')
         form.addParam('inputODEs', params.MultiPointerParam, label="Input ODE models",
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDMonoCompartmentPD, ProtPKPDTwoCompartmentsBothPD, '\
-                                   'ProtPKPDODERefine,  ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
+                                   'ProtPKPDODERefine, ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
                       help='Select a run of an ODE model')
         form.addParam('doses', params.TextParam, label="Doses", height=5, width=50,
                       default="",
