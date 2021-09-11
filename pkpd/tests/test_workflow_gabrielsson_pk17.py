@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK17Workflow(TestWorkflow):
@@ -45,7 +43,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
     def testGabrielssonPK17Workflow(self):
         # Import an experiment (intravenous)
 
-        print "Import Experiment (intravenous doses)"
+        print("Import Experiment (intravenous doses)")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -54,7 +52,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a mono-compartment model with intravenous absorption to a set of measurements
-        print "Fitting a mono-compartment model ..."
+        print("Fitting a mono-compartment model ...")
         protPKPDPMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                      objLabel='pkpd - iv mono-compartment',
                                                      globalSearch=False,fitType=0,
@@ -75,7 +73,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.8)
 
         # Fit a mono-compartment model with intravenous absorption to a set of measurements
-        print "Fitting a mono-compartment model intrinsic ..."
+        print("Fitting a mono-compartment model intrinsic ...")
         protPKPDPMonoCompartment = self.newProtocol(ProtPKPDMonoCompartmentClint,
                                                      objLabel='pkpd - iv mono-compartment intrinsic',
                                                      globalSearch=False,fitType=0,
@@ -98,7 +96,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].R2>0.8)
 
         # This example is simulated data_test and it serves to verify that infusions are correctly simulated
-        print "Import Experiment 2 (intravenous doses)"
+        print("Import Experiment 2 (intravenous doses)")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment simulated',
                                       inputFile=self.exptFn2)
@@ -107,7 +105,7 @@ class TestGabrielssonPK17Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # Fit a mono-compartment model with intravenous absorption to a set of measurements
-        print "Fitting a mono-compartment model ..."
+        print("Fitting a mono-compartment model ...")
         protPKPDPMonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                      objLabel='pkpd - iv mono-compartment',
                                                      globalSearch=False,fitType=0,

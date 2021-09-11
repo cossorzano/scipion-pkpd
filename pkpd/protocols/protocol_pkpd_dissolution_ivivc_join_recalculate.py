@@ -24,8 +24,10 @@
 # *
 # **************************************************************************
 
-import copy
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 import sys
 from scipy.interpolate import InterpolatedUnivariateSpline
@@ -440,3 +442,9 @@ class ProtPKPDDissolutionIVIVCJoinRecalculate(ProtPKPDDissolutionIVIVCSplines):
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentFabs)
             self._defineSourceRelation(ptrProt.get().inputInVitro.get(), self.outputExperimentAdissol)
             self._defineSourceRelation(ptrProt.get().inputInVivo.get(), self.outputExperimentAdissol)
+
+    def _validate(self):
+        errors = []
+        if self.timeScale.get()==0 and self.responseScale.get()==0:
+            errors.append("You have not chosen any time or response transformation, there is nothing to recalculate")
+        return errors

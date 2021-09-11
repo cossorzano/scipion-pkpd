@@ -27,14 +27,17 @@
 
 import math
 import numpy as np
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 from datetime import datetime
-import Tkinter as tk
+import tkinter as tk
 
 import pyworkflow.gui.dialog as dialog
 import pyworkflow.gui as gui
 from pyworkflow.gui.tree import TreeProvider, BoundTree
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 from pkpd.pkpd_units import strUnit
 
 
@@ -184,7 +187,7 @@ class PKPDResponsiveDialog(dialog.Dialog):
         i = 0
         self.sliders = {}
         paramUnits = self.targetProtocol.parameterUnits
-        for paramName, bounds in self.targetProtocol.getParameterBounds().iteritems():
+        for paramName, bounds in self.targetProtocol.getParameterBounds().items():
             bounds = bounds or (0, 1)
             slider = MinMaxSlider(lfBounds, "%s [%s]"%(paramName,strUnit(paramUnits[i])),
                                   bounds[0], bounds[1],

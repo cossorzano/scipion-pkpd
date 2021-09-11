@@ -25,12 +25,10 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 
 class TestGabrielssonPK12Workflow(TestWorkflow):
@@ -43,7 +41,7 @@ class TestGabrielssonPK12Workflow(TestWorkflow):
 
     def testGabrielssonPK12Workflow(self):
         # Import an experiment
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -52,7 +50,7 @@ class TestGabrielssonPK12Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)
 
         # # Change the concentration to mg/L
-        print "Change Units"
+        print("Change Units")
         protChangeConcUnit = self.newProtocol(ProtPKPDChangeUnits,
                                               objLabel='pkpd - change units (Cp to mg/L)',
                                               labelToChange='Cp', newUnitsCategory=4, newUnitsCategoryConc=1)
@@ -62,7 +60,7 @@ class TestGabrielssonPK12Workflow(TestWorkflow):
         self.validateFiles('protChangeUnits', protChangeConcUnit)
 
         # Fit a two-compartment model with oral absorption to a set of measurements
-        print "Fitting a two-compartment model ..."
+        print("Fitting a two-compartment model ...")
         protPKPDPOTwoCompartments = self.newProtocol(ProtPKPDTwoCompartments,
                                                      objLabel='pkpd - ev1 two-compartments',
                                                      globalSearch=True,

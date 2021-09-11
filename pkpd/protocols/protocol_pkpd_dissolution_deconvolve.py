@@ -47,8 +47,8 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputODE', params.PointerParam, label="Input ODE model",
-                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments,ProtPKPDODERefine, '\
-                                   'ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
+                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments,ProtPKPDODERefine,'\
+                                   ' ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
                       help='Select a run of an ODE model')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
@@ -110,7 +110,7 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
         timeRange = self.experiment.getRange(self.varNameX)
         deltaT = 0.5
         t = np.arange(0.0,timeRange[1],deltaT)
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             self.printSection("Deconvolving "+sampleName)
             sample.interpretDose()
             drugSource = DrugSource()

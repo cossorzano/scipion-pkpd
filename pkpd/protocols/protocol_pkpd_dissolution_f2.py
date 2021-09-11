@@ -89,7 +89,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
     def getProfiles(self,prmExp,varNameT,varNameC):
         experiment = self.readExperiment(prmExp.fnPKPD)
         allY = []
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             x=np.asarray(sample.getValues(varNameT),dtype=np.float64)
             y=np.asarray(sample.getValues(varNameC),dtype=np.float64)
             if self.resampleT.get()>0:
@@ -249,7 +249,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                         allF2b.append(f2)
                         self.b = self.b + 1
         elif self.bootstrapBy.get() == ProtPKPDDissolutionF2.BYVECTOR:
-            for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
+            for n in list(range(self.Nbootstrap.get()))*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePointAvg(profilesRef)
                 profileTestB = self.bootstrapByTimePointAvg(profilesTest)
                 f1, f2 = self.calculateF(profileRefB, profileTestB, True)
@@ -257,7 +257,7 @@ class ProtPKPDDissolutionF2(ProtPKPD):
                 allF2b.append(f2)
                 self.b = self.b + 1
         else:
-            for n in range(self.Nbootstrap.get())*len(profilesRef)*len(profilesTest):
+            for n in list(range(self.Nbootstrap.get()))*len(profilesRef)*len(profilesTest):
                 profileRefB = self.bootstrapByTimePoint(profilesRef)
                 profileTestB = self.bootstrapByTimePoint(profilesTest)
                 f1, f2 = self.calculateF(profileRefB, profileTestB, True)

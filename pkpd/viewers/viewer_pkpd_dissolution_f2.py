@@ -27,7 +27,7 @@
 from numpy import genfromtxt, isnan
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 
 from pkpd.protocols import ProtPKPDDissolutionF2
 

@@ -1,0 +1,27 @@
+Substance:       Gold
+Individual:      healthy
+Inhaler:         custom setup
+Total dose [ug]: 1
+Diameter [um]:   aerodynamic
+Inhalation characteristics: see Smith (2008)
+
+Diam	Generation	FractionDeposited 
+5	1	0.0327
+5	2	0.0239
+5	3	0.0148
+5	4	0.0132
+5	5	0.018
+5	6	0.0266
+5	7	0.03
+5	8	0.0331
+5	9	0.0419
+5	10	0.0525
+5	11	0.0677
+5	12	0.0588
+5	13	0.0458
+5	14	0.0345
+5	15	0.0177
+5	16	0.0156
+5	17	0.00637
+5	18	0.000322
+

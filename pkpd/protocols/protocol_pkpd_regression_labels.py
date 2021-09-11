@@ -199,7 +199,7 @@ class ProtPKPDRegressionLabel(ProtPKPD):
         Y = []
         labelX = self.labelX.get()
         labelY = self.labelY.get()
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             X.append(float(sample.descriptors[labelX]))
             Y.append(float(sample.descriptors[labelY]))
         X = np.asarray(X, np.double)

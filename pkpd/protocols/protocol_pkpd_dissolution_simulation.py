@@ -24,13 +24,11 @@
 # *
 # **************************************************************************
 
-import numpy as np
 import random
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDSample, PKPDVariable, PKPDFitting
-from pkpd.utils import uniqueFloatValues
 from .protocol_pkpd import ProtPKPD
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pkpd.models.dissolution_models import *
@@ -103,7 +101,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
         else:
             experiment = self.readExperiment(self.inputLevy.get().fnPKPD, show=False)
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             if self.conversionType.get() == 0:
                 vivo = sample.getValues("tvivo")
                 vitro = sample.getValues("tvitroReinterpolated")
@@ -322,7 +320,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             if sampleFitVivo.sampleName in self.allTimeScalings:
                 keyToUse = sampleFitVivo.sampleName
             elif len(self.allTimeScalings)==1:
-                keyToUse = self.allTimeScalings.keys()[0]
+                keyToUse = list(self.allTimeScalings.keys())[0]
             else:
                 raise Exception("Cannot find %s in the scaling keys"%sampleFitVivo.sampleName)
             nfit = int(random.uniform(0, len(self.allTimeScalings[keyToUse])))

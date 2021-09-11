@@ -27,14 +27,14 @@
 
 import numpy as np
 from collections import OrderedDict
-import Tkinter as tk
+import tkinter as tk
 
 import pyworkflow.object as pwobj
 import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import HotButton
 from pyworkflow.gui.tree import TreeProvider, BoundTree
 from pyworkflow.gui.text import TaggedText
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 
 from pkpd.pkpd_units import PKPDUnit
 
@@ -42,7 +42,7 @@ from pkpd.pkpd_units import PKPDUnit
 class PopulationVar(pwobj.Object):
     def __init__(self, **kwargs):
         self.data = kwargs
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 

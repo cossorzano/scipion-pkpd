@@ -24,11 +24,14 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
-from pkpd.objects import (PKPDExperiment, PKPDSampleSignalAnalysis,
+from pkpd.objects import (PKPDSampleSignalAnalysis,
                           PKPDSignalAnalysis)
 from pkpd.pkpd_units import PKPDUnit
 
@@ -94,7 +97,7 @@ class ProtPKPDSABase(ProtPKPD):
         self.signalAnalysis.analysisParameters = self.analysis.getParameterNames()
 
         self.printSection("Processing samples")
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             print("%s -------------------"%sampleName)
             if not self.prepareForSampleAnalysis(sampleName):
                 continue

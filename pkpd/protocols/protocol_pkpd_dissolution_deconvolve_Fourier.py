@@ -132,7 +132,7 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
         # Create unit dose
         drugSource = DrugSource()
         dose=None
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             sample.interpretDose()
             if len(sample.parsedDoseList)>0:
                 dose = createDeltaDose(1.0, via=createVia("Intravenous; iv", self.experiment),
@@ -144,7 +144,7 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
         model.drugSource = drugSource
 
         # Simulate the different responses
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             self.printSection("Deconvolving "+sampleName)
             drugSourceSample = DrugSource()
             drugSourceSample.setDoses(sample.parsedDoseList, 0.0, timeRange[1])

@@ -27,9 +27,14 @@
 
 import math
 import numpy as np
-from itertools import izip
-import Tkinter as tk
-import ttk
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
+
+import tkinter as tk
+import tkinter.ttk as ttk
+
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.object as pwobj
@@ -38,7 +43,7 @@ import pyworkflow.gui as gui
 from pyworkflow.gui.widgets import Button, HotButton, ComboBox
 from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui.tree import TreeProvider, BoundTree
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 
 
 class VariablesTreeProvider(TreeProvider):
@@ -147,7 +152,7 @@ class SamplesTreeProvider(TreeProvider):
 
         numberOfSamples = len(experiment.samples)
         if numberOfSamples > 0:
-            sample = self.experiment.samples.values()[0]
+            sample = list(self.experiment.samples.values())[0]
             if sample.descriptors:
                 self.columns = [(key, 60)
                                 for key in sorted(sample.descriptors.keys())]
@@ -388,6 +393,8 @@ class ExperimentWindow(gui.Window):
             varFrame.grid(row=0, column=col, sticky='new')
             label = tk.Label(varFrame, text=text, font=self.fontBold)
             label.grid(row=0, column=0, padx=5, pady=2, sticky='nw')
+            if len(choices)==0:
+                choices=['']
             combo = ComboBox(varFrame, choices, width=10)
             combo.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
             radioVar = tk.IntVar()
@@ -556,7 +563,7 @@ class ExperimentWindow(gui.Window):
                     self.plotDict[s.sampleName] = True
             leg = ax.legend()
             if leg:
-                leg.draggable()
+                leg.set_draggable(True)
 
             if doShow:
                 self.plotter.show()
@@ -575,7 +582,7 @@ class ExperimentWindow(gui.Window):
             if n > 1:
                 samples = [self.experiment.samples[k] for k in sampleKeys]
             else:
-                samples = self.experiment.samples.values()
+                samples = list(self.experiment.samples.values())
 
             xmin=1e38
             xmax=-1e38
@@ -673,7 +680,7 @@ class ExperimentWindow(gui.Window):
                 ax.plot(np.asarray(xValues)[idx], np.asarray(ypValues)[idx], 'g', label="Fit")
                 leg = ax.legend()
                 if leg:
-                    leg.draggable()
+                    leg.set_draggable(True)
 
                 plotter.show()
 

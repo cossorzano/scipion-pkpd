@@ -24,7 +24,10 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDFitting, PKPDSampleFit, PKPDLSOptimizer
@@ -143,7 +146,7 @@ class ProtPKPDODERefine(ProtPKPDODEBase):
             fitType = "relative"
 
         parameterNames = None
-        for groupName, group in self.experiment.groups.iteritems():
+        for groupName, group in self.experiment.groups.items():
             self.printSection("Fitting "+groupName)
             self.protODE.clearGroupParameters()
             self.clearGroupParameters()

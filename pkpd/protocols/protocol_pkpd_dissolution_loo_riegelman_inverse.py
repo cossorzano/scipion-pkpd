@@ -171,7 +171,7 @@ class ProtPKPDDeconvolutionLooRiegelmanInverse(ProtPKPD):
         self.outputExperiment = None
 
         timeRange = self.experiment.getRange(self.timeVar.get())
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             # Get t, A
             t=np.asarray(sample.getValues(self.timeVar.get()),dtype=np.float64)
             A=np.asarray(sample.getValues(self.amountVar.get()),dtype=np.float64)

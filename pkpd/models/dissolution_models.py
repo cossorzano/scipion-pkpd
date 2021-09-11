@@ -33,7 +33,7 @@ import numpy as np
 from pkpd.objects import PKPDModel
 from pkpd.pkpd_units import inverseUnits, divideUnits, PKPDUnit
 from pkpd.utils import uniqueFloatValues
-from scipy.interpolate import InterpolatedUnivariateSpline, PchipInterpolator
+from scipy.interpolate import PchipInterpolator
 
 # Tested by test_workflow_dissolution
 

@@ -25,7 +25,10 @@
 # **************************************************************************
 
 import numpy as np
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -73,7 +76,7 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
         experiment = self.readExperiment(fnPKPD)
         allY = []
         sampleNames = []
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             t=sample.getValues("t")
             y=sample.getValues("A")
             allY.append((np.asarray(t,dtype=np.float64),np.asarray(y,dtype=np.float64)))
@@ -99,8 +102,9 @@ class ProtPKPDDissolutionLevyPlot(ProtPKPD):
 
         parameterNames = self.protFit.model.getParameterNames()
         vesselNames=[]
-        tvitroMax = []
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
+            tvitroMax = []
+        for sampleName, sample in experiment.samples.items():
             vesselNames.append(sampleName)
             parameters0 = []
             for parameterName in parameterNames:

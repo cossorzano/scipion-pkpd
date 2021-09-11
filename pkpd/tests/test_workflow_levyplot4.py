@@ -30,7 +30,7 @@ import os
 from pyworkflow.tests import *
 from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 
 class TestLevyPlotWorkflow4(TestWorkflow):
 

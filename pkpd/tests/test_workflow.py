@@ -19,9 +19,9 @@ class TestWorkflow(BaseTest):
         self.assertEqual(prot.getFiles(), filesSet)
         
     def printSet(self, msg, s):
-        print "============= %s ==========" % msg
+        print("============= %s ==========" % msg)
         for i in s:
-            print i
+            print(i)
             
     def getProtocolFiles(self, key):
         fileList = self.GOLD_FILES[key]
@@ -33,7 +33,7 @@ class TestWorkflow(BaseTest):
         """ Convert list to set and replace the key
         in the filename by the protocol working dir. 
         """
-        for k, v in self.protDict.iteritems():
+        for k, v in self.protDict.items():
             if filename.startswith(k):
                 return filename.replace(k, v.getWorkingDir())
         return filename

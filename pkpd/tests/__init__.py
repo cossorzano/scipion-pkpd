@@ -195,3 +195,14 @@ PKPDDataSet(name='model',  folder='model',
                'modelGoldSqlite': 'gold/model_gold.sqlite',
                'modelGoldXml': 'gold/model_gold.xml',
         })
+
+PKPDDataSet(name='Inhalation', folder='Inhalation',
+        files={
+               'deposition1': 'deposition1.txt',
+               'deposition2': 'deposition2.txt',
+               'SmithPSLGold6': 'Smith2008_PSL_Gold_6Subjects.csv',
+               'SmithPSLGold6_prm': 'Smith2008_fittedModelParameters.csv',
+               'FP_chamber_asthmatic_1.5um_50ug': 'FP_chamber_asthmatic_1,5um_50ug.txt',
+               'FP_chamber_asthmatic_3.0um_50ug': 'FP_chamber_asthmatic_3,0um_50ug.txt',
+               'FP_chamber_asthmatic_6.0um_50ug': 'FP_chamber_asthmatic_6,0um_50ug.txt'
+               })

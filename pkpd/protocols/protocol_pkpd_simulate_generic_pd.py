@@ -184,7 +184,7 @@ class ProtPKPDSimulateGenericPD(ProtPKPD):
         newVariable.units = PKPDUnit(self.predictedUnit.get())
         self.experiment.variables[newVariable.varName] = newVariable
 
-        for sampleName, sample in self.experiment.samples.iteritems():
+        for sampleName, sample in self.experiment.samples.items():
             model.x = np.array(sample.getValues(self.predictor.get()),dtype=np.float)
             y = model.forwardModel(model.parameters,model.x)
             y = self.addNoise(y)

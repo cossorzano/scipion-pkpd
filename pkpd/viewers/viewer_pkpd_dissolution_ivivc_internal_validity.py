@@ -24,12 +24,15 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
-from pyworkflow.em.viewers.plotter import EmPlotter
+from pwem.viewers.plotter import EmPlotter
 from pkpd.objects import PKPDExperiment
 from pkpd.utils import uniqueFloatValues
 
@@ -51,14 +54,14 @@ class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
 
         xmin = 1e38
         xmax = -1e38
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             xValues, _ = self.getPlotValues(sample)
             xmin = min(xmin, min(xValues))
             xmax = max(xmax, max(xValues))
 
         dataDict = {}  # key will be time values
         xrange = np.arange(xmin, xmax, (xmax - xmin) / 300.0)
-        for sampleName, sample in experiment.samples.iteritems():
+        for sampleName, sample in experiment.samples.items():
             xValues, yValues = self.getPlotValues(sample)
             xValuesUnique, yValuesUnique = uniqueFloatValues(xValues, yValues)
             B = InterpolatedUnivariateSpline(xValuesUnique, yValuesUnique, k=1)

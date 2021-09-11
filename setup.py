@@ -11,10 +11,16 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+from pkpd import __version__
+
 here = path.abspath(path.dirname(__file__))
 
+# Load requirements.txt
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
@@ -22,7 +28,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='scipion-pkpd',  # Required
-    version='1.0.1',  # Required
+    version=__version__,  # Required
     description='scipion-pkpd.',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/cossorzano/scipion-pkpd',  # Optional
@@ -30,8 +36,16 @@ setup(
     author_email='info@kinestat.com',  # Optional
     keywords='pkpd',  # Optional
     packages=find_packages(),
+    include_package_data=True,
     package_data={  # Optional
        'pkpd': ['protocols.conf'],
     },
-    install_requires=['scipy','openpyxl']
+    project_urls={  # Optional
+        'Bug Reports': 'https://github.com/cossorzano/scipion-pkpd/issues',
+        'Source': 'https://github.com/cossorzano/scipion-pkpd',
+    },
+    install_requires=[requirements],
+    entry_points={
+        'pyworkflow.plugin': 'pkpd = pkpd'
+    },
 )

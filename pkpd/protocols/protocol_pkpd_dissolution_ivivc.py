@@ -24,7 +24,11 @@
 # *
 # **************************************************************************
 
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
+
 from math import sqrt
 import numpy as np
 import sys

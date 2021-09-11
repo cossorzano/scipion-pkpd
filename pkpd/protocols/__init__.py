@@ -36,6 +36,7 @@ from .protocol_pkpd_bootstrap_simulate2 import ProtPKPDODESimulate2
 from .protocol_pkpd_change_units import ProtPKPDChangeUnits
 from .protocol_pkpd_change_via import ProtPKPDChangeVia
 from .protocol_pkpd_compare_experiments import ProtPKPDCompareExperiments
+from .protocol_pkpd_create_experiment import ProtPKPDCreateExperiment
 from .protocol_pkpd_create_label import ProtPKPDCreateLabel
 from .protocol_pkpd_create_label_2exps import ProtPKPDCreateLabel2Exps
 from .protocol_pkpd_cumulated_dose import ProtPKPDCumulatedDose
@@ -71,6 +72,10 @@ from .protocol_pkpd_gather_fitting import ProtPKPDGatherFitting
 from .protocol_pkpd_import_from_table import ProtPKPDImportFromTable
 from .protocol_pkpd_import_from_csv import *
 from .protocol_pkpd_import_from_winnonlin import ProtPKPDImportFromWinnonlin
+from .protocol_pkpd_inhalation_import_deposition import ProtPKPDInhImportDepositionProperties
+from .protocol_pkpd_inhalation_lung_physiology import ProtPKPDInhLungPhysiology
+from .protocol_pkpd_inhalation_simulate import ProtPKPDInhSimulate
+from .protocol_pkpd_inhalation_substance_properties import ProtPKPDInhSubstanceProperties
 from .protocol_pkpd_iv_two_compartments import ProtPKPDIVTwoCompartments
 from .protocol_pkpd_join_samples import ProtPKPDJoinSamples
 from .protocol_pkpd_merge_labels import ProtPKPDMergeLabels

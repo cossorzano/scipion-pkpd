@@ -25,11 +25,9 @@
 # **************************************************************************
 
 
-import unittest, sys
-from pyworkflow.em import *
 from pyworkflow.tests import *
 from pkpd.protocols import *
-from test_workflow import TestWorkflow
+from .test_workflow import TestWorkflow
 from pkpd.objects import PKPDDataSet
 
 
@@ -44,7 +42,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
     def testGabrielssonPK02Workflow(self):
         #First, import an experiment
 
-        print "Import Experiment"
+        print("Import Experiment")
         protImport = self.newProtocol(ProtImportExperiment,
                                       objLabel='pkpd - import experiment',
                                       inputFile=self.exptFn)
@@ -53,7 +51,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.validateFiles('protImport', protImport)      
 
         # Filter time variable
-        print "Filter time"
+        print("Filter time")
         protFilterTime = self.newProtocol(ProtPKPDFilterMeasurements,
                                                   objLabel='pkpd - filter measurements t>50',
                                                   filterType=1, condition='$(t)>50 and $(t)<=300')
@@ -63,7 +61,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.validateFiles('protFilterTime', protFilterTime)
 
         # Filter concentration variable
-        print "Filter Cp"
+        print("Filter Cp")
         protFilterCp = self.newProtocol(ProtPKPDFilterMeasurements,
                                         objLabel='pkpd - filter measurements Cp>0',
                                         filterType=0, condition='$(Cp)<=0')
@@ -73,7 +71,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.validateFiles('ProtFilterCp', protFilterCp)
 
         # Fit a single exponential to the input data_test
-        print "Fitting an exponential..."
+        print("Fitting an exponential...")
         protEliminationRate = self.newProtocol(ProtPKPDEliminationRate,
                                                objLabel='pkpd - elimination rate',
                                                predictor='t', predicted='Cp')
@@ -95,7 +93,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-11)
 
         # Estimate absorption rate
-        print "Estimation of the absorption rate..."
+        print("Estimation of the absorption rate...")
         protAbsorptionRate = self.newProtocol(ProtPKPDAbsorptionRate,
                                               objLabel='pkpd - absorption rate',
                                               bounds='(0,0.1);(10,60);(0,25)')
@@ -127,7 +125,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-17)
 
         # Fit a monocompartmental model with first order absorption
-        print "Fitting monocompartmental model..."
+        print("Fitting monocompartmental model...")
         protEV1MonoCompartment = self.newProtocol(ProtPKPDMonoCompartment,
                                                   objLabel='pkpd - ev1 monocompartment',
                                                   bounds='(0.0, 30.0); (0.0, 0.2); (0.0, 1.0); (0.0, 100.0)')
@@ -154,7 +152,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.assertTrue(fitting.sampleFits[0].AIC<-15)
 
         # Population bootstrap
-        print "Bootstrapping model..."
+        print("Bootstrapping model...")
         protBootstrap = self.newProtocol(ProtPKPDODEBootstrap,
                                          objLabel='pkpd - bootstrap')
         protBootstrap.inputODE.set(protEV1MonoCompartment)
@@ -163,7 +161,7 @@ class TestGabrielssonPK02Workflow(TestWorkflow):
         self.validateFiles('protBootstrap', protBootstrap)
 
         # Filter population
-        print "Filtering bootstrap..."
+        print("Filtering bootstrap...")
         protFilterBootstrap = self.newProtocol(ProtPKPDFilterPopulation,
                                                objLabel='pkpd - filter population',
                                                condition="$(R2)<0.95")

@@ -42,6 +42,9 @@ class PKPDUnit:
     UNIT_CONC_mmol_L= 17
     UNIT_CONC_umol_L= 18
     UNIT_CONC_nmol_L= 19
+    UNIT_CONC_mmol_mL= 20
+    UNIT_CONC_umol_mL= 21
+    UNIT_CONC_nmol_mL= 22
     UNIT_VOLUME_L=30
     UNIT_VOLUME_mL=31
     UNIT_VOLUME_uL=32
@@ -153,6 +156,9 @@ class PKPDUnit:
         UNIT_CONC_mmol_L: "mmol/L",
         UNIT_CONC_umol_L: "umol/L",
         UNIT_CONC_nmol_L: "nmol/L",
+        UNIT_CONC_mmol_mL: "mmol/mL",
+        UNIT_CONC_umol_mL: "umol/mL",
+        UNIT_CONC_nmol_mL: "nmol/mL",
         UNIT_VOLUME_L: "L",
         UNIT_VOLUME_mL: "mL",
         UNIT_VOLUME_uL: "uL",

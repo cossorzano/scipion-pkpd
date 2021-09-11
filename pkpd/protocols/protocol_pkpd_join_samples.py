@@ -25,7 +25,6 @@
 # **************************************************************************
 
 import copy
-import sys
 
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
@@ -81,47 +80,47 @@ class ProtPKPDJoinSamples(ProtPKPD):
             self.experiment.general["title"]=self.title.get()
         if self.comment!=None:
             self.experiment.general["comment"]=self.comment.get()
-        for key, value in experiment1.general.iteritems():
+        for key, value in experiment1.general.items():
             if not (key in self.experiment.general):
                 self.experiment.general[key] = copy.copy(value)
-        for key, value in experiment2.general.iteritems():
+        for key, value in experiment2.general.items():
             if not (key in self.experiment.general):
                 self.experiment.general[key] = copy.copy(value)
 
         # Variables
-        for key, value in experiment1.variables.iteritems():
+        for key, value in experiment1.variables.items():
             if not (key in self.experiment.variables):
                 self.experiment.variables[key] = copy.copy(value)
-        for key, value in experiment2.variables.iteritems():
+        for key, value in experiment2.variables.items():
             if not (key in self.experiment.variables):
                 self.experiment.variables[key] = copy.copy(value)
 
         # Doses
-        for key, value in experiment1.doses.iteritems():
+        for key, value in experiment1.doses.items():
             dose = copy.copy(value)
             dose.doseName = "%s%s"%(prefix1,key)
             self.experiment.doses[dose.doseName] = dose
-        for key, value in experiment2.doses.iteritems():
+        for key, value in experiment2.doses.items():
             dose = copy.copy(value)
             dose.doseName = "%s%s"%(prefix2,key)
             self.experiment.doses[dose.doseName] = dose
 
         # Vias
-        for key, value in experiment1.vias.iteritems():
+        for key, value in experiment1.vias.items():
             via = copy.copy(value)
             self.experiment.vias[via.viaName] = via
-        for key, value in experiment2.vias.iteritems():
+        for key, value in experiment2.vias.items():
             if key not in self.experiment.vias:
                 via = copy.copy(value)
                 self.experiment.vias[via.viaName] = via
 
         # Samples
-        for key, value in experiment1.samples.iteritems():
+        for key, value in experiment1.samples.items():
             sample = copy.copy(value)
             sample.sampleName = "%s%s"%(prefix1,key)
             sample.doseList = ["%s%s"%(prefix1,doseName) for doseName in sample.doseList]
             self.experiment.addSample(sample)
-        for key, value in experiment2.samples.iteritems():
+        for key, value in experiment2.samples.items():
             sample = copy.copy(value)
             sample.sampleName = "%s%s"%(prefix2,key)
             sample.doseList = ["%s%s"%(prefix2,doseName) for doseName in sample.doseList]

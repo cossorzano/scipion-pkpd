@@ -28,7 +28,7 @@ import numpy as np
 import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDVariable
-from pkpd.pkpd_units import createUnit, PKPDUnit, multiplyUnits, strUnit
+from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 import math
 
 # Tested in test_workflow_deconvolution.py
@@ -176,7 +176,7 @@ class ProtPKPDNCANumeric(ProtPKPD):
         CmaxArray = np.zeros(inputN)
         TmaxArray = np.zeros(inputN)
         i=0
-        for sampleName, sample in self.outputExperiment.samples.iteritems():
+        for sampleName, sample in self.outputExperiment.samples.items():
             [t,Cp] = sample.getXYValues(tvarName,xvarName)
             print("Analyzing %s"%sampleName)
             self.analyzeSample(sample, t[0], Cp[0])
