@@ -320,7 +320,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             if sampleFitVivo.sampleName in self.allTimeScalings:
                 keyToUse = sampleFitVivo.sampleName
             elif len(self.allTimeScalings)==1:
-                keyToUse = self.allTimeScalings.keys()[0]
+                keyToUse = list(self.allTimeScalings.keys())[0]
             else:
                 raise Exception("Cannot find %s in the scaling keys"%sampleFitVivo.sampleName)
             nfit = int(random.uniform(0, len(self.allTimeScalings[keyToUse])))
