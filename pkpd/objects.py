@@ -1118,8 +1118,13 @@ class PKPDModelBase2(PKPDModelBase):
                                 (len(tokens),self.getNumberOfParameters()))
             self.bounds=[]
             for token in tokens:
-                values = token.strip().split(',')
-                self.bounds.append((float(values[0][1:]),float(values[1][:-1])))
+                try:
+                    values = token.strip().split(',')
+                    self.bounds.append((float(values[0][1:]),float(values[1][:-1])))
+                except:
+                    print("Error parsing %s: values="%token,values)
+                    print("All tokens: ",tokens)
+                    raise Exception("Don't know how to continue")
 
     def getBounds(self):
         return self.bounds
