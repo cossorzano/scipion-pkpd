@@ -47,6 +47,9 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
 
     _label = 'dissol deconv Fourier'
 
+    SAME_INPUT = 0
+    ANOTHER_INPUT = 1
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
@@ -54,6 +57,15 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                       pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments, ProtPKPDODERefine, '\
                                    'ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
                       help='Select a run of an ODE model')
+        form.addParam('externalIV', params.EnumParam, choices=['Get impulse response from the same input fit',
+                                                                        'Get impulse response from another fit'],
+                      label='Impulse response source',
+                      default=self.SAME_INPUT, help="The impulse response is an estimate of the intravenous response")
+        form.addParam('externalIVODE', params.PointerParam, label="External impulse response ODE model",
+                      condition='externalIV==1',
+                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments,ProtPKPDODERefine,' \
+                                   ' ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
+                      help='Select a run of an ODE model. It should be ideally the intravenous response.')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
@@ -123,7 +135,6 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
         model.t0=0
         model.tF=np.max(t)
         prmNames = model.getParameterNames()
-        print(prmNames)
 
         if len(self.experiment.samples)==0:
             print("Cannot find any sample in the experiment")
@@ -143,6 +154,13 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
         drugSource.setDoses([dose], 0.0, timeRange[1])
         model.drugSource = drugSource
 
+        # Get the input sample from another experiment if necessary
+        sampleFrom = None
+        if self.externalIV.get() == self.ANOTHER_INPUT:
+            anotherExperiment = self.readExperiment(self.externalIVODE.get().outputExperiment.fnPKPD)
+            for _, sampleFrom in anotherExperiment.samples.items(): # Take the first sample from the reference
+                break
+
         # Simulate the different responses
         for sampleName, sample in self.experiment.samples.items():
             self.printSection("Deconvolving "+sampleName)
@@ -157,9 +175,11 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                     tlag=float(sample.getDescriptorValue(paramName))
             drugSourceSample.setParameters(p)
 
+            if self.externalIV.get()==self.SAME_INPUT:
+                sampleFrom = sample
             parameters=[]
             for prmName in prmNames:
-                parameters.append(float(sample.descriptors[prmName]))
+                parameters.append(float(sampleFrom.descriptors[prmName]))
             model.setParameters(parameters)
             h = model.forwardModel(parameters, [t]*model.getResponseDimension())[0]
 

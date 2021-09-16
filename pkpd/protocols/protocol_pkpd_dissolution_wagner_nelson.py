@@ -48,11 +48,23 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
 
     _label = 'deconvolution Wagner Nelson'
 
+    SAME_INPUT = 0
+    ANOTHER_INPUT = 1
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputExperiment', params.PointerParam, label="In-vivo profiles",
                       pointerClass='PKPDExperiment', help='Make sure that it has a clearance parameter (Cl) and central volume (V)')
+        form.addParam('externalIV', params.EnumParam, choices=['Get impulse response from the same input fit',
+                                                                        'Get impulse response from another fit'],
+                      label='Impulse response source',
+                      default=self.SAME_INPUT, help="The impulse response is an estimate of the intravenous response")
+        form.addParam('externalIVODE', params.PointerParam, label="External impulse response ODE model",
+                      condition='externalIV==1',
+                      pointerClass='ProtPKPDMonoCompartment, ProtPKPDTwoCompartments,ProtPKPDODERefine,' \
+                                   ' ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
+                      help='Select a run of an ODE model. It should be ideally the intravenous response.')
         form.addParam('timeVar', params.StringParam, label="Time variable", default="t",
                       help='Which variable contains the time stamps.')
         form.addParam('concVar', params.StringParam, label="Concentration variable", default="Cp",
@@ -101,6 +113,13 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         self.outputExperiment.general["title"]="Deconvolution of the amount released"
         self.outputExperiment.general["comment"]="Amount released at any time t"
 
+        # Get the input sample from another experiment if necessary
+        sampleFrom = None
+        if self.externalIV.get() == self.ANOTHER_INPUT:
+            anotherExperiment = self.readExperiment(self.externalIVODE.get().outputExperiment.fnPKPD)
+            for _, sampleFrom in anotherExperiment.samples.items(): # Take the first sample from the reference
+                break
+
         timeRange = self.experiment.getRange(self.timeVar.get())
         for sampleName, sample in self.experiment.samples.items():
             # Get t, Cp
@@ -119,8 +138,10 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             AUC0t=calculateAUC0t(t,Cp)
 
             # Deconvolve
-            Cl=float(sample.descriptors['Cl'])
-            V=float(sample.descriptors['V'])
+            if self.externalIV.get()==self.SAME_INPUT:
+                sampleFrom = sample
+            Cl=float(sampleFrom.descriptors['Cl'])
+            V=float(sampleFrom.descriptors['V'])
             Ke=Cl/V
             AUC0inf = float(AUC0t[-1])
             A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
