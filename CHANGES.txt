@@ -104,3 +104,10 @@ October 2020.
 
 February 2021.
         - Two-compartments PK model with intrinsic and 1st order clearance added
+
+July 2021.
+        - PK Inhalation added
+
+September 2021.
+        - Deconvolution using an external reference added
+
