@@ -69,6 +69,8 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
                       help='Which variable contains the time stamps.')
         form.addParam('concVar', params.StringParam, label="Concentration variable", default="Cp",
                       help='Which variable contains the plasma concentration.')
+        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
+                      help='Saturate the absorption so that there cannot be values beyond 100')
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
@@ -145,12 +147,16 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             Ke=Cl/V
             AUC0inf = float(AUC0t[-1])
             A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
-            A = np.clip(A,0,100)
+            if self.saturate.get():
+                A = np.clip(A,None,100.0)
+            A = np.clip(A,0,None)
             if self.smooth:
                 if t[0]>0:
                     t = np.insert(t, 0, 0)
                     A = np.insert(A, 0, 0)
-                A = np.clip(smoothPchip(t, A),0,100)
+                if self.saturate.get():
+                    A = np.clip(A, None, 100.0)
+                A = np.clip(smoothPchip(t, A),0,None)
 
             self.addSample(sampleName,t,A)
 

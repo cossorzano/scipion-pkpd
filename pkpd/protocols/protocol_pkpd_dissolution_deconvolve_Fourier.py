@@ -68,6 +68,8 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                       help='Select a run of an ODE model. It should be ideally the intravenous response.')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
+        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
+                      help='Saturate the absorption so that there cannot be values beyond 100')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
                       help='If set to True, then the deconvolution is performed ignoring the the tlag in the absorption.'
                            'This homogeneizes the different responses.')
@@ -203,7 +205,9 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                     A[i] /= totalReleased
                 print("%f %f"%(t[i],A[i]))
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
-            As, ts = uniqueFloatValues(np.clip(A,0,100),t-tlag)
+            if self.saturate.get():
+                A = np.clip(A,None,100.0)
+            As, ts = uniqueFloatValues(np.clip(A,0,None),t-tlag)
             self.addSample(sampleName,ts,As)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
