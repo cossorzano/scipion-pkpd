@@ -93,12 +93,16 @@ class ProtPKPDIVIVCInternalValidity(ProtPKPD):
         for sampleName in trueAUC:
             tAUC = trueAUC[sampleName]
             tCmax = trueCmax[sampleName]
-            if sampleName in simAUC:
+            sampleNameSim = sampleName
+            if len(trueAUC)==1 and len(simAUC)==1:
+                sampleNamesSim = [x for x in simAUC]
+                sampleNameSim = sampleNamesSim[0]
+            if sampleNameSim in simAUC:
                 if tAUC>0:
-                    for sAUC in simAUC[sampleName]:
+                    for sAUC in simAUC[sampleNameSim]:
                         errorAUC.append((tAUC-sAUC)/tAUC*100)
                 if tCmax>0:
-                    for sCmax in simCmax[sampleName]:
+                    for sCmax in simCmax[sampleNameSim]:
                         errorCmax.append((tCmax-sCmax)/tCmax*100)
 
         np.savetxt(self._getExtraPath("errorAUC.txt"),errorAUC)
