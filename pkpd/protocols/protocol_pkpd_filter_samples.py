@@ -30,6 +30,7 @@ import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDExperiment, PKPDVariable
 
+# Tested on test_workflow_ivivc.py
 
 class ProtPKPDFilterSamples(ProtPKPD):
     """ Filter samples.\n
@@ -73,7 +74,8 @@ class ProtPKPDFilterSamples(ProtPKPD):
         filteredExperiment = PKPDExperiment()
         filteredExperiment.general = copy.copy(experiment.general)
         filteredExperiment.variables = copy.copy(experiment.variables)
-        filteredExperiment.groups = copy.copy(experiment.groups)
+        filteredExperiment.vias = copy.copy(experiment.vias)
+        filteredExperiment.groups = {}
         filteredExperiment.samples = {}
         filteredExperiment.doses = {}
 
@@ -112,6 +114,9 @@ class ProtPKPDFilterSamples(ProtPKPD):
                 filteredExperiment.samples[sampleKey] = copy.copy(sample)
                 for doseName in sample.doseList:
                     usedDoses.append(doseName)
+                for groupName in sample.groupList:
+                    if not groupName in filteredExperiment.groups:
+                        filteredExperiment.groups[groupName] = copy.copy(experiment.groups[groupName])
 
         if len(usedDoses)>0:
             for doseName in usedDoses:
