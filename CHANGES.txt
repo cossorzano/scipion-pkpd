@@ -111,3 +111,5 @@ July 2021.
 September 2021.
         - Deconvolution using an external reference added
         - Deconvolution is now saturated at 100 as an option
+        - Simulate PK does not require now a previous model
+
