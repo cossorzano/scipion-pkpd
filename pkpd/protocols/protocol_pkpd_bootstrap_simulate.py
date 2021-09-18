@@ -369,7 +369,6 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
             vianame = tokens[0]
             self.outputExperiment.vias[vianame] = PKPDVia(ptrExperiment=self.outputExperiment)
-            print("tokens=",tokens)
             self.outputExperiment.vias[vianame].parseTokens(tokens)
 
         # Read the doses
@@ -396,7 +395,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             Cvar.varName = "C"
             Cvar.varType = PKPDVariable.TYPE_NUMERIC
             Cvar.role = PKPDVariable.ROLE_MEASUREMENT
-            Cvar.units = createUnit(divideUnits(dunits,unitFromString(self.volumeUnits.get())))
+            Cvar.units = createUnit(divideUnits(dunits.unit,unitFromString(self.volumeUnits.get())))
             self.outputExperiment.variables[self.varNameY] = Cvar
 
         # Setup model
