@@ -38,6 +38,7 @@ from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 
 # tested in test_workflow_levyplot
 # tested in test_workflow_deconvolution2
+# tested in test_workflow_ivivc
 
 class ProtPKPDDissolutionPKSimulation(ProtPKPD):
     """ This protocol simulates the pharmacokinetic response of an ODE model when it is given a single dose of
@@ -56,7 +57,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                       help='To convert the dissolution profile into an absorption profile you may use an IVIVC (Fabs output) or a Levy plot. '
                       'The Levy plot can better represent what is happening in reality with patients.')
         form.addParam('inputIvIvC', params.PointerParam, label="In vitro-In vivo correlation", condition='conversionType==0',
-                      pointerClass='PKPDExperiment', help='Select the output of an in vitro-in vivo correlation')
+                      pointerClass='PKPDExperiment', help='Select the Fabs output of an in vitro-in vivo correlation')
         form.addParam('inputLevy', params.PointerParam, label="Levy plot", condition='conversionType==1',
                       pointerClass='PKPDExperiment', help='Select the output of a Levy plot protocol')
         form.addParam('inputDose', params.FloatParam, label="Dose", default=1,
