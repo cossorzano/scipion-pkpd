@@ -153,6 +153,14 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                     print("Found tlag in %s at position %d"%(prmName,i))
                     break
                 i+=1
+        self.bioavailabilityIdx=None
+        i = 0
+        for prmName in self.fittingPK.modelParameters:
+            if prmName.endswith('_bioavailability'):
+                self.bioavailabilityIdx = i
+                print("Found bioavailabilityIdx in %s at position %d" % (prmName, i))
+                break
+            i += 1
 
     def addSample(self, sampleName, t, y, fromSamples):
         newSample = PKPDSample()
@@ -306,6 +314,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             if self.includeTlag.get() and (not self.tlagIdx is None):
                 tlag=pkPrmAll[self.tlagIdx]
                 print("tlag: ",tlag)
+            bioavailability=1
+            if not self.bioavailabilityIdx is None:
+                bioavailability=pkPrmAll[self.bioavailabilityIdx]
+                print("bioavailability: ",bioavailability)
 
             # Get a random dissolution profile
             nfit = int(random.uniform(0, len(self.fittingInVitro.sampleFits)))
@@ -347,6 +359,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 B=interp1d(t,C)
                 C=B(np.clip(t-tlag,0.0,None))
                 C[0:int(tlag)]=0.0
+            C*=bioavailability
 
             self.NCA(t,C)
             AUCarray[i] = self.AUC0t
