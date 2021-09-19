@@ -59,7 +59,7 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                                    'ProtPKPDTwoCompartmentsClint, ProtPKPDTwoCompartmentsClintCl',
                       help='Select a run of an ODE model')
         form.addParam('externalIV', params.EnumParam, choices=['Get impulse response from the same input fit',
-                                                                        'Get impulse response from another fit'],
+                                                               'Get impulse response from another fit'],
                       label='Impulse response source',
                       default=self.SAME_INPUT, help="The impulse response is an estimate of the intravenous response")
         form.addParam('externalIVODE', params.PointerParam, label="External impulse response ODE model",
@@ -69,6 +69,8 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                       help='Select a run of an ODE model. It should be ideally the intravenous response.')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
+        form.addParam('considerBioaval', params.BooleanParam, label="Consider bioavailability", default=True,
+                      help='Take into account the bioavailability')
         form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
                       help='Saturate the absorption so that there cannot be values beyond 100')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
@@ -208,6 +210,8 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
             if self.saturate.get():
                 A = np.clip(A,None,100.0)
+            if self.considerBioaval.get():
+                A *= sample.getBioavailability()
             As, ts = uniqueFloatValues(np.clip(A,0,None),t-tlag)
             self.addSample(sampleName,ts,As)
 

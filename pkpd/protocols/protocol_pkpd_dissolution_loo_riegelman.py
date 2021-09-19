@@ -76,6 +76,8 @@ class ProtPKPDDeconvolutionLooRiegelman(ProtPKPD):
                       help='Which variable contains the plasma concentration.')
         form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
                       help='Saturate the absorption so that there cannot be values beyond 100')
+        form.addParam('considerBioaval', params.BooleanParam, label="Consider bioavailability", default=True,
+                      help='Take into account the bioavailability')
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=0.5,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
                            'Leave it to -1 for no resampling')
@@ -182,6 +184,8 @@ class ProtPKPDDeconvolutionLooRiegelman(ProtPKPD):
                     A = np.clip(A, None, 100.0)
                 A = np.clip(smoothPchip(t, A),0,None)
 
+            if self.considerBioaval.get():
+                A *= sample.getBioavailability()
             self.addSample(sampleName,t,A)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))

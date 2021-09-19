@@ -52,6 +52,8 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
                       help='Select a run of an ODE model')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
+        form.addParam('considerBioaval', params.BooleanParam, label="Consider bioavailability", default=True,
+                      help='Take into account the bioavailability')
         form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
                       help='Saturate the absorption so that there cannot be values beyond 100')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
@@ -139,6 +141,8 @@ class ProtPKPDDeconvolve(ProtPKPDODEBase):
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
             if self.saturate.get():
                 A = np.clip(A,None,100.0)
+            if self.considerBioaval.get():
+                A *= sample.getBioavailability()
             self.addSample(sampleName,t-tlag,A)
 
         self.outputExperiment.write(self._getPath("experiment.pkpd"))
