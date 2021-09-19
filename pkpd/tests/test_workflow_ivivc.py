@@ -290,7 +290,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             experiment = PKPDExperiment()
             experiment.load(protIVIVC.outputExperimentFabs.fnPKPD)
             R = float(experiment.samples['ivivc_0001'].descriptors['R'])
-            self.assertTrue(R>0.999)
+            self.assertTrue(R>0.99)
 
             print("Simulate PK %s ..."%msg)
             protSimulatePK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
