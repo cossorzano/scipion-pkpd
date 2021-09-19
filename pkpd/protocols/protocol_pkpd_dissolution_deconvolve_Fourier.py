@@ -36,6 +36,7 @@ from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.biopharmaceutics import DrugSource, createDeltaDose, createVia
 
 # Tested in test_workflow_deconvolution.py
+# Tested in test_workflow_ivivc.py
 
 class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
     """ Deconvolve the drug dissolution from a compartmental model. It does the deconvolution in

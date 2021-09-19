@@ -34,6 +34,7 @@ from pkpd.pkpd_units import createUnit
 from pkpd.utils import uniqueFloatValues, calculateAUC0t, smoothPchip
 
 # tested in test_workflow_levyplot.py
+# tested in test_workflow_ivivc.py
 
 class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
     """ Calculate the absorption profile of an in vivo concentration profile using
@@ -57,7 +58,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         form.addParam('inputExperiment', params.PointerParam, label="In-vivo profiles",
                       pointerClass='PKPDExperiment', help='Make sure that it has a clearance parameter (Cl) and central volume (V)')
         form.addParam('externalIV', params.EnumParam, choices=['Get impulse response from the same input fit',
-                                                                        'Get impulse response from another fit'],
+                                                               'Get impulse response from another fit'],
                       label='Impulse response source',
                       default=self.SAME_INPUT, help="The impulse response is an estimate of the intravenous response")
         form.addParam('externalIVODE', params.PointerParam, label="External impulse response ODE model",
