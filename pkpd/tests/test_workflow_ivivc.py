@@ -29,7 +29,6 @@ from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from .test_workflow import TestWorkflow
 import copy
-import math
 
 class TestIVIVCWorkflow(TestWorkflow):
 
@@ -317,7 +316,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             fh=open(fnSummary,'r')
             for line in fh.readlines():
                 tokens = line.split('=')
-                self.assertTrue(math.abs(float(tokens[-1]))<5)
+                self.assertTrue(abs(float(tokens[-1]))<5)
             fh.close()
 
         def deconvolve(msg, protVitro, protVivo, protPK, protPKIV, refKa, refAmax, tol):
