@@ -37,38 +37,38 @@ class TestIVIVCWorkflow(TestWorkflow):
         tests.setupTestProject(cls)
 
     def testIVIVCWorkflow(self):
-        # # Check that Simulation is working
-        # prot1 = self.newProtocol(ProtPKPDDissolutionSimulate,
-        #                         objLabel='pkpd - simulate dissolution 1st order',
-        #                         modelType=1,
-        #                         parameters="100;0.01",
-        #                         timeUnits=0,
-        #                         resampleT=10,
-        #                         resampleTF=800)
-        # self.launchProtocol(prot1)
-        # self.assertIsNotNone(prot1.outputExperiment.fnPKPD, "There was a problem")
-        #
-        # # Fit a first order dissolution
-        # print("Fitting 1st order ...")
-        # prot2 = self.newProtocol(ProtPKPDDissolutionFit,
-        #                          objLabel='pkpd - fit dissolution 1st order',
-        #                          predicted='A',
-        #                          globalSearch=True,
-        #                          modelType=1)
-        # prot2.inputExperiment.set(prot1.outputExperiment)
-        # self.launchProtocol(prot2)
-        # self.assertIsNotNone(prot2.outputExperiment.fnPKPD, "There was a problem")
-        # self.assertIsNotNone(prot2.outputFitting.fnFitting, "There was a problem")
-        # experiment = PKPDExperiment()
-        # experiment.load(prot2.outputExperiment.fnPKPD)
-        # Vmax = float(experiment.samples['simulatedProfile'].descriptors['Vmax'])
-        # self.assertTrue(Vmax>99.9)
-        # beta = float(experiment.samples['simulatedProfile'].descriptors['beta'])
-        # self.assertTrue(beta>0.0099 and beta<0.0101)
-        #
-        # fitting = PKPDFitting()
-        # fitting.load(prot2.outputFitting.fnFitting)
-        # self.assertTrue(fitting.sampleFits[0].R2>0.99)
+        # Check that Simulation is working
+        prot1 = self.newProtocol(ProtPKPDDissolutionSimulate,
+                                objLabel='pkpd - simulate dissolution 1st order',
+                                modelType=1,
+                                parameters="100;0.01",
+                                timeUnits=0,
+                                resampleT=10,
+                                resampleTF=800)
+        self.launchProtocol(prot1)
+        self.assertIsNotNone(prot1.outputExperiment.fnPKPD, "There was a problem")
+
+        # Fit a first order dissolution
+        print("Fitting 1st order ...")
+        prot2 = self.newProtocol(ProtPKPDDissolutionFit,
+                                 objLabel='pkpd - fit dissolution 1st order',
+                                 predicted='A',
+                                 globalSearch=True,
+                                 modelType=1)
+        prot2.inputExperiment.set(prot1.outputExperiment)
+        self.launchProtocol(prot2)
+        self.assertIsNotNone(prot2.outputExperiment.fnPKPD, "There was a problem")
+        self.assertIsNotNone(prot2.outputFitting.fnFitting, "There was a problem")
+        experiment = PKPDExperiment()
+        experiment.load(prot2.outputExperiment.fnPKPD)
+        Vmax = float(experiment.samples['simulatedProfile'].descriptors['Vmax'])
+        self.assertTrue(Vmax>99.9)
+        beta = float(experiment.samples['simulatedProfile'].descriptors['beta'])
+        self.assertTrue(beta>0.0099 and beta<0.0101)
+
+        fitting = PKPDFitting()
+        fitting.load(prot2.outputFitting.fnFitting)
+        self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
         # Simulate PK
         print("Simulate PK IV ...")
@@ -236,7 +236,7 @@ class TestIVIVCWorkflow(TestWorkflow):
         prot4B = self.newProtocol(ProtPKPDMonoCompartment,
                                   objLabel='pkpd - bioavail monocompartment',
                                   predicted='C',
-                                  bounds='(0,1);(0,0.1);(0,0.1);(0.95,1.05)')
+                                  bounds='(0,1);(0,0.1);(0,0.003);(0.95,1.05)')
         prot4B.inputExperiment.set(prot3B2.outputExperiment)
         self.launchProtocol(prot4B)
         self.assertIsNotNone(prot4B.outputExperiment.fnPKPD, "There was a problem")
@@ -333,7 +333,7 @@ class TestIVIVCWorkflow(TestWorkflow):
 
         [protDeconvF, protDeconvFF, protDeconvWF, protDeconvWIVF] = deconvolve("fast", prot4F, prot4, 0.005, 100, 0.03)
         [protDeconvS, protDeconvFS, protDeconvWS, protDeconvWIVS] = deconvolve("slow", prot4S, prot4, 0.00125, 100, 0.03)
-        [protDeconvB, protDeconvFB, protDeconvWB, protDeconvWIVB] = deconvolve("bioaval", prot4B, prot4, 0.005, 50, 0.03)
+        [protDeconvB, protDeconvFB, protDeconvWB, protDeconvWIVB] = deconvolve("bioaval", prot4B, prot4, 0.005, 50, 0.06)
 
 if __name__ == "__main__":
     unittest.main()
