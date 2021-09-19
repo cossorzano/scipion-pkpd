@@ -30,8 +30,6 @@ import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.objects import PKPDExperiment, PKPDVariable
 
-# Tested on test_workflow_ivivc.py
-
 class ProtPKPDFilterSamples(ProtPKPD):
     """ Filter samples.\n
         Protocol created by http://www.kinestatpharma.com\n """

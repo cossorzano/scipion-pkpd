@@ -33,7 +33,7 @@ from pkpd.objects import PKPDExperiment, PKPDSample
 # Tested by test_workflow_dissolution
 # Tested by test_workflow_levyplot
 # Tested by test_workflow_deconvolution2
-
+# Tested in test_workflow_ivivc.py
 
 class ProtPKPDDissolutionFit(ProtPKPDFitBase):
     """ Fit a dissolution model. The observed measurement is modelled as Y=f(t).\n

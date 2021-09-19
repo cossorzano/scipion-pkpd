@@ -24,10 +24,11 @@
 # *
 # **************************************************************************
 
-import numpy as np
 import math
+import numpy as np
 import openpyxl
 import random
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 import pyworkflow.protocol.params as params
 from pkpd.objects import PKPDExperiment, PKPDDose, PKPDSample, PKPDVariable
@@ -38,7 +39,8 @@ from pkpd.utils import find_nearest, excelWriteRow
 from pkpd.biopharmaceutics import PKPDVia
 from pkpd.models.pk_models import PK_Monocompartment, PK_Twocompartments
 
-# Tested in test_worokflow_deconvolution.py
+# Tested in test_workflow_deconvolution.py
+# Tested in test_workflow_ivivc.py
 
 class ProtPKPDODESimulate(ProtPKPDODEBase):
     """ Simulate a population of ODE parameters.
@@ -146,6 +148,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                       help="Same units as input experiment")
         form.addParam('tF', params.FloatParam, label="Final time (see help)", default=24*7,
                       help="Same units as input experiment")
+        form.addParam('sampling', params.FloatParam, label="Sampling time (see help)", default=1,
+                      help="Same units as input experiment")
         form.addParam('Nsimulations', params.IntParam, label="Simulation samples", default=200,
                       condition="paramsSource==0 and odeSource==0",
                       expertLevel=LEVEL_ADVANCED, help='Number of simulations')
@@ -172,16 +176,19 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         newSample.doseDictPtr = self.outputExperiment.doses
         newSample.descriptors = {}
         newSample.doseList = [doseName]
+        tsample = np.arange(0.0, np.max(simulationsX), self.sampling.get())
         if type(self.varNameY)!=list:
             newSample.addMeasurementPattern([self.varNameY])
-            newSample.addMeasurementColumn("t", simulationsX)
-            newSample.addMeasurementColumn(self.varNameY,y)
+            B=InterpolatedUnivariateSpline(simulationsX, y, k=1)
+            newSample.addMeasurementColumn("t", tsample)
+            newSample.addMeasurementColumn(self.varNameY,B(tsample))
         else:
             for j in range(len(self.varNameY)):
                 newSample.addMeasurementPattern([self.varNameY[j]])
-            newSample.addMeasurementColumn("t", simulationsX)
+            newSample.addMeasurementColumn("t", tsample)
             for j in range(len(self.varNameY)):
-                newSample.addMeasurementColumn(self.varNameY[j], y[j])
+                B = InterpolatedUnivariateSpline(simulationsX, y[j], k=1)
+                newSample.addMeasurementColumn(self.varNameY[j], B(tsample))
         newSample.descriptors["FromSample"] = self.fromSample
         newSample.descriptors["AUC0t"] = self.AUC0t
         newSample.descriptors["AUMC0t"] = self.AUMC0t
@@ -659,7 +666,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
         fhSummary.close()
 
         # Calculate statistics
-        if self.addStats:
+        if self.addStats and self.odeSource==0 and self.paramsSource==0:
             if self.paramsSource!=ProtPKPDODESimulate.PRM_USER_DEFINED:
                 limits = np.percentile(simulationsY,[alpha_2,100-alpha_2],axis=0)
 
