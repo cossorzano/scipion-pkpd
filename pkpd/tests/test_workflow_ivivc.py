@@ -29,6 +29,7 @@ from pkpd.protocols import *
 from pkpd.objects import PKPDDataSet
 from .test_workflow import TestWorkflow
 import copy
+import math
 
 class TestIVIVCWorkflow(TestWorkflow):
 
@@ -209,7 +210,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                   pkType=0,
                                   prmUser='0.0025, 1',
                                   doses='Bolus ; via=Oral; bolus; t=0 h; d=1000 ug',
-                                  tF=36 * 60,
+                                  tF=84 * 60,
                                   sampling=5,
                                   addIndividuals=True)
         self.launchProtocol(prot3B)
@@ -217,9 +218,9 @@ class TestIVIVCWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot3B.outputExperiment.fnPKPD)
         AUC0t = float(experiment.samples['Simulation_0'].descriptors['AUC0t'])
-        self.assertTrue(AUC0t > 198180 and AUC0t < 198210)
-        Cavg = float(experiment.samples['Simulation_0'].descriptors['Cavg'])
-        self.assertTrue(Cavg > 91.3 and Cavg < 92.3)
+        self.assertTrue(AUC0t > 199990 and AUC0t < 200010)
+        Cmax = float(experiment.samples['Simulation_0'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 249 and Cmax < 251)
 
         print("Change via to unknown bioavailability ...")
         prot3B2 = self.newProtocol(ProtPKPDChangeVia,
@@ -277,7 +278,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             fitting.load(protFit.outputFitting.fnFitting)
             self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
-        def ivivc(msg, protVitro, protPK, protDeconv):
+        def ivivc(msg, protVitro, protVivo, protPK, protDeconv):
             print("IVIVC %s ..."%msg)
             protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                          objLabel='pkpd - ivivc %s'%msg,
@@ -304,9 +305,22 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protSimulatePK)
             self.assertIsNotNone(protSimulatePK.outputExperiment.fnPKPD, "There was a problem")
 
-            return protIVIVC
+            print("Internal validity %s ..."%msg)
+            protInternal = self.newProtocol(ProtPKPDIVIVCInternalValidity,
+                                              objLabel='pkpd - internal validity %s'%msg)
+            protInternal.inputExperiment.set(protVivo.outputExperiment)
+            protInternal.inputSimulated.set(protSimulatePK.outputExperiment)
+            self.launchProtocol(protInternal)
 
-        def deconvolve(msg, protVitro, protPK, protPKIV, refKa, refAmax, tol):
+            fnSummary = protInternal._getPath('summary.txt')
+            self.assertTrue(os.path.exists(fnSummary))
+            fh=open(fnSummary,'r')
+            for line in fh.readlines():
+                tokens = line.split('=')
+                self.assertTrue(math.abs(float(tokens[-1]))<5)
+            fh.close()
+
+        def deconvolve(msg, protVitro, protVivo, protPK, protPKIV, refKa, refAmax, tol):
             print("Deconvolving %s ..."%msg)
             protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                       objLabel='pkpd - deconvolve %s'%msg,
@@ -316,7 +330,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protDeconv)
             self.assertIsNotNone(protDeconv.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution(msg, protDeconv, refKa, refAmax, tol)
-            ivivc(msg, protVitro, protPK, protDeconv)
+            ivivc(msg, protVitro, protVivo, protPK, protDeconv)
 
             print("Deconvolving Fourier %s ..." % msg)
             protDeconvF = self.newProtocol(ProtPKPDDeconvolveFourier,
@@ -327,7 +341,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protDeconvF)
             self.assertIsNotNone(protDeconvF.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Fourier "+msg, protDeconvF, refKa, refAmax, tol)
-            ivivc("Fourier "+msg, protVitro, protPK, protDeconvF)
+            ivivc("Fourier "+msg, protVitro, protVivo, protPK, protDeconvF)
 
             print("Deconvolving Fourier IV %s ..." % msg)
             protDeconvFIV = self.newProtocol(ProtPKPDDeconvolveFourier,
@@ -340,7 +354,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protDeconvFIV)
             self.assertIsNotNone(protDeconvFIV.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Fourier IV "+msg, protDeconvFIV, refKa, refAmax, tol)
-            ivivc("Fourier IV "+msg, protVitro, protPK, protDeconvFIV)
+            ivivc("Fourier IV "+msg, protVitro, protVivo, protPK, protDeconvFIV)
 
             print("Deconvolving Wagner Nelson %s ..." % msg)
             protDeconvW = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
@@ -352,7 +366,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protDeconvW)
             self.assertIsNotNone(protDeconvW.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Wagner " + msg, protDeconvW, refKa, refAmax, tol)
-            ivivc("Wagner "+msg, protVitro, protPK, protDeconvW)
+            ivivc("Wagner "+msg, protVitro, protVivo, protPK, protDeconvW)
 
             print("Deconvolving Wagner Nelson IV %s ..." % msg)
             protDeconvWIV = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
@@ -366,13 +380,11 @@ class TestIVIVCWorkflow(TestWorkflow):
             self.launchProtocol(protDeconvWIV)
             self.assertIsNotNone(protDeconvWIV.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("WagnerIV " + msg, protDeconvWIV, refKa, refAmax, tol)
-            ivivc("WagnerIV "+msg, protVitro, protPK, protDeconvWIV)
+            ivivc("WagnerIV "+msg, protVitro, protVivo, protPK, protDeconvWIV)
 
-            return [protDeconv, protDeconvF, protDeconvW, protDeconvWIV]
-
-        [protDeconvF, protDeconvFF, protDeconvWF, protDeconvWIVF] = deconvolve("fast", prot2, prot4F, prot4, 0.005, 100, 0.03)
-        [protDeconvS, protDeconvFS, protDeconvWS, protDeconvWIVS] = deconvolve("slow", prot2, prot4S, prot4, 0.00125, 100, 0.03)
-        [protDeconvB, protDeconvFB, protDeconvWB, protDeconvWIVB] = deconvolve("bioaval", prot2, prot4B, prot4, 0.005, 100, 0.05)
+        deconvolve("fast", prot2, prot3F, prot4F, prot4, 0.005, 100, 0.03)
+        deconvolve("slow", prot2, prot3S, prot4S, prot4, 0.00125, 100, 0.03)
+        deconvolve("bioaval", prot2, prot3B, prot4B, prot4, 0.005, 100, 0.05)
 
 if __name__ == "__main__":
     unittest.main()
