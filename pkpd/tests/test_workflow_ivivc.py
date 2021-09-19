@@ -79,7 +79,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                 pkType=0,
                                 prmUser='0.0025, 1',
                                 doses='Bolus ; via=Intravenous; bolus; t=0 h; d=1000 ug',
-                                tF=36*60,
+                                tF=84*60,
                                 sampling=60,
                                 addIndividuals=True)
         self.launchProtocol(prot3)
@@ -87,9 +87,9 @@ class TestIVIVCWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot3.outputExperiment.fnPKPD)
         AUC0t = float(experiment.samples['Simulation_0'].descriptors['AUC0t'])
-        self.assertTrue(AUC0t > 397980 and AUC0t < 397984)
-        Cavg = float(experiment.samples['Simulation_0'].descriptors['Cavg'])
-        self.assertTrue(Cavg > 184 and Cavg < 185)
+        self.assertTrue(AUC0t > 399780 and AUC0t < 399800)
+        Cmax = float(experiment.samples['Simulation_0'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 999 and Cmax < 1000)
 
         # Fit a monocompartmental to IV
         print("Fitting monocompartmental model to IV ...")
@@ -121,7 +121,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                   pkType=0,
                                   prmUser='0.0025, 1',
                                   doses='Bolus ; via=Oral; bolus; t=0 h; d=1000 ug',
-                                  tF=36 * 60,
+                                  tF=84 * 60,
                                   sampling=5,
                                   addIndividuals=True)
         self.launchProtocol(prot3F)
@@ -129,16 +129,16 @@ class TestIVIVCWorkflow(TestWorkflow):
         experiment = PKPDExperiment()
         experiment.load(prot3F.outputExperiment.fnPKPD)
         AUC0t = float(experiment.samples['Simulation_0'].descriptors['AUC0t'])
-        self.assertTrue(AUC0t > 396380 and AUC0t < 396400)
-        Cavg = float(experiment.samples['Simulation_0'].descriptors['Cavg'])
-        self.assertTrue(Cavg > 183 and Cavg < 184)
+        self.assertTrue(AUC0t > 399990 and AUC0t < 400010)
+        Cmax = float(experiment.samples['Simulation_0'].descriptors['Cmax'])
+        self.assertTrue(Cmax > 499 and Cmax < 501)
 
         # Fit a monocompartmental to Fast
         print("Fitting monocompartmental model to Fast ...")
         prot4F = self.newProtocol(ProtPKPDMonoCompartment,
                                  objLabel='pkpd - fast monocompartment',
                                  predicted='C',
-                                 bounds='(0,0.1);(0,0.1);(0,5)')
+                                 bounds='(0.003,0.005);(0,0.003);(0.5,1.5)')
         prot4F.inputExperiment.set(prot3F.outputExperiment)
         self.launchProtocol(prot4F)
         self.assertIsNotNone(prot4F.outputExperiment.fnPKPD, "There was a problem")
@@ -277,7 +277,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             fitting.load(protFit.outputFitting.fnFitting)
             self.assertTrue(fitting.sampleFits[0].R2>0.99)
 
-        def ivivc(msg, protVitro, protDeconv):
+        def ivivc(msg, protVitro, protPK, protDeconv):
             print("IVIVC %s ..."%msg)
             protIVIVC = self.newProtocol(ProtPKPDDissolutionIVIVC,
                                          objLabel='pkpd - ivivc %s'%msg,
@@ -286,70 +286,93 @@ class TestIVIVCWorkflow(TestWorkflow):
             protIVIVC.inputInVivo.set(protDeconv)
             self.launchProtocol(protIVIVC)
             self.assertIsNotNone(protIVIVC.outputExperimentFabs.fnPKPD, "There was a problem")
+
+            experiment = PKPDExperiment()
+            experiment.load(protIVIVC.outputExperimentFabs.fnPKPD)
+            R = float(experiment.samples['ivivc_0001'].descriptors['R'])
+            self.assertTrue(R>0.999)
+
+            print("Simulate PK %s ..."%msg)
+            protSimulatePK = self.newProtocol(ProtPKPDDissolutionPKSimulation,
+                                              objLabel='pkpd - simulate PK %s'%msg,
+                                              inputDose=1000,
+                                              inputN=1,
+                                              tF=84)
+            protSimulatePK.inputInVitro.set(protVitro.outputFitting)
+            protSimulatePK.inputPK.set(protPK.outputFitting)
+            protSimulatePK.inputIvIvC.set(protIVIVC.outputExperimentFabs)
+            self.launchProtocol(protSimulatePK)
+            self.assertIsNotNone(protSimulatePK.outputExperiment.fnPKPD, "There was a problem")
+
             return protIVIVC
 
         def deconvolve(msg, protVitro, protPK, protPKIV, refKa, refAmax, tol):
             print("Deconvolving %s ..."%msg)
             protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                       objLabel='pkpd - deconvolve %s'%msg,
-                                      saturate=False)
+                                      saturate=False,
+                                      considerBioaval=False)
             protDeconv.inputODE.set(protPK)
             self.launchProtocol(protDeconv)
             self.assertIsNotNone(protDeconv.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution(msg, protDeconv, refKa, refAmax, tol)
-            ivivc(msg, protVitro, protDeconv)
+            ivivc(msg, protVitro, protPK, protDeconv)
 
             print("Deconvolving Fourier %s ..." % msg)
             protDeconvF = self.newProtocol(ProtPKPDDeconvolveFourier,
                                           objLabel='pkpd - deconvolve Fourier %s' % msg,
-                                          saturate=False)
+                                          saturate=False,
+                                          considerBioaval=False)
             protDeconvF.inputODE.set(protPK)
             self.launchProtocol(protDeconvF)
             self.assertIsNotNone(protDeconvF.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Fourier "+msg, protDeconvF, refKa, refAmax, tol)
-            ivivc("Fourier "+msg, protVitro, protDeconvF)
+            ivivc("Fourier "+msg, protVitro, protPK, protDeconvF)
 
             print("Deconvolving Fourier IV %s ..." % msg)
             protDeconvFIV = self.newProtocol(ProtPKPDDeconvolveFourier,
                                           objLabel='pkpd - deconvolve Fourier IV %s' % msg,
                                           externalIV=1,
-                                          saturate=False)
+                                          saturate=False,
+                                          considerBioaval=False)
             protDeconvFIV.inputODE.set(protPK)
             protDeconvFIV.externalIVODE.set(protPKIV)
             self.launchProtocol(protDeconvFIV)
             self.assertIsNotNone(protDeconvFIV.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Fourier IV "+msg, protDeconvFIV, refKa, refAmax, tol)
-            ivivc("Fourier IV "+msg, protVitro, protDeconvFIV)
+            ivivc("Fourier IV "+msg, protVitro, protPK, protDeconvFIV)
 
             print("Deconvolving Wagner Nelson %s ..." % msg)
             protDeconvW = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
                                            objLabel='pkpd - deconvolve Wagner %s' % msg,
                                            concVar='C',
-                                           saturate=False)
+                                           saturate=False,
+                                           considerBioaval=False)
             protDeconvW.inputExperiment.set(protPK.outputExperiment)
             self.launchProtocol(protDeconvW)
             self.assertIsNotNone(protDeconvW.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("Wagner " + msg, protDeconvW, refKa, refAmax, tol)
-            ivivc("Wagner "+msg, protVitro, protDeconvW)
+            ivivc("Wagner "+msg, protVitro, protPK, protDeconvW)
 
             print("Deconvolving Wagner Nelson IV %s ..." % msg)
             protDeconvWIV = self.newProtocol(ProtPKPDDeconvolutionWagnerNelson,
                                            objLabel='pkpd - deconvolve Wagner IV %s' % msg,
                                            externalIV=1,
                                            concVar='C',
-                                           saturate=False)
+                                           saturate=False,
+                                           considerBioaval=False)
             protDeconvWIV.inputExperiment.set(protPK.outputExperiment)
             protDeconvWIV.externalIVODE.set(protPKIV)
             self.launchProtocol(protDeconvWIV)
             self.assertIsNotNone(protDeconvWIV.outputExperiment.fnPKPD, "There was a problem")
             checkDeconvolution("WagnerIV " + msg, protDeconvWIV, refKa, refAmax, tol)
-            ivivc("WagnerIV "+msg, protVitro, protDeconvWIV)
+            ivivc("WagnerIV "+msg, protVitro, protPK, protDeconvWIV)
 
             return [protDeconv, protDeconvF, protDeconvW, protDeconvWIV]
 
         [protDeconvF, protDeconvFF, protDeconvWF, protDeconvWIVF] = deconvolve("fast", prot2, prot4F, prot4, 0.005, 100, 0.03)
         [protDeconvS, protDeconvFS, protDeconvWS, protDeconvWIVS] = deconvolve("slow", prot2, prot4S, prot4, 0.00125, 100, 0.03)
-        [protDeconvB, protDeconvFB, protDeconvWB, protDeconvWIVB] = deconvolve("bioaval", prot2, prot4B, prot4, 0.005, 50, 0.06)
+        [protDeconvB, protDeconvFB, protDeconvWB, protDeconvWIVB] = deconvolve("bioaval", prot2, prot4B, prot4, 0.005, 100, 0.05)
 
 if __name__ == "__main__":
     unittest.main()
