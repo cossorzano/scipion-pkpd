@@ -42,6 +42,7 @@ from pkpd.pkpd_units import createUnit, PKPDUnit
 
 
 # tested in test_workflow_levyplot
+# tested in test_workflow_ivivc
 
 from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
 
@@ -220,18 +221,28 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
         return error
 
     def goalFunction(self,x):
-        t0=0.0
-        k=1.0
-        alpha=1.0
-        A=1.0
-        B=0.0
-        i=0
+        t0 = 0.0
+        k = 1.0
+        alpha = 1.0
+        A = 1.0
+        B = 0.0
+        i = 0
         try:
             for prm in self.parameters:
-                exec ("%s=%f" % (prm, x[i]))
+                if prm=="t0":
+                    t0=x[i]
+                elif prm=="k":
+                    k=x[i]
+                elif prm=="alpha":
+                    alpha=x[i]
+                elif prm=="A":
+                    A=x[i]
+                elif prm=="B":
+                    B=x[i]
                 i+=1
 
-            self.tvitroReinterpolated=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,self.tvitroMax)
+            self.tvitroReinterpolated=np.clip(k*np.power(np.clip(self.tvivoUnique-t0,0,None),alpha),self.tvitroMin,
+                                              self.tvitroMax)
             self.AdissolReinterpolated = self.BAdissol(self.tvitroReinterpolated)
             self.FabsPredicted = np.clip(A*self.AdissolReinterpolated+B,0.0,100)
 
@@ -433,16 +444,17 @@ class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
                 self.tvivoMax=np.max(self.tvivoUnique)
                 self.tvitroMin=np.min(self.tvitroUnique)
                 self.tvitroMax=np.max(self.tvitroUnique)
-                #for i in range(len(self.tvivoUnique)):
-                #   print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
-                #for i in range(len(self.tvitroUnique)):
-                #   print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
 
                 # Make sure they are sorted in x
                 self.tvivoUnique, self.FabsUnique = uniqueFloatValues(self.tvivoUnique, self.FabsUnique)
                 self.tvitroUnique, self.AdissolUnique = uniqueFloatValues(self.tvitroUnique, self.AdissolUnique)
                 vivoList.append((self.tvivoUnique, self.FabsUnique))
                 vitroList.append((self.tvitroUnique, self.AdissolUnique))
+
+                # for i in range(len(self.tvivoUnique)):
+                #   print("i=",i,"tvivo[i]=",self.tvivoUnique[i],"Fabs[i]",self.FabsUnique[i])
+                # for i in range(len(self.tvitroUnique)):
+                #   print("i=",i,"tvitro[i]=",self.tvitroUnique[i],"Adissol[i]",self.AdissolUnique[i])
 
                 self.BAdissol = InterpolatedUnivariateSpline(self.tvitroUnique, self.AdissolUnique, k=1)
                 self.BFabs = InterpolatedUnivariateSpline(self.tvivoUnique, self.FabsUnique, k=1)
