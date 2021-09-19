@@ -511,6 +511,11 @@ class PKPDSample:
             self.descriptors = {}
         self.descriptors[descriptorName] = descriptorValue
 
+    def getBioavailability(self):
+        for descriptorName in self.descriptors:
+            if descriptorName.endswith('_bioavailability'):
+                return float(self.descriptors[descriptorName])
+        return 1.0
 
 class PKPDSampleMeasurement():
     def __init__(self, sample, n):
