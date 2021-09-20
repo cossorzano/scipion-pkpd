@@ -84,7 +84,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            'taken from the sources below')
         form.addParam('viaType',params.EnumParam, label='Input via', condition='odeSource==1', default=0,
                       choices=['Intravenous (iv)','Extra vascular, 0th order absorption (ev0)',
-                               'Extra vascular, 0th order absorption (ev1)'],
+                               'Extra vascular, 1st order absorption (ev1)'],
                       help='Parameters:\n'
                            'iv (vianame=Intravenous): no parameters\n'
                            'ev0 (vianame=Oral): Rin, F (bioavailability), tlag\n'
