@@ -37,7 +37,7 @@ from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.pkpd_units import createUnit, multiplyUnits, divideUnits, strUnit, PKPDUnit, unitFromString
 from pkpd.utils import find_nearest, excelWriteRow
 from pkpd.biopharmaceutics import PKPDVia
-from pkpd.models.pk_models import PK_Monocompartment, PK_Twocompartments
+from pkpd.models.pk_models import PK_Monocompartment, PK_Twocompartments, PK_TwocompartmentsClintCl
 
 # Tested in test_workflow_deconvolution.py
 # Tested in test_workflow_ivivc.py
@@ -69,6 +69,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
     PKTYPE_COMP1 = 0
     PKTYPE_COMP2 = 1
+    PKTYPE_COMP2CLCLINT = 2
 
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
@@ -99,10 +100,11 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            'ev0: Rin, tlag, F (bioavailability)\n'
                            'ev1: Ka, tlag, F (bioavailability)\n')
         form.addParam('pkType',params.EnumParam, label='PK model', condition='odeSource==1', default=0,
-                      choices=['1 compartment', '2 compartments'],
+                      choices=['1 compartment', '2 compartments', '2 compartments Cl+Clint'],
                       help='Parameters:\n'
                            '1 compartment: Cl, V\n'
-                           '2 compartments: Cl, V, Clp, Vp\n')
+                           '2 compartments: Cl, V, Clp, Vp\n'
+                           '2 compartments Cl+Clint: Vmax, Km, Cl, V, Clp, Vp\n')
         form.addParam('timeUnits',params.StringParam,label='Time units', default='min', condition="odeSource==1",
                       help='min or h')
         form.addParam('volumeUnits',params.StringParam,label='Volume units', default='L', condition="odeSource==1",
@@ -124,7 +126,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                            '\n'
                            'If the parameters are not taken from a previous ODE:\n'
                            '1 compartment: Cl, V\n'
-                           '2 compartments: Cl, V, Clp, Vp\n')
+                           '2 compartments: Cl, V, Clp, Vp\n'
+                           '2 compartments Cl+Clint: Vmax, Km, Cl, V, Clp, Vp\n')
         form.addParam('inputFitting', params.PointerParam, label="Input ODE fitting",
                       condition="paramsSource==2 and odeSource==0",
                       pointerClass='PKPDFitting', help='It must be a fitting coming from a compartmental PK fitting')
@@ -415,6 +418,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                 self.model = PK_Monocompartment()
             elif self.pkType.get() == self.PKTYPE_COMP2:
                 self.model = PK_Twocompartment()
+            elif self.pkType.get() == self.PKTYPE_COMP2CLCLINT:
+                self.model = PK_TwocompartmentsClintCl()
 
         self.model.setExperiment(self.outputExperiment)
         self.model.setXVar(self.varNameX)
@@ -709,9 +714,9 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
     def _summary(self):
         msg = []
         msg.append("Dose: %s"%self.doses.get())
-        if self.paramsSource ==  ProtPKPDODESimulate.PRM_POPULATION:
+        if self.odeSource== ProtPKPDODESimulate.SRC_ODE and self.paramsSource ==  ProtPKPDODESimulate.PRM_POPULATION:
             msg.append("Number of simulations: %d"%self.Nsimulations.get())
-        elif self.paramsSource ==  ProtPKPDODESimulate.PRM_USER_DEFINED:
+        elif  self.odeSource== ProtPKPDODESimulate.SRC_LIST or self.paramsSource ==  ProtPKPDODESimulate.PRM_USER_DEFINED:
             msg.append("Parameters:\n"+self.prmUser.get())
         else:
             msg.append("Parameters from previous fitting")
