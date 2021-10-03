@@ -33,6 +33,7 @@ from pkpd.pkpd_units import createUnit, strUnit
 
 # tested in test_workflow_dissolution.py
 # Tested in test_workflow_ivivc.py
+# Tested in test_workflow_ivivc2.py
 
 class ProtPKPDDissolutionSimulate(ProtPKPD):
     """ Simulate a dissolution profile\n

@@ -43,6 +43,7 @@ from pkpd.pkpd_units import createUnit, PKPDUnit
 
 # tested in test_workflow_levyplot
 # tested in test_workflow_ivivc
+# tested in test_workflow_ivivc2
 
 from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
 

@@ -28,7 +28,10 @@ import pyworkflow.protocol.params as params
 from .protocol_pkpd import ProtPKPD
 from pkpd.pkpd_units import PKPDUnit
 
-# TESTED in test_workflow_gabrielsson_pk03.py, test_workflow_deconvolution.py, test_workflow_ivivc.py
+# TESTED in test_workflow_gabrielsson_pk03.py
+# TESTED in test_workflow_deconvolution.py
+# TESTED in test_workflow_ivivc.py
+# TESTED in test_workflow_ivivc2.py
 
 class ProtPKPDChangeVia(ProtPKPD):
     """ Change via of administration\n

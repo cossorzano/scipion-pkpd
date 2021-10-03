@@ -29,6 +29,8 @@ from .protocol_pkpd_ode_base import ProtPKPDODEBase
 from pkpd.models.pk_models import PK_TwocompartmentsClintCl
 
 # TESTED in test_workflow_gabrielsson_pk18.py
+# TESTED in test_workflow_ivivc2.py
+
 
 class ProtPKPDTwoCompartmentsClintCl(ProtPKPDODEBase):
     """ Fit a two-compartmentx model to a set of measurements (any arbitrary dosing regimen is allowed)\n

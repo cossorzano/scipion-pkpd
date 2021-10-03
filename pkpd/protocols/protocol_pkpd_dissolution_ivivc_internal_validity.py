@@ -31,6 +31,7 @@ from .protocol_pkpd import ProtPKPD
 # Tested in test_workflow_levyplot.py
 # Tested in test_workflow_deconvolution2.py
 # Tested in test_workflow_ivivc.py
+# Tested in test_workflow_ivivc2.py
 
 class ProtPKPDIVIVCInternalValidity(ProtPKPD):
     """ This protocol compares the AUC and Cmax predicted from an in vitro-in vivo experiment and
