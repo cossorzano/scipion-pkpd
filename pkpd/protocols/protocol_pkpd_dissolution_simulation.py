@@ -39,6 +39,7 @@ from pkpd.pkpd_units import createUnit, multiplyUnits, strUnit
 # tested in test_workflow_levyplot
 # tested in test_workflow_deconvolution2
 # tested in test_workflow_ivivc
+# tested in test_workflow_ivivc2
 
 class ProtPKPDDissolutionPKSimulation(ProtPKPD):
     """ This protocol simulates the pharmacokinetic response of an ODE model when it is given a single dose of
@@ -50,9 +51,13 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
     def _defineParams(self, form):
         form.addSection('Input')
         form.addParam('inputInVitro', params.PointerParam, label="Dissolution profiles in vitro",
-                      pointerClass='PKPDFitting', help='Select a fitting with dissolution profiles')
+                      pointerClass='PKPDFitting', help='Select a fitting with dissolution profiles. '
+                      'It is assumed that the input dissolution profile is a percentage, between 0 and 100')
         form.addParam('inputPK', params.PointerParam, label="Pharmacokinetic model",
                       pointerClass='PKPDFitting', help='Select the PK model to be simulated with this input')
+        form.addParam('ignorePKbioavailability', params.BooleanParam, default=False,
+                      label='Ignore PK bioavailability',
+                      help='Ignore the bioavailability from the PK if it has been considered in the IVIVC')
         form.addParam('conversionType', params.EnumParam, label='Time/Response scaling', choices=['IVIVC','Levy plot'], default=0,
                       help='To convert the dissolution profile into an absorption profile you may use an IVIVC (Fabs output) or a Levy plot. '
                       'The Levy plot can better represent what is happening in reality with patients.')
@@ -154,13 +159,14 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                     break
                 i+=1
         self.bioavailabilityIdx=None
-        i = 0
-        for prmName in self.fittingPK.modelParameters:
-            if prmName.endswith('_bioavailability'):
-                self.bioavailabilityIdx = i
-                print("Found bioavailabilityIdx in %s at position %d" % (prmName, i))
-                break
-            i += 1
+        if not self.ignorePKbioavailability.get():
+            i = 0
+            for prmName in self.fittingPK.modelParameters:
+                if prmName.endswith('_bioavailability'):
+                    self.bioavailabilityIdx = i
+                    print("Found bioavailabilityIdx in %s at position %d" % (prmName, i))
+                    break
+                i += 1
 
     def addSample(self, sampleName, t, y, fromSamples):
         newSample = PKPDSample()
@@ -343,7 +349,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             BLevy = InterpolatedUnivariateSpline(tvivoLevyUnique, tvitroLevyUnique, k=1)
 
             tvitro = np.asarray(BLevy(t), dtype=np.float64)
-            A = self.dissolutionModel.forwardModel(dissolutionPrm, tvitro)[0]
+            A = np.clip(self.dissolutionModel.forwardModel(dissolutionPrm, tvitro)[0],0,100)
 
             if self.conversionType.get()==0:
                 # In vitro-in vivo correlation
