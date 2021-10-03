@@ -51,6 +51,10 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
     SAME_INPUT = 0
     ANOTHER_INPUT = 1
 
+    BIOAVAIL_NONE = 0
+    BIOAVAIL_MULT = 1
+    BIOAVAIL_DIV = 2
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
@@ -69,9 +73,11 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
                       help='Select a run of an ODE model. It should be ideally the intravenous response.')
         form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
                       help='Normalize the output by the input dose, so that a total absorption is represented by 100.')
-        form.addParam('considerBioaval', params.BooleanParam, label="Consider bioavailability", default=True,
+        form.addParam('considerBioaval', params.EnumParam, label="Consider bioavailability", default=self.BIOAVAIL_NONE,
+                      choices=['Do not correct','Multiply deconvolution by bioavailability','Divide deconvolution by bioavailability'],
                       help='Take into account the bioavailability')
-        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
+        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%", default=True,
+                      condition='normalize',
                       help='Saturate the absorption so that there cannot be values beyond 100')
         form.addParam('removeTlag', params.BooleanParam, label="Remove tlag effect", default=True,
                       help='If set to True, then the deconvolution is performed ignoring the the tlag in the absorption.'
@@ -199,18 +205,21 @@ class ProtPKPDDeconvolveFourier(ProtPKPDODEBase):
 
             cumulatedDose=0.0
             A=t*0.0 # Allocate memory
-            totalReleased = drugSourceSample.getAmountReleasedUpTo(10*t[-1])/100 # Divided by 100 to have a number between 0 and 100
+            totalReleased = drugSourceSample.getAmountReleasedUpTo(10*t[-1]) # Divided by 100 to have a number between 0 and 100
+            print("Total amount released: %f"%totalReleased)
             print("t(min) A(%s)"%Avar.units._toString())
             for i in range(t.size):
                 cumulatedDose+=Fabs[i]
                 A[i]=cumulatedDose
                 if self.normalize.get():
-                    A[i] /= totalReleased
+                    A[i] *= 100.0/totalReleased
                 print("%f %f"%(t[i],A[i]))
                 # print("%f %f %f %f"%(t[i], A[i], drugSource.getAmountReleasedAt(t[i], 0.5), drugSource.getAmountReleasedUpTo(t[i] + 0.5)))
-            if self.saturate.get():
+            if self.saturate.get() and self.normalize.get():
                 A = np.clip(A,None,100.0)
-            if self.considerBioaval.get():
+            if self.considerBioaval.get()==self.BIOAVAIL_DIV:
+                A /= sample.getBioavailability()
+            elif self.considerBioaval.get()==self.BIOAVAIL_MULT:
                 A *= sample.getBioavailability()
             As, ts = uniqueFloatValues(np.clip(A,0,None),t-tlag)
             self.addSample(sampleName,ts,As)

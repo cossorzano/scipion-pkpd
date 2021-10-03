@@ -52,6 +52,10 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
     SAME_INPUT = 0
     ANOTHER_INPUT = 1
 
+    BIOAVAIL_NONE = 0
+    BIOAVAIL_MULT = 1
+    BIOAVAIL_DIV = 2
+
     #--------------------------- DEFINE param functions --------------------------------------------
     def _defineParams(self, form):
         form.addSection('Input')
@@ -70,9 +74,12 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
                       help='Which variable contains the time stamps.')
         form.addParam('concVar', params.StringParam, label="Concentration variable", default="Cp",
                       help='Which variable contains the plasma concentration.')
-        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%%", default=True,
+        form.addParam('normalize', params.BooleanParam, label="Normalize by dose", default=True,
+                      help='Normalize the output by AUC0inf, so that a total absorption is represented by 100.')
+        form.addParam('saturate', params.BooleanParam, label="Saturate at 100%", default=True, condition='normalize',
                       help='Saturate the absorption so that there cannot be values beyond 100')
-        form.addParam('considerBioaval', params.BooleanParam, label="Consider bioavailability", default=True,
+        form.addParam('considerBioaval', params.EnumParam, label="Consider bioavailability", default=self.BIOAVAIL_NONE,
+                      choices=['Do not correct','Multiply deconvolution by bioavailability','Divide deconvolution by bioavailability'],
                       help='Take into account the bioavailability')
         form.addParam('resampleT', params.FloatParam, label="Resample profiles (time step)", default=-1,
                       help='Resample the input profiles at this time step (make sure it is in the same units as the input). '
@@ -149,19 +156,23 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             V=float(sampleFrom.descriptors['V'])
             Ke=Cl/V
             AUC0inf = float(AUC0t[-1])
-            A = (Cp + Ke * AUC0t) / (Ke * AUC0inf) * 100
-            if self.saturate.get():
-                A = np.clip(A,None,100.0)
+            A = (Cp + Ke * AUC0t) / Ke
+            if self.normalize.get():
+                A *= 100/AUC0inf
+                if self.saturate.get():
+                    A = np.clip(A,None,100.0)
             A = np.clip(A,0,None)
             if self.smooth:
                 if t[0]>0:
                     t = np.insert(t, 0, 0)
                     A = np.insert(A, 0, 0)
-                if self.saturate.get():
+                if self.saturate.get() and self.normalize.get():
                     A = np.clip(A, None, 100.0)
                 A = np.clip(smoothPchip(t, A),0,None)
 
-            if self.considerBioaval.get():
+            if self.considerBioaval.get()==self.BIOAVAIL_DIV:
+                A /= sample.getBioavailability()
+            elif self.considerBioaval.get()==self.BIOAVAIL_MULT:
                 A *= sample.getBioavailability()
             self.addSample(sampleName,t,A)
 
