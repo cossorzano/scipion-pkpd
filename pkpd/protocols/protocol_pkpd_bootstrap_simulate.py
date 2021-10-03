@@ -41,6 +41,7 @@ from pkpd.models.pk_models import PK_Monocompartment, PK_Twocompartments, PK_Two
 
 # Tested in test_workflow_deconvolution.py
 # Tested in test_workflow_ivivc.py
+# Tested in test_workflow_ivivc2.py
 
 class ProtPKPDODESimulate(ProtPKPDODEBase):
     """ Simulate a population of ODE parameters.
@@ -88,8 +89,8 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
                                'Extra vascular, 1st order absorption (ev1)'],
                       help='Parameters:\n'
                            'iv (vianame=Intravenous): no parameters\n'
-                           'ev0 (vianame=Oral): Rin, F (bioavailability), tlag\n'
-                           'ev1 (vianame=Oral): Ka, F (bioavailability), tlag\n')
+                           'ev0 (vianame=Oral): Rin, tlag, F (bioavailability)\n'
+                           'ev1 (vianame=Oral): Ka, tlag, F (bioavailability)\n')
         form.addParam('viaPrm', params.TextParam, label="Via parameters", height=8, default="",
                       condition="odeSource==1",
                       help='Specify the parameters for the via separated by commas. Example: \n'
