@@ -324,7 +324,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             protDeconv = self.newProtocol(ProtPKPDDeconvolve,
                                       objLabel='pkpd - deconvolve %s'%msg,
                                       saturate=False,
-                                      considerBioaval=False)
+                                      considerBioaval=0)
             protDeconv.inputODE.set(protPK)
             self.launchProtocol(protDeconv)
             self.assertIsNotNone(protDeconv.outputExperiment.fnPKPD, "There was a problem")
@@ -335,7 +335,7 @@ class TestIVIVCWorkflow(TestWorkflow):
             protDeconvF = self.newProtocol(ProtPKPDDeconvolveFourier,
                                           objLabel='pkpd - deconvolve Fourier %s' % msg,
                                           saturate=False,
-                                          considerBioaval=False)
+                                          considerBioaval=0)
             protDeconvF.inputODE.set(protPK)
             self.launchProtocol(protDeconvF)
             self.assertIsNotNone(protDeconvF.outputExperiment.fnPKPD, "There was a problem")
@@ -347,7 +347,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                           objLabel='pkpd - deconvolve Fourier IV %s' % msg,
                                           externalIV=1,
                                           saturate=False,
-                                          considerBioaval=False)
+                                          considerBioaval=0)
             protDeconvFIV.inputODE.set(protPK)
             protDeconvFIV.externalIVODE.set(protPKIV)
             self.launchProtocol(protDeconvFIV)
@@ -360,7 +360,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                            objLabel='pkpd - deconvolve Wagner %s' % msg,
                                            concVar='C',
                                            saturate=False,
-                                           considerBioaval=False)
+                                           considerBioaval=0)
             protDeconvW.inputExperiment.set(protPK.outputExperiment)
             self.launchProtocol(protDeconvW)
             self.assertIsNotNone(protDeconvW.outputExperiment.fnPKPD, "There was a problem")
@@ -373,7 +373,7 @@ class TestIVIVCWorkflow(TestWorkflow):
                                            externalIV=1,
                                            concVar='C',
                                            saturate=False,
-                                           considerBioaval=False)
+                                           considerBioaval=0)
             protDeconvWIV.inputExperiment.set(protPK.outputExperiment)
             protDeconvWIV.externalIVODE.set(protPKIV)
             self.launchProtocol(protDeconvWIV)
