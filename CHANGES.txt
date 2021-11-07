@@ -113,3 +113,7 @@ September 2021.
         - Deconvolution is now saturated at 100 as an option
         - Simulate PK does not require now a previous model
 
+November 2021.
+	- Dissolution target added
+
+
