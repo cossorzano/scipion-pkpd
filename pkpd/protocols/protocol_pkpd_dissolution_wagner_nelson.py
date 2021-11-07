@@ -183,7 +183,19 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         self._defineSourceRelation(self.inputExperiment.get(), self.outputExperiment)
 
     def _validate(self):
-        return []
+        retval = []
+        if self.externalIV.get() == self.ANOTHER_INPUT:
+            sample = self.readExperiment(self.externalIVODE.get().outputExperiment.fnPKPD).getFirstSample()
+        else:
+            sample = self.readExperiment(self.inputExperiment.get().fnPKPD).getFirstSample()
+        if sample is None:
+            reval.append('Cannot find a sample in the input experiment')
+        else:
+            if sample.getDescriptorValue('Cl') is None:
+                retval.append('Cannot find Cl in the input experiment')
+            if sample.getDescriptorValue('V') is None:
+                retval.append('Cannot find V in the input experiment')
+        return retval
 
     def _summary(self):
         retval = []
