@@ -104,8 +104,9 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         self.outputExperiment.samples[sampleName] = newSample
 
     def estimateAUCrightTail(self, t, Cp, Cl, V):
-        x = t
-        y = np.log10(Cp)
+        idx = Cp>0
+        x = t[idx]
+        y = np.log10(Cp[idx])
         ydiff = np.diff(y)
         idx = -1
         while ydiff[idx]<0:
