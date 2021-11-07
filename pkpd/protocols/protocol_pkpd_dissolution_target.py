@@ -40,6 +40,8 @@ from pkpd.utils import uniqueFloatValues, computeXYmean, smoothPchip
 from pkpd.pkpd_units import createUnit, PKPDUnit
 from .protocol_pkpd import ProtPKPD
 
+# Tested in test_workflow_deconvolution
+
 class ProtPKPDDissolutionTarget(ProtPKPD):
     """ Given an in-vivo absorption profile (assumed to be between 0 and 100), and the IVIVC parameters specified
         in this protocol, the protocol calculates the target in-vitro dissolution profile"""

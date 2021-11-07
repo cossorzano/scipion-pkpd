@@ -131,8 +131,8 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         V = float(experiment.samples['Simulation_0'].descriptors['V'])
         Ka = float(experiment.samples['Simulation_0'].descriptors['Oral_Ka'])
         tlag = float(experiment.samples['Simulation_0'].descriptors['Oral_tlag'])
-        self.assertTrue(Cl > 0.26 and Cl < 0.30)
-        self.assertTrue(V > 26 and V < 30)
+        self.assertTrue(Cl > 0.24 and Cl < 0.30)
+        self.assertTrue(V > 25 and V < 30)
         self.assertTrue(tlag >= 0 and tlag < 25)
         self.assertTrue(Ka > 0.03 and Ka < 0.2)
 
@@ -148,6 +148,7 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         experiment.load(prot.outputExperiment.fnPKPD)
         A = np.asarray(experiment.samples['Simulation_0'].getValues('A'), dtype=np.float64)
         self.assertTrue(A[-1] > 91 and A[-1] <= 100)
+        protDeconvFourier = prot
 
         # Change via
         print("Change via ...")
@@ -204,6 +205,20 @@ class TestDeconvolutionWorkflow(TestWorkflow):
         A = np.asarray(experiment.samples['Individual1'].getValues('A'), dtype=np.float64)
         self.assertTrue(A[0] == 0.0)
         self.assertTrue(A[64] > 42 and A[64] < 75)
+
+        # Target
+        print("Dissolution target ...")
+        prot = self.newProtocol(ProtPKPDDissolutionTarget,
+                                objLabel='dissol target')
+        prot.inputInVivo.set(protDeconvFourier.outputExperiment)
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputExperiment.fnPKPD, "There was a problem with the deconvolution")
+        self.validateFiles('prot', prot)
+        experiment = PKPDExperiment()
+        experiment.load(prot.outputExperiment.fnPKPD)
+        A = np.asarray(experiment.samples['target_Simulation_0'].getValues('Adissol'), dtype=np.float64)
+        self.assertTrue(A[0] < 0.5)
+        self.assertTrue(A[-1] > 97)
 
         # NCA numeric
         print("NCA numeric ...")
