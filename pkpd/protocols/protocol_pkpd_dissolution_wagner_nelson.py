@@ -103,6 +103,21 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
         newSample.addMeasurementColumn("A",y)
         self.outputExperiment.samples[sampleName] = newSample
 
+    def estimateAUCrightTail(self, t, Cp, Cl, V):
+        x = t
+        y = np.log10(Cp)
+        ydiff = np.diff(y)
+        idx = -1
+        while ydiff[idx]<0:
+            idx-=1
+        if idx<-3:
+            p = np.polyfit(x[idx:], y[idx:], 1)
+            Ke = Cl/V
+            lastCt=np.power(10,p[0]*x[-1]+p[1])
+            return lastCt/np.abs(Ke)
+        else:
+            return 0
+
     def deconvolve(self, objId1):
         self.experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
 
@@ -155,7 +170,7 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
             Cl=float(sampleFrom.descriptors['Cl'])
             V=float(sampleFrom.descriptors['V'])
             Ke=Cl/V
-            AUC0inf = float(AUC0t[-1])
+            AUC0inf = float(AUC0t[-1])+self.estimateAUCrightTail(t,Cp, Cl, V)
             A = (Cp + Ke * AUC0t) / Ke
             if self.normalize.get():
                 A *= 100/AUC0inf
@@ -169,6 +184,8 @@ class ProtPKPDDeconvolutionWagnerNelson(ProtPKPD):
                 if self.saturate.get() and self.normalize.get():
                     A = np.clip(A, None, 100.0)
                 A = np.clip(smoothPchip(t, A),0,None)
+                if self.saturate.get() and self.normalize.get():
+                    A = np.clip(A, None, 100.0)
 
             if self.considerBioaval.get()==self.BIOAVAIL_DIV:
                 A /= sample.getBioavailability()
