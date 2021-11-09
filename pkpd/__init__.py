@@ -36,6 +36,7 @@ import subprocess
 import uuid
 import pwem as em
 from pyworkflow.utils import Environ
+from pyworkflow.utils.path import cleanPath
 from .constants import *
 
 
@@ -83,32 +84,11 @@ class Plugin(em.Plugin):
         print("Running: ",Rscript,"--vanilla",fnScript)
         process = subprocess.Popen([Rscript,"--vanilla",fnScript], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = ''.join([x.decode() for x in process.stdout.readlines()])
+
+        cleanPath(fnScript)
         return output
 
     @classmethod
     def checkRPackage(cls, packageName):
         response = cls.runRscript("if ('%s' %%in%% installed.packages()) {cat(1);} else {cat(0)}"%packageName)
         return response=='1'
-
-    # @classmethod
-    # def isVersionActive(cls):
-    #     return cls.getActiveVersion().startswith(V1_0_0)
-    #
-    # @classmethod
-    # def defineBinaries(cls, env):
-    #     pass
-
-# def tryAddPipModule(env, moduleName, *args, **kwargs):
-#     """ To try to add certain pipModule.
-#         If it fails due to it is already add by other plugin or Scipion,
-#           just returns its name to use it as a dependency.
-#         Raise the exception if unknown error is gotten.
-#     """
-#     try:
-#         return env.addPipModule(moduleName, *args, **kwargs)._name
-#     except Exception as e:
-#         if str(e) == "Duplicated target '%s'" % moduleName:
-#             return moduleName
-#         else:
-#             raise Exception(e)
-
