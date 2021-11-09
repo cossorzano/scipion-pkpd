@@ -1,7 +1,6 @@
 # **************************************************************************
 # *
-# * Authors: Yunior C. Fonseca Reyna    (cfonseca@cnb.csic.es)
-# *
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@gmail.com)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -21,19 +20,23 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'scipion@cnb.csic.es'
+# *  e-mail address 'jmdelarosa@cnb.csic.es'
 # *
 # **************************************************************************
 
-from .viewer import (PKPDExperimentViewer, PKPDFittingViewer, PKPDCSVViewer,
-                     PKPDAnalysisViewer, PKPDStatisticsLabelViewer,
-                     PKPDRegressionLabelsViewer, PKPDPopulationViewer,
-                     PKPDAllometricScalingViewer)
-from .viewer_pkpd_BE_power_analysis import PKPDBEPowerAnalysisViewer
-from .viewer_pkpd_compare_experiments import PKPDCompareExperimentsViewer
-from .viewer_pkpd_dissolution_f2 import PKPDDissolutionF2Viewer
-from .viewer_pkpd_dissolution_ivivc_internal_validity import PKPDDissolutionIVIVCInternalValidityViewer
-from .viewer_pkpd_particle_size import PKPDParticleSizeViewer
-from .viewer_pkpd_simulate_drug_interactions import PKPDSimulateDrugInteractionsViewer
-from .viewer_pkpd_simulate_liver_flow import PKPDSimulateLiverFlowViewer
-from .viewer_pkpd_stats_mahalanobis import PKPDStatsMahalanobisViewer
+import os
+
+from pyworkflow.viewer import Viewer, DESKTOP_TKINTER
+from pyworkflow.gui.text import openTextFileEditor
+
+from pkpd.protocols import ProtPKPDBEPowerAnalysis
+
+class PKPDBEPowerAnalysisViewer(Viewer):
+    _targets = [ProtPKPDBEPowerAnalysis]
+    _environments = [DESKTOP_TKINTER]
+
+    def visualize(self, obj, **kwargs):
+        prot = obj
+        fnPlot = prot._getPath('plot.png')
+        if os.path.exists(fnPlot):
+            openTextFileEditor(fnPlot)

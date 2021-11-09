@@ -30,7 +30,10 @@ PKPD functions
 # Pending:
 # Batch effects, Reese2013
 
+import distutils.spawn
 import os
+import subprocess
+import uuid
 import pwem as em
 from pyworkflow.utils import Environ
 from .constants import *
@@ -60,6 +63,32 @@ class Plugin(em.Plugin):
         # }, position=Environ.BEGIN)
 
         return environ
+
+    @classmethod
+    def getRscript(cls):
+        return distutils.spawn.find_executable("Rscript")
+
+    @classmethod
+    def runRscript(cls, scriptString):
+        Rscript = cls.getRscript()
+        if Rscript is None:
+            raise Exception("Cannot find Rscript in the path")
+
+        fnRoot = str(uuid.uuid4()).replace('-','_')
+        fnScript = '/tmp/scipionRScript_%s.r'%fnRoot
+        fh = open(fnScript,'w')
+        fh.write(scriptString)
+        fh.close()
+
+        print("Running: ",Rscript,"--vanilla",fnScript)
+        process = subprocess.Popen([Rscript,"--vanilla",fnScript], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = ''.join([x.decode() for x in process.stdout.readlines()])
+        return output
+
+    @classmethod
+    def checkRPackage(cls, packageName):
+        response = cls.runRscript("if ('%s' %%in%% installed.packages()) {cat(1);} else {cat(0)}"%packageName)
+        return response=='1'
 
     # @classmethod
     # def isVersionActive(cls):
