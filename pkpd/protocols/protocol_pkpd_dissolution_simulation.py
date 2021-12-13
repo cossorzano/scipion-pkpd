@@ -55,6 +55,12 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                       'It is assumed that the input dissolution profile is a percentage, between 0 and 100')
         form.addParam('inputPK', params.PointerParam, label="Pharmacokinetic model",
                       pointerClass='PKPDFitting', help='Select the PK model to be simulated with this input')
+        form.addParam('usePKExperiment', params.BooleanParam, label="Use experiment from PK fitting", default=True,
+                      help='If True, the PK parameters are taken from the same fitting. '
+                           'If False, they are taken from another experiment')
+        form.addParam('inputPKOtherExperiment', params.PointerParam, label="Experiment with PK parameters",
+                      pointerClass='PKPDExperiment', condition='not usePKExperiment',
+                      help='The experiment must have all the PK parameters specified by the PK model')
         form.addParam('ignorePKbioavailability', params.BooleanParam, default=False,
                       label='Ignore PK bioavailability',
                       help='Ignore the bioavailability from the PK if it has been considered in the IVIVC')
@@ -241,6 +247,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.getScaling()
         self.getPKModels()
 
+        if not self.usePKExperiment:
+            otherPKExperiment = PKPDExperiment()
+            otherPKExperiment.load(self.inputPKOtherExperiment.get().fnPKPD)
+
         self.outputExperiment = PKPDExperiment()
         tvar = PKPDVariable()
         tvar.varName = "t"
@@ -300,8 +310,19 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
         t=np.arange(self.pkModel.t0,self.pkModel.tF,1)
 
+        if self.usePKExperiment:
+            NPKFits = len(self.fittingPK.sampleFits)
+            invivoFits = self.fittingPK.sampleFits
+        else:
+            NPKFits = len(otherPKExperiment.samples)
+            invivoFits = [x for x in otherPKExperiment.samples.values()]
+            for sample in invivoFits:
+                sample.parameters = [float(x) for x in sample.getDescriptorValues(self.fittingPK.modelParameters)]
+
+        NDissolFits = len(self.fittingInVitro.sampleFits)
+
         if self.allCombinations:
-            inputN = len(self.fittingPK.sampleFits) * len(self.fittingInVitro.sampleFits)
+            inputN = NPKFits * NDissolFits
 
         AUCarray = np.zeros(inputN)
         AUMCarray = np.zeros(inputN)
@@ -314,10 +335,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
             # Get a random PK model
             if self.allCombinations:
-                nfit = int(i/len(self.fittingInVitro.sampleFits))
+                nfit = int(i/NDissolFits)
             else:
-                nfit = int(random.uniform(0, len(self.fittingPK.sampleFits)))
-            sampleFitVivo = self.fittingPK.sampleFits[nfit]
+                nfit = int(random.uniform(0, NPKFits))
+            sampleFitVivo = invivoFits[nfit]
             print("In vivo sample name=",sampleFitVivo.sampleName)
             if self.pkPopulation:
                 nbootstrap = int(random.uniform(0,sampleFitVivo.parameters.shape[0]))
@@ -338,9 +359,9 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
             # Get a dissolution profile
             if self.allCombinations:
-                nfit = i%len(self.fittingInVitro.sampleFits)
+                nfit = i%NDissolFits
             else:
-                nfit = int(random.uniform(0, len(self.fittingInVitro.sampleFits)))
+                nfit = int(random.uniform(0, NDissolFits))
             sampleFitVitro = self.fittingInVitro.sampleFits[nfit]
             if self.dissolutionPopulation:
                 nbootstrap = int(random.uniform(0,sampleFitVitro.parameters.shape[0]))
