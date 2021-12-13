@@ -71,7 +71,11 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         form.addParam('includeTlag', params.BooleanParam, label="Include PK tlag", default=True,
                       help='If you include the tlag (if available), the simulations will be done with the same PK tlag as '
                            'the input PK population. If not, tlag will be set to 0.')
-        form.addParam('inputN', params.IntParam, label="Number of simulations", default=100, expertLevel=LEVEL_ADVANCED)
+        form.addParam('allCombinations', params.BooleanParam, label="All combinations of dissolutions/PK", default=False,
+                      help='If set to True, then all combinations of dissolutions and PK profiles are tested. '
+                           'Otherwise, only a random subset is chosen')
+        form.addParam('inputN', params.IntParam, label="Number of simulations", default=100,
+                      condition='not allCombinations')
         form.addParam('t0', params.FloatParam, label="Initial time (h)", default=0)
         form.addParam('tF', params.FloatParam, label="Final time (h)", default=48)
         form.addParam('addIndividuals', params.BooleanParam, label="Add individual simulations", default=True, expertLevel=LEVEL_ADVANCED,
@@ -295,6 +299,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
 
 
         t=np.arange(self.pkModel.t0,self.pkModel.tF,1)
+
+        if self.allCombinations:
+            inputN = len(self.fittingPK.sampleFits) * len(self.fittingInVitro.sampleFits)
+
         AUCarray = np.zeros(inputN)
         AUMCarray = np.zeros(inputN)
         MRTarray = np.zeros(inputN)
@@ -305,7 +313,10 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             print("Simulation no. %d ----------------------"%i)
 
             # Get a random PK model
-            nfit = int(random.uniform(0, len(self.fittingPK.sampleFits)))
+            if self.allCombinations:
+                nfit = int(i/len(self.fittingInVitro.sampleFits))
+            else:
+                nfit = int(random.uniform(0, len(self.fittingPK.sampleFits)))
             sampleFitVivo = self.fittingPK.sampleFits[nfit]
             print("In vivo sample name=",sampleFitVivo.sampleName)
             if self.pkPopulation:
@@ -325,8 +336,11 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
                 bioavailability=pkPrmAll[self.bioavailabilityIdx]
                 print("bioavailability: ",bioavailability)
 
-            # Get a random dissolution profile
-            nfit = int(random.uniform(0, len(self.fittingInVitro.sampleFits)))
+            # Get a dissolution profile
+            if self.allCombinations:
+                nfit = i%len(self.fittingInVitro.sampleFits)
+            else:
+                nfit = int(random.uniform(0, len(self.fittingInVitro.sampleFits)))
             sampleFitVitro = self.fittingInVitro.sampleFits[nfit]
             if self.dissolutionPopulation:
                 nbootstrap = int(random.uniform(0,sampleFitVitro.parameters.shape[0]))
