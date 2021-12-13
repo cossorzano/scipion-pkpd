@@ -506,6 +506,9 @@ class PKPDSample:
         else:
             return None
 
+    def getDescriptorValues(self, descriptorNameList):
+        return [self.getDescriptorValue(descriptorName) for descriptorName in descriptorNameList]
+
     def setDescriptorValue(self, descriptorName, descriptorValue):
         if self.descriptors is None:
             self.descriptors = {}
