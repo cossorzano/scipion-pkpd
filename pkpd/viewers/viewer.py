@@ -96,11 +96,14 @@ class PKPDFittingViewer(PKPDViewer):
             self.windowDisplayed.show()
         else:
             fitting.load()
+            """ # This code should probably not be here
             if hasattr(self.protocol,"outputExperiment"):
                 experiment = self.protocol.outputExperiment
                 experiment.load()
             else:
                 experiment = fitting.loadExperiment()
+            """
+            experiment = fitting.loadExperiment()
 
             self.windowDisplayed = self.tkWindow(ExperimentWindow,
                                                title='Fitting Viewer',
