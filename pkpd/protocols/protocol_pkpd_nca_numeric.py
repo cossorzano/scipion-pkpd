@@ -99,10 +99,10 @@ class ProtPKPDNCANumeric(ProtPKPD):
         self.MRT = self.AUMC0t/self.AUC0t
 
         print("   Cmax=%f [%s]"%(self.Cmax,strUnit(self.Cunits.unit)))
-        print("   Tmax=%f [min]"%self.Tmax)
+        print("   Tmax=%f [%s]"%(self.Tmax,strUnit(self.tunits)))
         print("   AUC0t=%f [%s]"%(self.AUC0t,strUnit(self.AUCunits)))
         print("   AUMC0t=%f [%s]"%(self.AUMC0t,strUnit(self.AUMCunits)))
-        print("   MRT=%f [min]"%self.MRT)
+        print("   MRT=%f [%s]"%(self.MRT,strUnit(self.tunits)))
         print("")
 
 
@@ -127,7 +127,8 @@ class ProtPKPDNCANumeric(ProtPKPD):
         tvar.varName = "t"
         tvar.varType = PKPDVariable.TYPE_NUMERIC
         tvar.role = PKPDVariable.ROLE_TIME
-        tvar.units = createUnit(self.outputExperiment.getTimeUnits().unit)
+        self.tunits = self.outputExperiment.getTimeUnits().unit
+        tvar.units = createUnit(self.tunits)
 
         self.Cunits = self.outputExperiment.variables[xvarName].units
         self.AUCunits = multiplyUnits(tvar.units.unit, self.Cunits.unit)
