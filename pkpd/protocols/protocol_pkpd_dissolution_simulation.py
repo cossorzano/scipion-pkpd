@@ -64,7 +64,8 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         form.addParam('ignorePKbioavailability', params.BooleanParam, default=False,
                       label='Ignore PK bioavailability',
                       help='Ignore the bioavailability from the PK if it has been considered in the IVIVC')
-        form.addParam('conversionType', params.EnumParam, label='Time/Response scaling', choices=['IVIVC','Levy plot'], default=0,
+        form.addParam('conversionType', params.EnumParam, label='Time/Response scaling',
+                      choices=['IVIVC','Levy plot','None'], default=0,
                       help='To convert the dissolution profile into an absorption profile you may use an IVIVC (Fabs output) or a Levy plot. '
                       'The Levy plot can better represent what is happening in reality with patients.')
         form.addParam('inputIvIvC', params.PointerParam, label="In vitro-In vivo correlation", condition='conversionType==0',
@@ -115,17 +116,27 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
         self.allResponseScalings = {}
         if self.conversionType.get()==0:
             experiment = self.readExperiment(self.inputIvIvC.get().fnPKPD,show=False)
-        else:
+        elif self.conversionType.get()==1:
             experiment = self.readExperiment(self.inputLevy.get().fnPKPD, show=False)
+        elif self.conversionType.get()==2:
+            experiment = self.readExperiment(self.inputInVitro.get().fnExperiment, show=False)
+            tvar = experiment.getTimeVariable()
         for sampleName, sample in experiment.samples.items():
             if self.conversionType.get() == 0:
                 vivo = sample.getValues("tvivo")
                 vitro = sample.getValues("tvitroReinterpolated")
-            else:
+            elif self.conversionType.get()==1:
                 vivo = sample.getValues("tvivo")
                 vitro = sample.getValues("tvitro")
-            fromSample=sample.getDescriptorValue("from")
-            fromIndividual,_=fromSample.split("---")
+            elif self.conversionType.get() == 2:
+                vivo = sample.getValues(tvar)
+                vitro = sample.getValues(tvar)
+            if self.conversionType.get() != 2:
+                fromSample=sample.getDescriptorValue("from")
+                fromIndividual,_=fromSample.split("---")
+            else:
+                fromSample = sample.sampleName
+                fromIndividual = sample.sampleName
             if not fromIndividual in self.allTimeScalings.keys():
                 self.allTimeScalings[fromIndividual]=[]
             self.allTimeScalings[fromIndividual].append((np.asarray(vitro,dtype=np.float64),np.asarray(vivo,dtype=np.float64)))
@@ -437,7 +448,7 @@ class ProtPKPDDissolutionPKSimulation(ProtPKPD):
             self._defineSourceRelation(self.inputPK.get(), self.outputExperiment)
             if self.conversionType.get()==0:
                 self._defineSourceRelation(self.inputIvIvC.get(), self.outputExperiment)
-            else:
+            elif self.conversionType.get()==1:
                 self._defineSourceRelation(self.inputLevy.get(), self.outputExperiment)
 
     def _validate(self):
