@@ -458,7 +458,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
             else:
                 self.inputExperiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
                 Nsimulations = len(self.inputExperiment.samples)
-                inputSampleNames = self.inputExperiment.samples.keys()
+                inputSampleNames = [x for x in self.inputExperiment.samples.keys()]
         else:
             lines = self.prmUser.get().strip().replace('\n', ';;').split(';;')
             Nsimulations = len(lines)
