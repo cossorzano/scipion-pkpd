@@ -48,6 +48,8 @@ class ProtPKPDChangeVia(ProtPKPD):
                       help='Select an experiment with samples')
         form.addParam('viaName', params.StringParam, label="Via name",
                       help='Name of the via you want to change')
+        form.addParam('newViaName', params.StringParam, label="Via name (new)",
+                      help='New name of the via. If it is empty, the same name as it had')
         form.addParam('newViaType', params.StringParam, label="New via type",
                       help='New via type, leave it empty to keep current via. Valid vias are iv, ev0, ev1, ev01, evFractional, '
                            'ev0tlag1, ev1-ev1Saturable, doubleWeibull, tripleWeibull, spline2, spline3, ..., spline20, '
@@ -60,14 +62,21 @@ class ProtPKPDChangeVia(ProtPKPD):
     #--------------------------- INSERT steps functions --------------------------------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep('runChange',self.inputExperiment.get().getObjId(),self.viaName.get(), self.newViaType.get(),
+        self._insertFunctionStep('runChange',self.inputExperiment.get().getObjId(),self.viaName.get(),
+                                 self.newViaName.get(), self.newViaType.get(),
                                  self.tlag.get(),self.bioavailability.get())
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions --------------------------------------------
-    def runChange(self, objId, viaName, newViaType, tlag, bioavailability):
+    def runChange(self, objId, viaName, newViaName, newViaType, tlag, bioavailability):
         self.experiment = self.readExperiment(self.inputExperiment.get().fnPKPD)
         via = self.experiment.vias[viaName]
+
+        if newViaName!="":
+            via.viaName=newViaName
+            self.experiment.vias[newViaName]=via
+            del self.experiment.vias[viaName]
+
         if newViaType!="":
             via.via = newViaType
 
