@@ -292,7 +292,7 @@ class ProtPKPDODESimulate(ProtPKPDODEBase):
 
         self.AUC0t = float(AUClist[-1])
         self.AUMC0t = float(AUMClist[-1])
-        self.MRT = self.AUMC0t/self.AUC0t
+        self.MRT = self.AUMC0t/self.AUC0t if self.AUC0t>0 else np.nan
         self.Cmin = float(Cminlist[-1])
         self.Cmax = float(Cmaxlist[-1])
         self.Tmin = float(Tminlist[-1])
