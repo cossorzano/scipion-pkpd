@@ -481,7 +481,7 @@ class PKPDSample:
                     exec ("%s=float(%s)" % (varName, varName), locals(), ldict)
             else:
                 # Measurement or time
-                exec ("%s=np.asarray(self.getValues('%s'),dtype=np.float)" % (varName, varName),
+                exec ("%s=np.asarray(self.getValues('%s'),dtype=np.float32)" % (varName, varName),
                       dict(locals(), **globals()), ldict)
         aux = None
         exec ("aux=%s" % parsedOperation, dict(locals(), **globals()), ldict)
@@ -1147,7 +1147,7 @@ class PKPDModelBase2(PKPDModelBase):
         for i in range(0,int(math.pow(2,self.getNumberOfParameters()))):
             pattern = ("{0:0%db}"%(self.getNumberOfParameters())).format(i)
             p = np.where(np.array(list(pattern))=="1",upperBound,lowerBound)
-            p = p.astype(np.float)
+            p = p.astype(np.float32)
             if not self.areParametersValid(p):
                 continue
             y = self.forwardModel(p)

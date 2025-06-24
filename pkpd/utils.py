@@ -48,7 +48,7 @@ def parseRange(auxString):
         auxString=auxString.replace(']','')
         tokens=auxString.split(',')
         auxArray = np.array(tokens, dtype='float')
-        return auxArray.astype(np.float)
+        return auxArray.astype(np.float64)
     elif ':' in auxString:
         tokens=auxString.split(':')
         if len(tokens)!=3:
