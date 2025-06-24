@@ -483,10 +483,13 @@ class ProtPKPDODEBase(ProtPKPD,PKPDModelBase2):
 
                 self.postSampleAnalysis(sampleName)
 
-                if reportX!=None:
+                if reportX is not None:
                     print("Evaluation of the model at specified time points")
                     self.model.tF = np.max(reportX)
-                    yreportX = self.model.forwardModel(self.model.parameters, reportX)
+                    if type(reportX) is np.ndarray:
+                        yreportX = self.model.forwardModel(self.model.parameters, [reportX])[0]
+                    else:
+                        yreportX = self.model.forwardModel(self.model.parameters, reportX)
                     print("==========================================")
                     print("X     Ypredicted     log10(Ypredicted)")
                     print("==========================================")
