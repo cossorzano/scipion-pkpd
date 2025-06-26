@@ -50,7 +50,24 @@ from .protocol_pkpd_dissolution_levyplot import ProtPKPDDissolutionLevyPlot
 class ProtPKPDDissolutionIVIVC(ProtPKPDDissolutionLevyPlot):
     """ Calculate the in vitro-in vivo correlation between two experiments. Each experiment may have
         several profiles and all vs all profiles are calculated. You may scale the time between the two
-        sets of experiments"""
+        sets of experiments.
+        
+        The protocol provides two different output experiments that reflect complementary views of the in vivo–in vitro 
+        correlation analysis. The first output, outputExperimentFabs, contains the detailed results of the IVIVC 
+        fitting performed individually for each possible combination of in vitro and in vivo profiles. This means that 
+        for every pair of dissolution and absorption profiles, the protocol fits a separate transformation model and 
+        stores the corresponding predicted values and fitting parameters. This level of granularity is useful when analyzing 
+        how each specific in vitro profile relates to each in vivo counterpart and allows for investigating variability 
+        across individual experiments.
+
+        In contrast, the second output, outputExperimentFabsSingle, presents a single, global correlation model obtained 
+        by averaging all in vitro profiles and all in vivo profiles before performing the fit. This aggregated view 
+        smooths out individual variability and provides an overall model that represents the average behavior of the system. 
+        It is particularly useful when a general predictive relationship between in vitro and in vivo data is sought, 
+        rather than focusing on subject- or batch-specific results. Both outputs include the same types of variables, 
+        such as predicted and observed values, but differ in whether they reflect individual pairings or an overall, 
+        population-level correlation.
+"""
 
     _label = 'dissol ivivc'
 
