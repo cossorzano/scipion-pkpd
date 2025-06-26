@@ -118,8 +118,8 @@ class PKPDDissolutionIVIVCInternalValidityViewer(Viewer):
 
         plotter = EmPlotter(style='seaborn-whitegrid')
         ax = plotter.createSubPlot("Mean Plot", self.timeVarName, self.CVarName)
-        ax.plot(sortedTimeTrue, Ytrue[:, 2], 'g', label="50% (Median)  In-vivo", linewidth=2)
-        ax.plot(sortedTimeSimulated, Ysimulated[:, 2], 'g', label="50% (Median) Simulated")
+        ax.plot(sortedTimeTrue, Ytrue[:, 2], 'b', label="50% (Median)  In-vivo", linewidth=2)
+        ax.plot(sortedTimeSimulated, Ysimulated[:, 2], 'm', label="50% (Median) Simulated")
         ax.grid(True)
         ax.legend()
         plotter.show()
