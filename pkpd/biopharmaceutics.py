@@ -462,7 +462,7 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
         return self.parameterUnits
 
     def getAg(self,t):
-        if t<=0:
+        if t<0:
             return 0.0
         td1 = self.parameters[0]
         b1 = self.parameters[1]
@@ -473,11 +473,11 @@ class BiopharmaceuticsModelDoubleWeibull(BiopharmaceuticsModel):
 
         t2 = t-tlag2
         f1 = F1*math.exp(-math.pow(t/td1,b1))
-        if t2>0:
+        if t2>=0:
             f2=(1-F1)*math.exp(-math.pow(t2/td2,b2))
         else:
-            f2=0
-        return self.Amax*(f1+f2)
+            f2=(1-F1)
+        return max(self.Amax*(f1+f2),0.0)
 
     def getEquation(self):
         td1 = self.parameters[0]
